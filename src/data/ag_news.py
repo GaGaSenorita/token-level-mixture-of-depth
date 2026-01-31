@@ -1,10 +1,28 @@
 from datasets import load_dataset
 
-dataset = load_dataset("ag_news")
-print(dataset)
-print(dataset['train'][0])
-#Hello World!
-'''
-e.g.
-{'text': "Wall St. Bears Claw Back Into the Black (Reuters) Reuters - Short-sellers, Wall Street's dwindling\\band of ultra-cynics, are seeing green again.", 'label': 2}
-'''
+def load_ag_news(split: str, seed: int = 10):
+    """
+    Load AG News dataset.
+
+    split: 'train' | 'valid' | 'test'
+    return: texts (List[str]), labels (List[int])
+    """
+    dataset = load_dataset("ag_news")
+
+    if split == "train":
+        data = dataset["train"]
+      
+    elif split == "valid":
+        split_data = dataset["train"].train_test_split(test_size=0.1, seed=seed)
+        data = split_data["test"]
+      
+    elif split == "test":
+        data = dataset["test"]
+      
+    else:
+        raise ValueError(f"Unknown split: {split}")
+
+    texts = data["text"]
+    labels = data["label"]
+
+    return texts, labels
