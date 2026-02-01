@@ -1,0 +1,35 @@
+2026-02-01 01:33:53,999 | INFO | Final args:
+2026-02-01 01:33:53,999 | INFO | config: None
+2026-02-01 01:33:53,999 | INFO | run_name: dense_bert_finetune_agnews
+2026-02-01 01:33:53,999 | INFO | model_key: finetuned_dense_bert
+2026-02-01 01:33:53,999 | INFO | batch_size: 32
+2026-02-01 01:33:53,999 | INFO | max_length: 128
+2026-02-01 01:33:53,999 | INFO | model_name: bert-base-uncased
+2026-02-01 01:33:53,999 | INFO | dropout: 0.1
+2026-02-01 01:33:53,999 | INFO | learning_rate: 2e-05
+2026-02-01 01:33:53,999 | INFO | epochs: 3
+2026-02-01 01:33:53,999 | INFO | seed: 42
+2026-02-01 01:33:53,999 | INFO | output_root: ./outputs
+2026-02-01 01:33:53,999 | INFO | Using device: cpu
+2026-02-01 01:35:22,173 | INFO | Final args:
+2026-02-01 01:35:22,173 | INFO | config: configs/bert_baseline.yaml
+2026-02-01 01:35:22,173 | INFO | run_name: dense_bert_finetune_agnews
+2026-02-01 01:35:22,173 | INFO | model_key: finetuned_dense_bert
+2026-02-01 01:35:22,174 | INFO | batch_size: 32
+2026-02-01 01:35:22,174 | INFO | max_length: 128
+2026-02-01 01:35:22,174 | INFO | model_name: bert-base-uncased
+2026-02-01 01:35:22,174 | INFO | dropout: 0.1
+2026-02-01 01:35:22,174 | INFO | learning_rate: 2e-05
+2026-02-01 01:35:22,174 | INFO | epochs: 3
+2026-02-01 01:35:22,174 | INFO | seed: 42
+2026-02-01 01:35:22,174 | INFO | output_root: ./outputs
+2026-02-01 01:35:22,174 | INFO | Using device: cpu
+2026-02-01 01:49:48,329 | INFO | Using device: cpu
+2026-02-01 01:49:48,329 | INFO | Loading data...
+2026-02-01 01:53:03,251 | INFO | Using device: cpu
+2026-02-01 01:53:03,251 | INFO | Loading data...
+2026-02-01 02:15:12,264 | INFO | Using device: cpu
+2026-02-01 02:15:12,264 | INFO | Loading data...
+2026-02-01 02:30:33,822 | INFO | Using device: cpu
+2026-02-01 02:30:33,822 | INFO | Loading data...
+2026-02-01 02:30:38,191 | INFO | Data loaded. num_labels=4
