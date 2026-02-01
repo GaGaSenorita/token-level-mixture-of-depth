@@ -23,8 +23,7 @@ def train_epoch(model, dataloader, optimizer, scheduler, device):
         optimizer.zero_grad()
         logits = model(
             input_ids=input_ids,
-            attention_mask=attention_mask,
-            labels=labels
+            attention_mask=attention_mask
         )
         loss = loss_fn(logits, labels)
         loss.backward()
