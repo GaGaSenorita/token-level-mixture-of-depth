@@ -95,6 +95,7 @@ def main():
     )
     model.to(device)
     logger.info(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
+    sys.exit('没得跑了')
     
     logger.info("Starting training...")
     history = train(model, train_loader, test_loader, args, device)

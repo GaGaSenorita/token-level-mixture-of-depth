@@ -28,7 +28,7 @@ class BERTClassifier(nn.Module):
             若提供 labels: (loss, logits)
             否则: logits
         
-        把AG News的文本 → BERT 编码 → 取 CLS → 做分类 → 算 loss
+        把AG News的文本 → BERT 编码 → 取 CLS → 做分类logits
         """
         # BERT encoding
         outputs = self.bert(
@@ -39,7 +39,5 @@ class BERTClassifier(nn.Module):
         # 使用 [CLS] token 的输出
         pooled_output = outputs.last_hidden_state[:, 0]  # [batch_size, hidden_size] 我们有B条句子，每条句子背padding/truncation到seq_len长度，取每条句子的第0个token的输出作为句子表示
         pooled_output = self.dropout(pooled_output)
-        
-        # 分类
         logits = self.classifier(pooled_output)  # [batch_size, num_labels] 
         return logits

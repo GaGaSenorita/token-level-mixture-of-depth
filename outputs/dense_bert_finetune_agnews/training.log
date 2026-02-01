@@ -33,3 +33,9 @@
 2026-02-01 02:30:33,822 | INFO | Using device: cpu
 2026-02-01 02:30:33,822 | INFO | Loading data...
 2026-02-01 02:30:38,191 | INFO | Data loaded. num_labels=4
+2026-02-01 03:07:10,362 | INFO | Using device: cpu
+2026-02-01 03:07:10,362 | INFO | Loading data...
+2026-02-01 03:07:13,910 | INFO | Train batches: 3750, Test batches: 238
+2026-02-01 03:07:13,910 | INFO | Data loaded. num_labels=4
+2026-02-01 03:07:13,911 | INFO | Initializing model...
+2026-02-01 03:07:14,088 | INFO | Model parameters: 109,485,316
