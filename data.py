@@ -32,7 +32,6 @@ def load_ag_news_data(tokenizer_name: str, batch_size: int = 32, max_length: int
 
     # set format for PyTorch
     tokenized_datasets.set_format(type='torch', columns=['input_ids', 'attention_mask', 'label'])
-    print(tokenized_datasets)
     
     train_loader = DataLoader(
         tokenized_datasets['train'],
