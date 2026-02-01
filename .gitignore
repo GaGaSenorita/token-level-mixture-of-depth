@@ -1,1 +1,8 @@
+# python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# large checkpoints
 outputs/**/best_model.pt
+*.pt
