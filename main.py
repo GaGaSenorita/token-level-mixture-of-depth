@@ -70,6 +70,7 @@ def main():
     set_seed(args.seed)
     output_dir = Path(args.output_root) / args.run_name
     ensure_dir(output_dir)
+    args.output_dir = str(output_dir)
     logger = setup_logger(output_dir, name="training")
     # logger.info("Final args:")
     # for k, v in vars(args).items():
@@ -95,7 +96,6 @@ def main():
     )
     model.to(device)
     logger.info(f"Model parameters: {sum(p.numel() for p in model.parameters()):,}")
-    sys.exit('没得跑了')
     
     logger.info("Starting training...")
     history = train(model, train_loader, test_loader, args, device)

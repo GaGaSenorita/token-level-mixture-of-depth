@@ -17,12 +17,11 @@ class BERTClassifier(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.classifier = nn.Linear(self.bert.config.hidden_size, num_labels) # hidden_size = 768 for bert-base
         
-    def forward(self, input_ids, attention_mask, labels=None):
+    def forward(self, input_ids, attention_mask):
         """
         Args:
             input_ids: [batch_size, seq_len]
             attention_mask: [batch_size, seq_len]
-            labels: [batch_size] (可选)
         
         Returns:
             若提供 labels: (loss, logits)

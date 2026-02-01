@@ -28,20 +28,18 @@ def train_epoch(model, dataloader, optimizer, scheduler, device):
         )
         loss = loss_fn(logits, labels)
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
         if scheduler is not None:
             scheduler.step()
-
         total_loss += loss.item()
 
-    return total_loss / len(dataloader)
+    return total_loss / max(1, len(dataloader))
 
 
-def train(model, train_loader, val_loader, args, device):
-    """
-    完整训练流程
-    """
-    from eval import evaluate  # 避免循环依赖
+def train(model, train_loader, test_loader, args, device):
+
+    from eval import evaluate
 
     os.makedirs(args.output_dir, exist_ok=True)
     optimizer = AdamW(model.parameters(), lr=args.learning_rate)
@@ -55,7 +53,7 @@ def train(model, train_loader, val_loader, args, device):
         num_training_steps=total_steps,
     )
 
-    history = {"train_loss": [], "val_acc": []}
+    history = {"train_loss": [], "test_acc": []}
     best_acc = 0.0
     best_path = os.path.join(args.output_dir, "best_model.pt")
 
@@ -63,18 +61,18 @@ def train(model, train_loader, val_loader, args, device):
         print(f"\n===== Epoch {epoch + 1}/{args.epochs} =====")
 
         train_loss = train_epoch(model, train_loader, optimizer, scheduler, device)
-        val_acc = evaluate(model, val_loader, device)
+        test_acc = evaluate(model, test_loader, device)
 
         history["train_loss"].append(train_loss)
-        history["val_acc"].append(val_acc)
+        history["test_acc"].append(test_acc)
 
         print(f"Train loss: {train_loss:.4f}")
-        print(f"Val acc:    {val_acc:.4f}")
+        print(f"Test acc:    {test_acc:.4f}")
 
-        if val_acc > best_acc:
-            best_acc = val_acc
+        if test_acc > best_acc:
+            best_acc = test_acc
             torch.save(model.state_dict(), best_path)
-            print(f"✔ Best model saved: {best_path} (acc={best_acc:.4f})")
+            print(f"Best model saved: {best_path} (acc={best_acc:.4f})")
 
     print(f"\nTraining finished. Best acc = {best_acc:.4f}")
     return history
