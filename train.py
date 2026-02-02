@@ -75,3 +75,66 @@ def train(model, train_loader, test_loader, args, device):
 
     print(f"\nTraining finished. Best acc = {best_acc:.4f}")
     return history
+
+
+def train_deebert_stage2(model, train_loader, test_loader, args, device):
+    """
+    DeeBERT Stage 2:
+    - backbone + last head frozen
+    - train intermediate off-ramps
+    """
+
+    from eval import evaluate
+
+    model.freeze_backbone_and_last_head()
+
+    optimizer = AdamW(
+        filter(lambda p: p.requires_grad, model.parameters()),
+        lr=args.learning_rate_stage2
+    )
+
+    total_steps = len(train_loader) * args.stage2_epochs
+    warmup_steps = int(0.1 * total_steps)
+
+    scheduler = get_linear_schedule_with_warmup(
+        optimizer,
+        num_warmup_steps=warmup_steps,
+        num_training_steps=total_steps,
+    )
+
+    loss_fn = torch.nn.CrossEntropyLoss()
+
+    for epoch in range(args.stage2_epochs):
+        print(f"\n===== DeeBERT Stage2 Epoch {epoch + 1}/{args.stage2_epochs} =====")
+        model.train()
+
+        total_loss = 0.0
+        for batch in train_loader:
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+            labels = batch["label"].to(device)
+
+            optimizer.zero_grad()
+
+            logits_list = model.forward_all_exits(
+                input_ids=input_ids,
+                attention_mask=attention_mask
+            )
+
+            # 只用前 n-1 个 off-ramps
+            loss = 0.0
+            for logits in logits_list[:-1]:
+                loss = loss + loss_fn(logits, labels)
+
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            optimizer.step()
+            scheduler.step()
+
+            total_loss += loss.item()
+
+        avg_loss = total_loss / max(1, len(train_loader))
+        test_acc = evaluate(model, test_loader, device)
+
+        print(f"Stage2 train loss: {avg_loss:.4f}")
+        print(f"Stage2 test acc (last head): {test_acc:.4f}")
