@@ -19,7 +19,7 @@ from transformers import AutoModel
 
 
 def entropy_from_logits(logits: torch.Tensor) -> torch.Tensor:
-    probs = F.softmax(logits, dim=-1).clamp_min(1e-12)
+    probs = F.softmax(logits, dim=-1).clamp_min(1e-12) # [B, C]
     return -(probs * probs.log()).sum(dim=-1)  # [B]
 
 
@@ -41,7 +41,7 @@ class DeeBERTClassifier(nn.Module):
 
         self.classifiers = nn.ModuleList(
             [nn.Linear(hidden, num_labels) for _ in range(self.n_layers)]
-        ) # 初始化规则是一样的，都是随机初始化，所以一开始的参数就不一样了
+        )
 
     def freeze_backbone_and_last_head(self): # freeze BERT and last classifier head for stage2 training
         for p in self.bert.parameters():
@@ -52,7 +52,7 @@ class DeeBERTClassifier(nn.Module):
     def forward_all_exits(self, input_ids, attention_mask):
         """
         Return logits for every layer exit:
-            logits_list: length = n_layers, each [B, C]
+        logits_list: length = n_layers, each [B, C]
         """
         outputs = self.bert(
             input_ids=input_ids,
@@ -63,7 +63,7 @@ class DeeBERTClassifier(nn.Module):
         hidden_states = outputs.hidden_states # tuple of length n_layers+1, each [B, seq_len, H]
 
         logits_list = []
-        for i in range(1, self.n_layers + 1):
+        for i in range(1, self.n_layers + 1): # 因为 hidden_states[0] 是 embedding 输出
             cls = hidden_states[i][:, 0] # [B, H]
             cls = self.dropout(cls) # [B, H]
             logits = self.classifiers[i - 1](cls) # [B, C]
@@ -79,7 +79,7 @@ class DeeBERTClassifier(nn.Module):
         return logits_list[-1]
 
     @torch.no_grad()
-    def forward_early_exit(self, input_ids, attention_mask, entropy_threshold: float = 0.2):
+    def forward_early_exit_batchwise(self, input_ids, attention_mask, entropy_threshold: float = 0.2):
         """
         Batch-wise early exit (simple & stable).
         Returns:
@@ -97,10 +97,10 @@ class DeeBERTClassifier(nn.Module):
         hidden_states = outputs.hidden_states
 
         for i in range(1, self.n_layers + 1):
-            cls = hidden_states[i][:, 0]
+            cls = hidden_states[i][:, 0] # hidden_states[i]: [B, seq_len, H] -> cls: [B, H]
             cls = self.dropout(cls)
             logits = self.classifiers[i - 1](cls) # [B, C]
-            ent = entropy_from_logits(logits)
+            ent = entropy_from_logits(logits) # batch里每个样本的entropy [B], entropy越小越自信
             if torch.all(ent < entropy_threshold):
                 return logits, i
 

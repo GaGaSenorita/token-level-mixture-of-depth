@@ -1,0 +1,26 @@
+# Experiment
+run_name: deebert_training_agnews
+model_key: deebert
+
+# Data
+batch_size: 32
+max_length: 128
+
+# Model
+model_name: bert-base-uncased
+dropout: 0.1
+
+# Training: Step 1 (Dense BERT)
+learning_rate: 2e-5
+epochs: 3
+
+# Training: Step 2 (DeeBERT off-ramps)
+stage2_epoches: 5
+learning_rate_stage2: 1e-3
+grad_clip_norm: 1.0
+
+
+seed: 42
+
+# IO
+output_root: ./outputs
