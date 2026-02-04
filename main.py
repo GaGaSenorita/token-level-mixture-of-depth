@@ -9,7 +9,7 @@ import time
 
 from utils import set_seed, save_results, get_device, ensure_dir, setup_logger
 from data import load_ag_news_data
-from models import BERTClassifier, BertSampleLevelForSequenceClassification
+from models import BERTClassifier
 from train import train
 import sys
 
