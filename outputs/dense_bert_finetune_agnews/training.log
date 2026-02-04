@@ -1,0 +1,65 @@
+2026-02-01 01:33:53,999 | INFO | Final args:
+2026-02-01 01:33:53,999 | INFO | config: None
+2026-02-01 01:33:53,999 | INFO | run_name: dense_bert_finetune_agnews
+2026-02-01 01:33:53,999 | INFO | model_key: finetuned_dense_bert
+2026-02-01 01:33:53,999 | INFO | batch_size: 32
+2026-02-01 01:33:53,999 | INFO | max_length: 128
+2026-02-01 01:33:53,999 | INFO | model_name: bert-base-uncased
+2026-02-01 01:33:53,999 | INFO | dropout: 0.1
+2026-02-01 01:33:53,999 | INFO | learning_rate: 2e-05
+2026-02-01 01:33:53,999 | INFO | epochs: 3
+2026-02-01 01:33:53,999 | INFO | seed: 42
+2026-02-01 01:33:53,999 | INFO | output_root: ./outputs
+2026-02-01 01:33:53,999 | INFO | Using device: cpu
+2026-02-01 01:35:22,173 | INFO | Final args:
+2026-02-01 01:35:22,173 | INFO | config: configs/bert_baseline.yaml
+2026-02-01 01:35:22,173 | INFO | run_name: dense_bert_finetune_agnews
+2026-02-01 01:35:22,173 | INFO | model_key: finetuned_dense_bert
+2026-02-01 01:35:22,174 | INFO | batch_size: 32
+2026-02-01 01:35:22,174 | INFO | max_length: 128
+2026-02-01 01:35:22,174 | INFO | model_name: bert-base-uncased
+2026-02-01 01:35:22,174 | INFO | dropout: 0.1
+2026-02-01 01:35:22,174 | INFO | learning_rate: 2e-05
+2026-02-01 01:35:22,174 | INFO | epochs: 3
+2026-02-01 01:35:22,174 | INFO | seed: 42
+2026-02-01 01:35:22,174 | INFO | output_root: ./outputs
+2026-02-01 01:35:22,174 | INFO | Using device: cpu
+2026-02-01 01:49:48,329 | INFO | Using device: cpu
+2026-02-01 01:49:48,329 | INFO | Loading data...
+2026-02-01 01:53:03,251 | INFO | Using device: cpu
+2026-02-01 01:53:03,251 | INFO | Loading data...
+2026-02-01 02:15:12,264 | INFO | Using device: cpu
+2026-02-01 02:15:12,264 | INFO | Loading data...
+2026-02-01 02:30:33,822 | INFO | Using device: cpu
+2026-02-01 02:30:33,822 | INFO | Loading data...
+2026-02-01 02:30:38,191 | INFO | Data loaded. num_labels=4
+2026-02-01 03:07:10,362 | INFO | Using device: cpu
+2026-02-01 03:07:10,362 | INFO | Loading data...
+2026-02-01 03:07:13,910 | INFO | Train batches: 3750, Test batches: 238
+2026-02-01 03:07:13,910 | INFO | Data loaded. num_labels=4
+2026-02-01 03:07:13,911 | INFO | Initializing model...
+2026-02-01 03:07:14,088 | INFO | Model parameters: 109,485,316
+2026-02-01 13:52:23,117 | INFO | Using device: cpu
+2026-02-01 13:52:23,117 | INFO | Loading data...
+2026-02-01 13:52:28,115 | INFO | Train batches: 3750, Test batches: 238
+2026-02-01 13:52:28,115 | INFO | Data loaded. num_labels=4
+2026-02-01 13:52:28,115 | INFO | Initializing model...
+2026-02-01 13:52:28,483 | INFO | Model parameters: 109,485,316
+2026-02-01 13:52:28,483 | INFO | Starting training...
+2026-02-01 14:02:10,891 | INFO | Using device: cpu
+2026-02-01 14:02:10,891 | INFO | Loading data...
+2026-02-01 14:02:15,138 | INFO | Train batches: 3750, Test batches: 238
+2026-02-01 14:02:15,138 | INFO | Data loaded. num_labels=4
+2026-02-01 14:02:15,138 | INFO | Initializing model...
+2026-02-01 14:02:15,310 | INFO | Model parameters: 109,485,316
+2026-02-01 14:02:15,310 | INFO | Starting training...
+2026-02-02 02:07:08,928 | INFO | Using device: cuda
+2026-02-02 02:07:08,928 | INFO | Loading data...
+2026-02-02 02:10:09,756 | INFO | Using device: cuda
+2026-02-02 02:10:09,757 | INFO | Loading data...
+2026-02-02 02:10:42,057 | INFO | Train batches: 3750, Test batches: 238
+2026-02-02 02:10:42,057 | INFO | Data loaded. num_labels=4
+2026-02-02 02:10:42,057 | INFO | Initializing model...
+2026-02-02 02:11:19,631 | INFO | Model parameters: 109,485,316
+2026-02-02 02:11:19,632 | INFO | Starting training...
+2026-02-02 02:40:27,670 | INFO | Experiment completed successfully!
