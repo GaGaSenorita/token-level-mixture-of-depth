@@ -122,7 +122,7 @@ def train_step1_deebert(model, train_loader, test_loader, args, device):
     return history, best_path
 
 
-def train_step2_deebert(model, train_loader, test_loader, args, device, entropy_threshold=0.2, eval_early_exit=True):
+def train_step2_deebert(model, train_loader, test_loader, test_loader_ee, args, device, entropy_threshold=0.2, eval_early_exit=True):
     """
     Step2: DeeBERT off-ramps training
     - freeze backbone + last head
@@ -136,8 +136,12 @@ def train_step2_deebert(model, train_loader, test_loader, args, device, entropy_
 
     optimizer = AdamW(
         filter(lambda p: p.requires_grad, model.parameters()),
-        lr=args.learning_rate_stage2
+        lr=args.stage2_learning_rate
     )
+    print("===== Trainable parameters =====")
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(name, param.shape)
     scheduler = _build_scheduler(optimizer, len(train_loader), args.stage2_epochs, warmup_ratio=0.1)
     loss_fn = torch.nn.CrossEntropyLoss()
 
@@ -196,9 +200,9 @@ def train_step2_deebert(model, train_loader, test_loader, args, device, entropy_
         if eval_early_exit:
             from eval import evaluate_early_exit
             ee_acc, avg_exit_layer, exit_hist = evaluate_early_exit(
-                model, test_loader, device,
+                model, test_loader_ee, device,
                 entropy_threshold=entropy_threshold,
-                fn_name="forward_early_exit_batchwise"  # 你现在的实现名
+                fn_name="forward_early_exit_batchwise"
             )
             history["step2_test_acc_ee"].append(ee_acc)
             history["step2_avg_exit_layer"].append(avg_exit_layer)

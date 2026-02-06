@@ -156,8 +156,8 @@ def main():
     history_step2 = train_step2_deebert(
         model,
         train_loader,
-        # 注意：step2 的 early-exit eval 用 batch=1 的 loader 更对齐论文语义
-        test_loader_ee if args.eval_early_exit else test_loader,
+        test_loader,
+        test_loader_ee, # step2 的 early-exit eval 用 batch=1 的 loader 更对齐论文语义
         args,
         device,
         entropy_threshold=args.entropy_threshold,
