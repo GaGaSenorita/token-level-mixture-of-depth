@@ -147,7 +147,6 @@ def main():
         logger.info(f"Loading best Step1 checkpoint: {step1_best_path}")
         print(torch.load(step1_best_path, map_location=device).keys())
         model.load_state_dict(torch.load(step1_best_path, map_location=device))
-    sys.exit("Step1 done, Step2 没写完，先别跑了")
 
     # -------- Step 2 --------
     logger.info("Starting Step2 training (train off-ramps)...")
