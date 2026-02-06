@@ -1,0 +1,78 @@
+2026-02-06 00:53:51,157 | INFO | Final args:
+2026-02-06 00:53:51,157 | INFO | config: configs/deebert.yaml
+2026-02-06 00:53:51,157 | INFO | run_name: deebert_training_agnews
+2026-02-06 00:53:51,157 | INFO | model_key: deebert
+2026-02-06 00:53:51,157 | INFO | batch_size: 32
+2026-02-06 00:53:51,157 | INFO | max_length: 128
+2026-02-06 00:53:51,157 | INFO | model_name: bert-base-uncased
+2026-02-06 00:53:51,157 | INFO | dropout: 0.1
+2026-02-06 00:53:51,157 | INFO | stage1_learning_rate: 2e-05
+2026-02-06 00:53:51,157 | INFO | stage1_epochs: 3
+2026-02-06 00:53:51,157 | INFO | stage2_learning_rate: 0.001
+2026-02-06 00:53:51,157 | INFO | stage2_epochs: 5
+2026-02-06 00:53:51,157 | INFO | grad_clip_norm: 1.0
+2026-02-06 00:53:51,157 | INFO | entropy_threshold: 0.2
+2026-02-06 00:53:51,157 | INFO | early_exit_fn: forward_early_exit_batchwise
+2026-02-06 00:53:51,157 | INFO | eval_early_exit: False
+2026-02-06 00:53:51,157 | INFO | seed: 42
+2026-02-06 00:53:51,157 | INFO | output_root: ./outputs
+2026-02-06 00:53:51,157 | INFO | resume_step1_ckpt: None
+2026-02-06 00:53:51,157 | INFO | output_dir: outputs/deebert_training_agnews
+2026-02-06 02:14:11,944 | INFO | Final args:
+2026-02-06 02:14:11,944 | INFO | config: configs/deebert.yaml
+2026-02-06 02:14:11,944 | INFO | run_name: deebert_training_agnews
+2026-02-06 02:14:11,944 | INFO | model_key: deebert
+2026-02-06 02:14:11,944 | INFO | batch_size: 32
+2026-02-06 02:14:11,944 | INFO | max_length: 128
+2026-02-06 02:14:11,944 | INFO | model_name: bert-base-uncased
+2026-02-06 02:14:11,944 | INFO | dropout: 0.1
+2026-02-06 02:14:11,944 | INFO | stage1_learning_rate: 2e-05
+2026-02-06 02:14:11,944 | INFO | stage1_epochs: 3
+2026-02-06 02:14:11,944 | INFO | stage2_learning_rate: 0.001
+2026-02-06 02:14:11,944 | INFO | stage2_epochs: 5
+2026-02-06 02:14:11,944 | INFO | grad_clip_norm: 1.0
+2026-02-06 02:14:11,944 | INFO | entropy_threshold: 0.2
+2026-02-06 02:14:11,944 | INFO | early_exit_fn: forward_early_exit_batchwise
+2026-02-06 02:14:11,944 | INFO | eval_early_exit: False
+2026-02-06 02:14:11,944 | INFO | seed: 42
+2026-02-06 02:14:11,944 | INFO | output_root: ./outputs
+2026-02-06 02:14:11,944 | INFO | resume_step1_ckpt: None
+2026-02-06 02:14:11,944 | INFO | output_dir: outputs/deebert_training_agnews
+2026-02-06 02:14:11,944 | INFO | Using device: cpu
+2026-02-06 02:14:11,944 | INFO | Loading data (train/test)...
+2026-02-06 02:14:15,484 | INFO | Train batches: 3750, Test batches: 238
+2026-02-06 02:14:15,485 | INFO | Data loaded. num_labels=4
+2026-02-06 02:14:15,485 | INFO | Building early-exit test loader (batch_size=1)...
+2026-02-06 02:14:17,878 | INFO | Early-exit test loader batches: 7600
+2026-02-06 02:14:17,879 | INFO | Initializing DeeBERT model...
+2026-02-06 02:14:18,133 | INFO | Model parameters: 109,519,152
+2026-02-06 02:14:18,133 | INFO | Starting Step1 training (dense fine-tune)...
+2026-02-06 02:28:41,951 | INFO | Final args:
+2026-02-06 02:28:41,952 | INFO | config: configs/deebert.yaml
+2026-02-06 02:28:41,952 | INFO | run_name: deebert_training_agnews
+2026-02-06 02:28:41,952 | INFO | model_key: deebert
+2026-02-06 02:28:41,952 | INFO | batch_size: 32
+2026-02-06 02:28:41,952 | INFO | max_length: 128
+2026-02-06 02:28:41,952 | INFO | model_name: bert-base-uncased
+2026-02-06 02:28:41,952 | INFO | dropout: 0.1
+2026-02-06 02:28:41,952 | INFO | stage1_learning_rate: 2e-05
+2026-02-06 02:28:41,952 | INFO | stage1_epochs: 3
+2026-02-06 02:28:41,952 | INFO | stage2_learning_rate: 0.001
+2026-02-06 02:28:41,952 | INFO | stage2_epochs: 5
+2026-02-06 02:28:41,952 | INFO | grad_clip_norm: 1.0
+2026-02-06 02:28:41,952 | INFO | entropy_threshold: 0.2
+2026-02-06 02:28:41,952 | INFO | early_exit_fn: forward_early_exit_batchwise
+2026-02-06 02:28:41,952 | INFO | eval_early_exit: False
+2026-02-06 02:28:41,952 | INFO | seed: 42
+2026-02-06 02:28:41,952 | INFO | output_root: ./outputs
+2026-02-06 02:28:41,952 | INFO | resume_step1_ckpt: None
+2026-02-06 02:28:41,952 | INFO | output_dir: outputs/deebert_training_agnews
+2026-02-06 02:28:41,952 | INFO | Using device: cpu
+2026-02-06 02:28:41,952 | INFO | Loading data (train/test)...
+2026-02-06 02:28:45,365 | INFO | Train batches: 3750, Test batches: 238
+2026-02-06 02:28:45,365 | INFO | Data loaded. num_labels=4
+2026-02-06 02:28:45,365 | INFO | Building early-exit test loader (batch_size=1)...
+2026-02-06 02:28:47,635 | INFO | Early-exit test loader batches: 7600
+2026-02-06 02:28:47,635 | INFO | Initializing DeeBERT model...
+2026-02-06 02:28:47,873 | INFO | Model parameters: 109,519,152
+2026-02-06 02:28:47,874 | INFO | Starting Step1 training (dense fine-tune)...

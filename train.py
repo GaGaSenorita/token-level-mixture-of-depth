@@ -97,14 +97,14 @@ def train_step1_deebert(model, train_loader, test_loader, args, device):
     os.makedirs(args.output_dir, exist_ok=True)
     best_path = os.path.join(args.output_dir, "best_model_step1.pt")
 
-    optimizer = AdamW(model.parameters(), lr=args.learning_rate)
-    scheduler = _build_scheduler(optimizer, len(train_loader), args.epochs, warmup_ratio=0.1)
+    optimizer = AdamW(model.parameters(), lr=args.stage1_learning_rate)
+    scheduler = _build_scheduler(optimizer, len(train_loader), args.stage1_epochs, warmup_ratio=0.1)
 
     history = {"Deebert_step1_train_loss": [], "Deebert_step1_test_acc": []}
     best_acc = 0.0
 
-    for epoch in range(args.epochs):
-        print(f"\n===== DeeBert Step1: Epoch {epoch+1}/{args.epochs} =====")
+    for epoch in range(args.stage1_epochs):
+        print(f"\n===== DeeBert Step1: Epoch {epoch+1}/{args.stage1_epochs} =====")
 
         train_loss = train_epoch(model, train_loader, optimizer, scheduler, device)
         test_acc = evaluate(model, test_loader, device)
@@ -119,7 +119,7 @@ def train_step1_deebert(model, train_loader, test_loader, args, device):
             torch.save(model.state_dict(), best_path)
             print(f"Best DeeBert step1 model saved: {best_path} (acc={best_acc:.4f})")
 
-    return history
+    return history, best_path
 
 
 def train_step2_deebert(model, train_loader, test_loader, args, device, entropy_threshold=0.2, eval_early_exit=True):

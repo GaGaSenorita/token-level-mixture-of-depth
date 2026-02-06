@@ -10,6 +10,7 @@ import torch
 from utils import set_seed, save_results, get_device, ensure_dir, setup_logger
 # from model import BERTClassifier
 from data import load_ag_news_data
+import sys
 
 
 def load_yaml_config(config_path: str) -> dict:
@@ -144,7 +145,9 @@ def main():
         step1_best_path = Path(best_ckpt_path)
 
         logger.info(f"Loading best Step1 checkpoint: {step1_best_path}")
+        print(torch.load(step1_best_path, map_location=device).keys())
         model.load_state_dict(torch.load(step1_best_path, map_location=device))
+    sys.exit("Step1 done, Step2 没写完，先别跑了")
 
     # -------- Step 2 --------
     logger.info("Starting Step2 training (train off-ramps)...")
