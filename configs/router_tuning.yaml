@@ -1,0 +1,27 @@
+# Experiment
+mode: router
+run_name: router_tuning_agnews
+model_key: router_tuning
+
+# Data
+batch_size: 32
+max_length: 128
+
+# Model
+model_name: bert-base-uncased
+dropout: 0.1
+
+# Train
+learning_rate: 2e-5
+epochs: 3
+seed: 42
+
+# Router
+routing_mode: token
+tau: 0.5
+lambda_mod: 1e-3
+target_keep_ratio: 0.7
+routed_layers: last4
+
+# IO
+output_root: ./outputs

@@ -21,6 +21,30 @@ def evaluate(model, dataloader, device):
     return correct / max(1, total)
 
 
+def evaluate_router(model, dataloader, device):
+    """
+    Router-Tuning 模型评估：
+    forward 返回 (logits, router_stats, l_mod)
+    """
+    model.eval()
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for batch in dataloader:
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+            labels = batch["label"].to(device)
+
+            logits, _, _ = model(input_ids=input_ids, attention_mask=attention_mask)
+            preds = logits.argmax(dim=-1)
+
+            correct += (preds == labels).sum().item()
+            total += labels.size(0)
+
+    return correct / max(1, total)
+
+
 @torch.no_grad()
 def evaluate_early_exit(model, dataloader, device, entropy_threshold, fn_name="forward_early_exit_batchwise"):
     '''
