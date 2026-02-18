@@ -168,6 +168,7 @@ def main():
 
     # -------- Step 2 --------
     logger.info("Starting Step2 training (freeze backbone，only training router)...")
+    sys.exit("没得跑了")
     from train import train_step2_router_tuning
 
     history_step2 = train_step2_router_tuning(

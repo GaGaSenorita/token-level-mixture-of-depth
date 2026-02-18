@@ -24,7 +24,7 @@ def evaluate(model, dataloader, device):
 def evaluate_router(model, dataloader, device):
     """
     Router-Tuning 模型评估：
-    forward 返回 (logits, router_stats, l_mod)
+    forward() 现在只返回 logits（drop-in replacement）
     """
     model.eval()
     correct = 0
@@ -36,7 +36,7 @@ def evaluate_router(model, dataloader, device):
             attention_mask = batch["attention_mask"].to(device)
             labels = batch["label"].to(device)
 
-            logits, _, _ = model(input_ids=input_ids, attention_mask=attention_mask)
+            logits = model(input_ids=input_ids, attention_mask=attention_mask)
             preds = logits.argmax(dim=-1)
 
             correct += (preds == labels).sum().item()

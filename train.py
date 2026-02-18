@@ -306,8 +306,8 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
 
             optimizer.zero_grad(set_to_none=True)
 
-            # forward 返回三样东西：logits 算交叉熵，l_mod 做稀疏惩罚，router_stats 记日志
-            logits, router_stats, l_mod = model(
+            # forward_with_routing 返回三样东西：logits 算交叉熵，l_mod 做稀疏惩罚，router_stats 记日志
+            logits, router_stats, l_mod = model.forward_with_routing(
                 input_ids=input_ids,
                 attention_mask=attention_mask
             )

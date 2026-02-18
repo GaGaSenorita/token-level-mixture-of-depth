@@ -1,134 +1,110 @@
-'''
-Router-Tuning BERT 模型（Mixture-of-Depth 风格）
-论文核心思想：冻住 BERT backbone，只训练极轻量的 router 来决定每层 Attention 是否跳过
+# models/router_tuning_bert.py
+"""
+Router Tuning BERT classifier (ACT for base Transformer).
 
-1) 复制 baseline 的骨架
-   self.bert = AutoModel.from_pretrained(model_name) 保留
-   self.classifier = nn.Linear(hidden_size, num_labels) 保留
-   增加：self.routers = ModuleList([...]) 每层一个 router
+论文公式 (3): y = M ⊙ F(x) + x
+- F(x) = Attention sublayer 的输出 (dense + dropout, 残差之前)
+- M = router 的二值 mask
+- + x = 残差连接 (无条件执行)
+- 之后 LayerNorm + FFN sublayer 也无条件执行
 
-2) Router 有两种粒度
-   TokenRouter:  对每个 token 独立打分 → sigmoid(W x_i) → [B, L, 1]
-   SampleRouter: 对整条序列打分（mean pool 后） → sigmoid(W mean(x)) → [B, 1]
+即: router 只决定 attention 要不要算，residual + LayerNorm + FFN 始终跑。
+M=0 时: y = 0 + x → LayerNorm(x) → FFN (attention 被跳过)
+M=1 时: y = Attn(x) + x → LayerNorm → FFN (正常计算)
 
-3) 门控机制
-   router 输出 prob → 与阈值 tau 比较 → 二值 mask（STE 让梯度能回传）
-   y = mask * Attention(x) + x （mask=0 时跳过 Attention，直接残差）
-
-4) Loss = L_task + lambda * L_MoD
-   L_MoD = ReLU(实际保留量 - 目标保留量)，鼓励跳过更多层
-
-5) forward() 返回 (logits, router_stats, l_mod)
-   与 train.py 中 train_epoch_router_tuning() 配合使用
-'''
-
+Training:  所有 token 都算 attention，用 STE mask gate 输出 → 梯度可回传
+Inference: 只对 kept tokens 算 attention，skipped tokens attention=0 → 省 FLOPs
+"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers import AutoModel
 
 
-# ==================== 工具函数 ====================
+# ====================== Utility ======================
 
-def ste_binarize(prob, tau=0.5):
+def ste_binarize(prob: torch.Tensor, tau: float = 0.5):
     """
-    Straight-Through Estimator 二值化
-    前向：硬阈值 prob >= tau → 0/1
-    反向：梯度直接穿过，当作恒等函数
-
-    Args:
-        prob: 任意形状的概率值（经过 sigmoid）
-        tau:  阈值，默认 0.5
-
-    Returns:
-        mask:      STE mask，前向是 0/1，反向有梯度
-        mask_hard: 纯 0/1 硬 mask，用于统计和 penalty 计算
+    router需要输出0/1的硬决策，但阀值操作梯度为0，无法反向传播训练
+    Backforward的时候，Pytorch autograd只看计算图里哪些变量带requires_grad:
+    mask = mask_hard.detach() - prob.detach() + prob 
+    mask_hard.detach() 和 prob.detach() 都是常数，autograd 忽略它们。所以反向时：
+    ∂mask/∂prob = ∂(常数 + prob)/∂prob = 1，相当于直接无视这个梯度
     """
-    mask_hard = (prob >= tau).to(prob.dtype)                # 前向：硬阈值
-    mask = mask_hard.detach() - prob.detach() + prob        # detach()保留mask_hard的数值，但阻断它的梯度
+    mask_hard = (prob >= tau).to(prob.dtype)
+    mask = mask_hard.detach() - prob.detach() + prob
     return mask, mask_hard
 
 
+# ====================== Routers ======================
+
 class TokenRouter(nn.Module):
-    """
-    Token-level router: 对序列中每个 token 独立打分
-    R(x)_i = sigmoid(W @ x_i)
-    W 初始化为全零 → sigmoid(0) = 0.5 = tau → 训练初始所有层都不跳过
-    """
-    def __init__(self, hidden_size):
+    """Token-level router: sigmoid(W · x_i) -> [B, L, 1]"""
+
+    def __init__(self, hidden_size: int):
         super().__init__()
         self.proj = nn.Linear(hidden_size, 1)
-        nn.init.zeros_(self.proj.weight)
+        nn.init.zeros_(self.proj.weight)   # sigmoid(0)=0.5, 初始时约一半 token 被保留
         nn.init.zeros_(self.proj.bias)
 
-    def forward(self, hidden_states):
-        # hidden_states: [B, L, H] 这个H是 BERT 的 hidden_size
-        return torch.sigmoid(self.proj(hidden_states))       # [B, L, 1]
+    def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
+        return torch.sigmoid(self.proj(hidden_states))  # [B, L, 1]
 
 
 class SampleRouter(nn.Module):
-    """
-    Sample-level (Sequence-level) router: 对整条序列算一个统一分数
-    R(x) = sigmoid(W @ mean_pool(x))
-    整条序列要么全走这一层，要么全跳
-    """
-    def __init__(self, hidden_size):
+    """Sequence-level router: sigmoid(W · mean(x)) -> [B, 1]"""
+
+    def __init__(self, hidden_size: int):
         super().__init__()
         self.proj = nn.Linear(hidden_size, 1)
         nn.init.zeros_(self.proj.weight)
         nn.init.zeros_(self.proj.bias)
 
-    def forward(self, hidden_states, attention_mask=None):
-        # hidden_states: [B, L, H]
+    def forward(self, hidden_states: torch.Tensor, attention_mask: torch.Tensor = None) -> torch.Tensor:
         if attention_mask is None:
-            pooled = hidden_states.mean(dim=1) # 把padding的token也算进去平均（不合理）
+            pooled = hidden_states.mean(dim=1)
         else:
-            # 用 attention_mask 做 masked mean pooling，忽略 padding token，attention_mask: [B, L]
-            mask = attention_mask.unsqueeze(-1).to(hidden_states.dtype)  # [B, L, 1], 为了hidden_states * mask广播
-            denom = mask.sum(dim=1).clamp_min(1.0)                      # [B, 1]
-            pooled = (hidden_states * mask).sum(dim=1) / denom           # [B, H]
-        return torch.sigmoid(self.proj(pooled))              # [B, 1]
+            mask = attention_mask.unsqueeze(-1).to(hidden_states.dtype)
+            pooled = (hidden_states * mask).sum(dim=1) / mask.sum(dim=1).clamp_min(1.0)
+        return torch.sigmoid(self.proj(pooled))  # [B, 1]
 
 
 class NoRouter(nn.Module):
-    """不做 routing 的占位符，用于非 routed 层"""
-    def __init__(self):
-        super().__init__()
+    """Placeholder: 该层不做路由，正常计算。"""
 
     def forward(self, *args, **kwargs):
         return None
 
 
+# ====================== Model ======================
+
 class RouterTuningBERTClassifier(nn.Module):
     """
-    Router-Tuning BERT 分类器
-    - 只对 Attention 子层做门控，MLP 仍然全量执行
-    - forward() 返回 (logits, router_stats, l_mod)
-    - 支持 token-level 和 sample-level 两种 routing 模式
+    Router-Tuning BERT classifier.
+
+    - forward():                drop-in replacement，返回 logits（eval 兼容）
+    - forward_with_routing():   返回 (logits, router_stats, l_mod_total)（训练用）
     """
 
-    def __init__(self, model_name, num_labels, dropout=0.1,
-                 routing_mode="token", tau=0.5,
-                 target_keep_ratio=0.7, routed_layers=None):
-        """
-        Args:
-            model_name:        预训练模型名，如 'bert-base-uncased'
-            num_labels:        分类类别数（AG News = 4）
-            dropout:           dropout 概率
-            routing_mode:      'token' 或 'sample'
-            tau:               二值化阈值，默认 0.5（配合全零初始化）
-            target_keep_ratio: 目标保留比例，L_MoD 会惩罚超过这个比例的层
-            routed_layers:     哪些层做 routing，None 表示所有层
-        """
+    def __init__(
+        self,
+        model_name: str,
+        num_labels: int,
+        dropout: float = 0.1,
+        routing_mode: str = "token",    # "token" or "sample"
+        tau: float = 0.5,
+        target_keep_ratio: float = 0.7,
+        routed_layers=None,             # None = 所有层都路由
+    ):
         super().__init__()
         self.num_labels = num_labels
+
         self.bert = AutoModel.from_pretrained(model_name)
         self.dropout = nn.Dropout(dropout)
         self.classifier = nn.Linear(self.bert.config.hidden_size, num_labels)
 
         self.n_layers = self.bert.config.num_hidden_layers
         hidden = self.bert.config.hidden_size
-
         self.routing_mode = routing_mode
         self.tau = tau
         self.target_keep_ratio = target_keep_ratio
@@ -137,7 +113,6 @@ class RouterTuningBERTClassifier(nn.Module):
             routed_layers = list(range(self.n_layers))
         self.routed_layers = set(routed_layers)
 
-        # 为每一层创建对应的 router（不做 routing 的层用 NoRouter 占位）
         routers = []
         for i in range(self.n_layers):
             if i in self.routed_layers:
@@ -151,141 +126,208 @@ class RouterTuningBERTClassifier(nn.Module):
                 routers.append(NoRouter())
         self.routers = nn.ModuleList(routers)
 
+    # ---- Freeze ----
+
     def freeze_backbone(self):
-        """冻住已经微调过的 BERT backbone 和 classifier，只留 router 可训练"""
+        """Freeze BERT backbone + classifier, only train routers."""
         for p in self.bert.parameters():
             p.requires_grad = False
         for p in self.classifier.parameters():
             p.requires_grad = False
 
-    def _gate_attention(self, layer_module, hidden_states,
-                        attention_mask, raw_attention_mask, router):
+    # ---- BERT layer decomposition ----
+    # BERT Post-LN 结构:
+    #   attn_out = dense(dropout(SelfAttention(x)))   ← 这部分被 router gate
+    #   h = LayerNorm(attn_out + x)                   ← residual + LN, 无条件执行
+    #   ffn_out = FFN(h)                               ← 无条件执行
+    #   out = LayerNorm(ffn_out + h)                   ← 无条件执行
+
+    def _run_attention(self, layer_module, hidden_states, extended_mask):
         """
-        对单层的 Attention 输出做门控，MLP 照常执行
-
-        流程：
-            1. 正常跑 Self-Attention → attn_out
-            2. 如果该层有 router：
-               - router 算出 prob → STE 二值化得 mask
-               - attn_out = attn_out * mask （mask=0 → 跳过 attention）
-               - 计算 keep_rate 和 L_MoD penalty
-            3. 残差 + LayerNorm → MLP → 该层输出
-
-        Args:
-            layer_module:        BERT 的一个 Transformer 层
-            hidden_states:       该层输入 [B, L, H]
-            attention_mask:      扩展后的 attention mask（给 self-attention 用）
-            raw_attention_mask:  原始 0/1 mask [B, L]（给 router 和统计用）
-            router:              该层的 router 模块
-
-        Returns:
-            layer_output: 该层输出 [B, L, H]
-            keep_rate:    该层实际保留比例（float），非 routed 层返回 None
-            l_mod:        该层的 MoD penalty（标量 tensor）
+        Self-Attention + dense + dropout, 残差之前的输出。
+        这是论文公式 (3) 中的 F(x)。
         """
-        # ---- Step 1: Self-Attention ----
-        attn_outputs = layer_module.attention.self(
+        self_outputs = layer_module.attention.self(
             hidden_states,
-            attention_mask=attention_mask,
+            attention_mask=extended_mask,
             head_mask=None,
             output_attentions=False,
-        )
-        context_layer = attn_outputs[0]                       # [B, L, H]
+        ) # self_outputs[0]: attn output [B, L, H]
+        attn_out = layer_module.attention.output.dense(self_outputs[0])
+        attn_out = layer_module.attention.output.dropout(attn_out)
+        return attn_out  # [B, L, H]
 
-        # attention output: dense + dropout（还没做 LayerNorm 和残差）
-        attn_out = layer_module.attention.output.dense(context_layer)   # [B, L, H]
-        attn_out = layer_module.attention.output.dropout(attn_out)      # [B, L, H]
-
-        # ---- Step 2: Router 门控 ----
-        keep_rate = None
-        l_mod = hidden_states.new_tensor(0.0)
-
-        if not isinstance(router, NoRouter):
-            if self.routing_mode == "token":
-                # 每个 token 独立决策
-                prob = router(hidden_states)                              # [B, L, 1]
-                mask, mask_hard = ste_binarize(prob, self.tau)            # [B, L, 1]
-                attn_out = attn_out * mask                                # mask=0 的 token 跳过 attention
-
-                # 统计：只算非 padding token 的保留比例
-                token_mask = raw_attention_mask.to(attn_out.dtype).unsqueeze(-1)  # [B, L, 1]
-                m_sum = (mask_hard * token_mask).sum()                    # 实际保留的 token 数
-                denom = token_mask.sum().clamp_min(1.0)                   # 总有效 token 数
-                keep_rate = (m_sum / denom).item()
-                budget = self.target_keep_ratio * denom                   # 目标保留量
-                l_mod = F.relu(m_sum - budget)                            # 超过预算才惩罚
-
-            elif self.routing_mode == "sample":
-                # 整条序列统一决策
-                prob_sample = router(hidden_states, raw_attention_mask)    # [B, 1]
-                mask_sample, mask_hard_sample = ste_binarize(prob_sample, self.tau)  # [B, 1]
-                mask = mask_sample.unsqueeze(1)                           # [B, 1, 1] → broadcast 到 [B, L, H]
-                attn_out = attn_out * mask                                # mask=0 的样本整条跳过
-
-                # 统计：以样本为单位
-                m_sum = mask_hard_sample.sum()                            # 保留的样本数
-                denom = mask_hard_sample.new_tensor(mask_hard_sample.size(0)).clamp_min(1.0)
-                keep_rate = (m_sum / denom).item()
-                budget = self.target_keep_ratio * denom
-                l_mod = F.relu(m_sum - budget)
-
-        # ---- Step 3: 残差 + LayerNorm → MLP ----
-        attn_out = layer_module.attention.output.LayerNorm(attn_out + hidden_states)  # [B, L, H]
-        intermediate_output = layer_module.intermediate(attn_out)                      # [B, L, intermediate_size]
-        layer_output = layer_module.output(intermediate_output, attn_out)              # [B, L, H]
-
-        return layer_output, keep_rate, l_mod
-
-    def forward(self, input_ids, attention_mask):
+    def _run_post_attention(self, layer_module, hidden_states, attn_out):
         """
-        Args:
-            input_ids:      [B, L]
-            attention_mask: [B, L]
+        hidden_states: 输入到该层的 x
+        attn_out: attention sublayer 的输出 (dense + dropout, 残差之前)
+        Residual + LayerNorm + FFN sublayer (无条件执行)。
+        对应 BERT 的: LN(attn_out + x) → FFN → LN(ffn_out + h)
+        """
+        # Attention residual + LayerNorm
+        h = layer_module.attention.output.LayerNorm(attn_out + hidden_states)
+        # FFN sublayer
+        intermediate_output = layer_module.intermediate(h)
+        layer_output = layer_module.output(intermediate_output, h)
+        return layer_output  # [B, L, H]
+
+    # ---- Budget loss ----
+
+    def _compute_budget_loss(self, mask_hard, attention_mask):
+        """
+        Compute keep_rate (for logging) and budget penalty (for loss).
+        L_budget = ReLU(actual_kept - target_budget)
+        """
+        if self.routing_mode == "token":
+            token_mask = attention_mask.to(mask_hard.dtype).unsqueeze(-1)  # attention_mask: [B, L] -> [B, L, 1]，和mask_hard shape对齐
+            m_sum = (mask_hard * token_mask).sum() # element-wise 后求和，得到实际 kept 的 token 数
+            denom = token_mask.sum().clamp_min(1.0) # 这个 batch 中的总 token 数（不算 padding）
+        else:  # sample
+            m_sum = mask_hard.sum()
+            denom = mask_hard.new_tensor(mask_hard.size(0)).clamp_min(1.0)
+
+        keep_rate = (m_sum / denom).item()
+        l_mod = F.relu(m_sum - self.target_keep_ratio * denom)
+        return keep_rate, l_mod
+
+    # ---- Inference: attention-only skipping ----
+
+    def _token_attn_skip_inference(self, layer_module, hidden_states, attention_mask, mask_hard):
+        """
+        推理时 token-level: 只对 kept tokens 算 attention，skipped tokens attention=0
+        Kept tokens 之间互相 attend (MoD 风格)。
+        返回: gated attention output [B, L, H] (残差之前)
+        """
+        keep_bool = (mask_hard.squeeze(-1) > 0) & (attention_mask > 0)  # [B, L]
+        attn_out = torch.zeros_like(hidden_states)
+
+        for b in range(hidden_states.size(0)):
+            keep_idx = torch.nonzero(keep_bool[b], as_tuple=False).squeeze(-1)
+            if keep_idx.numel() == 0:
+                continue
+            sub_hidden = hidden_states[b : b + 1, keep_idx, :]  # [1, K, H]
+            sub_mask = torch.ones(
+                1, keep_idx.numel(),
+                dtype=attention_mask.dtype, device=attention_mask.device,
+            )
+            sub_ext_mask = self.bert.get_extended_attention_mask(
+                sub_mask, sub_mask.size(), sub_hidden.device
+            )
+            sub_attn_out = self._run_attention(layer_module, sub_hidden, sub_ext_mask)
+            attn_out[b, keep_idx, :] = sub_attn_out[0]
+
+        return attn_out
+
+    def _sample_attn_skip_inference(self, layer_module, hidden_states, extended_mask, mask_hard):
+        """
+        推理时 sample-level: 只对 kept samples 算 attention，skipped samples attention=0。
+        返回: gated attention output [B, L, H] (残差之前)
+        """
+        keep_sample = mask_hard.squeeze(-1) > 0  # [B]
+        attn_out = torch.zeros_like(hidden_states)
+
+        if keep_sample.any():
+            keep_idx = torch.nonzero(keep_sample, as_tuple=False).squeeze(-1)
+            kept_attn_out = self._run_attention(
+                layer_module, hidden_states[keep_idx], extended_mask[keep_idx]
+            )
+            attn_out[keep_idx] = kept_attn_out
+
+        return attn_out
+
+    # ---- Core: one routed layer ----
+
+    def _routed_layer(self, layer_module, hidden_states, extended_mask, attention_mask, router):
+        """
+        One Transformer layer with router-gated attention.
+
+        论文公式 (3): y = M ⊙ F(x) + x
+        - F(x) = attention sublayer (self-attn + dense + dropout)  ← 被 gate
+        - + x = residual                                           ← 无条件
+        - → LayerNorm → FFN sublayer                               ← 无条件
+
+        Returns: (hidden_states, keep_rate, l_mod)
+        """
+        # 1. Router decision
+        if self.routing_mode == "token":
+            prob = router(hidden_states)                  # [B, L, 1]
+        else:
+            prob = router(hidden_states, attention_mask)   # [B, 1]
+
+        mask, mask_hard = ste_binarize(prob, self.tau)
+        keep_rate, l_mod = self._compute_budget_loss(mask_hard, attention_mask)
+
+        # 2. Gated attention: attn_out = M ⊙ F(x)
+        if self.training:
+            attn_out = self._run_attention(layer_module, hidden_states, extended_mask)
+            gate = mask.unsqueeze(1) if self.routing_mode == "sample" else mask
+            attn_out = attn_out * gate  # STE gate
+        else:
+            if self.routing_mode == "token":
+                attn_out = self._token_attn_skip_inference(
+                    layer_module, hidden_states, attention_mask, mask_hard
+                )
+            else:
+                attn_out = self._sample_attn_skip_inference(
+                    layer_module, hidden_states, extended_mask, mask_hard
+                )
+
+        # 3. Residual + LayerNorm + FFN (无条件执行)
+        hidden_states = self._run_post_attention(layer_module, hidden_states, attn_out)
+
+        return hidden_states, keep_rate, l_mod
+
+    # ---- Forward ----
+
+    def forward_with_routing(self, input_ids, attention_mask):
+        """
+        训练用: 返回 logits + routing 统计 + budget loss。
 
         Returns:
-            logits:       [B, num_labels]  分类 logits
-            router_stats: dict，包含每层的 keep_rate 和 routed_layers 列表
-            l_mod_total:  标量 tensor，所有 routed 层的 MoD penalty 之和
+            logits:       [B, num_labels]
+            router_stats: {"keep_rates": list, "routed_layers": list}
+            l_mod_total:  scalar budget loss
         """
-        device = input_ids.device
-        input_shape = input_ids.size()
-
-        # 这个embedding_output 是微调后的BERT
         embedding_output = self.bert.embeddings(
-            input_ids=input_ids,
-            token_type_ids=None,
-        )  # [B, L, H]
+            input_ids=input_ids, token_type_ids=None,
+        )
+        extended_mask = self.bert.get_extended_attention_mask(
+            attention_mask, input_ids.size(), input_ids.device
+        )
 
-        # 扩展 attention mask 给 self-attention 用（加了因果 mask 和维度扩展）
-        extended_attention_mask = self.bert.get_extended_attention_mask(
-            attention_mask, input_shape, device
-        )  # [B, 1, 1, L]
-
-        # ---- 逐层过 Transformer + Router 门控 ----
         hidden_states = embedding_output
-        keep_rates = [None for _ in range(self.n_layers)]
+        keep_rates = [None] * self.n_layers
         l_mod_total = hidden_states.new_tensor(0.0)
 
         for i, layer_module in enumerate(self.bert.encoder.layer):
             router = self.routers[i]
-            hidden_states, keep_rate, l_mod = self._gate_attention(
-                layer_module,
-                hidden_states,
-                extended_attention_mask,
-                attention_mask,       # 原始 0/1 mask，给 router 用
-                router,
-            )
-            if keep_rate is not None:
-                keep_rates[i] = keep_rate
-                l_mod_total = l_mod_total + l_mod
 
-        # ---- 取 [CLS] → 分类 ----
-        pooled_output = hidden_states[:, 0]                   # [B, H]
+            if isinstance(router, NoRouter):
+                # 非路由层: 正常计算整层
+                hidden_states = layer_module(hidden_states, extended_mask)[0]
+                continue
+
+            hidden_states, keep_rate, l_mod = self._routed_layer(
+                layer_module, hidden_states, extended_mask, attention_mask, router
+            )
+            keep_rates[i] = keep_rate
+            l_mod_total = l_mod_total + l_mod
+
+        # CLS pooling + classification
+        pooled_output = hidden_states[:, 0]
         pooled_output = self.dropout(pooled_output)
-        logits = self.classifier(pooled_output)               # [B, num_labels]
+        logits = self.classifier(pooled_output)
 
         router_stats = {
             "keep_rates": keep_rates,
             "routed_layers": sorted(self.routed_layers),
         }
         return logits, router_stats, l_mod_total
+
+    def forward(self, input_ids, attention_mask):
+        """
+        Drop-in replacement: 只返回 logits，兼容 baseline 评估流程。
+        训练时请用 forward_with_routing() 获取 router_stats 和 l_mod。
+        """
+        logits, _, _ = self.forward_with_routing(input_ids, attention_mask)
+        return logits
