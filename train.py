@@ -225,7 +225,15 @@ def train_step1_router_tuning(model, train_loader, test_loader, args, device):
     os.makedirs(args.output_dir, exist_ok=True)
     best_path = os.path.join(args.output_dir, "best_model_step1.pt")
 
-    optimizer = AdamW(model.parameters(), lr=args.stage1_learning_rate)
+    # Step1 不训练 router，冻住 router 参数使其保持全零（sigmoid(0)=0.5=tau，全部保留）
+    for p in model.routers.parameters():
+        p.requires_grad = False
+
+    optimizer = AdamW(
+        filter(lambda p: p.requires_grad, model.parameters()),
+        lr=args.stage1_learning_rate
+    )
+    print(f"num parameters: {sum(p.numel() for p in model.parameters()):,}")
     scheduler = _build_scheduler(optimizer, len(train_loader), args.stage1_epochs, warmup_ratio=0.1)
 
     history = {"router_step1_train_loss": [], "router_step1_test_acc": []}
@@ -261,8 +269,11 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
     """
     from eval import evaluate_router
 
-    # ---- 冻结 backbone + classifier，只留 router 可训练 ----
+    # ---- 冻结 backbone + classifier，解冻 router ----
     model.freeze_backbone()
+    # Step1 可能冻住了 router，这里确保 router 可训练
+    for p in model.routers.parameters():
+        p.requires_grad = True
 
     # 只把有梯度的参数（router）交给 optimizer
     optimizer = AdamW(
