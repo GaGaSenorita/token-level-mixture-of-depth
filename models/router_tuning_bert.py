@@ -173,20 +173,27 @@ class RouterTuningBERTClassifier(nn.Module):
 
     # ---- Budget loss ----
 
-    def _compute_budget_loss(self, mask_hard, attention_mask):
+    def _compute_budget_loss(self, mask, mask_hard, attention_mask):
         """
         Compute keep_rate (for logging) and budget penalty (for loss).
         L_budget = ReLU(actual_kept - target_budget)
+
+        mask:      STE 版本，有梯度 → 用来算 l_mod（参与反向传播）
+        mask_hard: 硬 0/1，无梯度 → 用来算 keep_rate（仅日志记录）
         """
         if self.routing_mode == "token":
-            token_mask = attention_mask.to(mask_hard.dtype).unsqueeze(-1)  # attention_mask: [B, L] -> [B, L, 1]，和mask_hard shape对齐
-            m_sum = (mask_hard * token_mask).sum() # element-wise 后求和，得到实际 kept 的 token 数
-            denom = token_mask.sum().clamp_min(1.0) # 这个 batch 中的总 token 数（不算 padding）
+            token_mask = attention_mask.to(mask.dtype).unsqueeze(-1)  # [B, L] -> [B, L, 1]
+            # keep_rate: 用 mask_hard 算真实保留比例（日志用）
+            m_sum_hard = (mask_hard * token_mask).sum()
+            denom = token_mask.sum().clamp_min(1.0)
+            # l_mod: 用 mask (STE) 算，梯度可以回传到 router
+            m_sum = (mask * token_mask).sum()
         else:  # sample
-            m_sum = mask_hard.sum()
+            m_sum_hard = mask_hard.sum()
             denom = mask_hard.new_tensor(mask_hard.size(0)).clamp_min(1.0)
+            m_sum = mask.sum()
 
-        keep_rate = (m_sum / denom).item()
+        keep_rate = (m_sum_hard / denom).item()
         l_mod = F.relu(m_sum - self.target_keep_ratio * denom)
         return keep_rate, l_mod
 
@@ -255,7 +262,7 @@ class RouterTuningBERTClassifier(nn.Module):
             prob = router(hidden_states, attention_mask)   # [B, 1]
 
         mask, mask_hard = ste_binarize(prob, self.tau)
-        keep_rate, l_mod = self._compute_budget_loss(mask_hard, attention_mask)
+        keep_rate, l_mod = self._compute_budget_loss(mask, mask_hard, attention_mask)
 
         # 2. Gated attention: attn_out = M ⊙ F(x)
         if self.training:
