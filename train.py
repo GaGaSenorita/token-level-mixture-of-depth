@@ -280,6 +280,7 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
         filter(lambda p: p.requires_grad, model.parameters()), # 从model的所有参数里，筛选出required_grad=True的参数
         lr=args.stage2_learning_rate
     )
+    print(f'number of trainable parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}')
 
     # 打印可训练参数，确认只有 router
     print("===== Trainable parameters =====")
