@@ -388,3 +388,265 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
 
     print(f"\nRouter-Tuning Step2 finished. Best acc = {best_acc:.4f}")
     return history
+
+
+# ====================== HDC-BERT Training ======================
+
+def train_step1_hdc(model, train_loader, test_loader, args, device):
+    """
+    HDC Stage 1: 标准 fine-tune BERT。
+    - 训练 backbone + final classifier
+    - 冻结 off-ramps + routers
+    - 复用 train_epoch() + evaluate()
+    """
+    from eval import evaluate
+    os.makedirs(args.output_dir, exist_ok=True)
+    best_path = os.path.join(args.output_dir, "best_model_step1.pt")
+
+    model.freeze_for_stage1()
+
+    optimizer = AdamW(
+        filter(lambda p: p.requires_grad, model.parameters()),
+        lr=args.stage1_learning_rate,
+    )
+    scheduler = _build_scheduler(optimizer, len(train_loader), args.stage1_epochs)
+
+    history = {"hdc_step1_train_loss": [], "hdc_step1_test_acc": []}
+    best_acc = 0.0
+
+    for epoch in range(args.stage1_epochs):
+        print(f"\n===== HDC Stage 1: Epoch {epoch+1}/{args.stage1_epochs} =====")
+
+        train_loss = train_epoch(model, train_loader, optimizer, scheduler, device)
+        test_acc = evaluate(model, test_loader, device)
+
+        history["hdc_step1_train_loss"].append(train_loss)
+        history["hdc_step1_test_acc"].append(test_acc)
+        print(f"Train loss: {train_loss:.4f}")
+        print(f"Test  acc : {test_acc:.4f}")
+
+        if test_acc > best_acc:
+            best_acc = test_acc
+            torch.save(model.state_dict(), best_path)
+            print(f"Best HDC step1 model saved: {best_path} (acc={best_acc:.4f})")
+
+    return history, best_path
+
+
+def train_step2_hdc(model, train_loader, test_loader, test_loader_ee,
+                    args, device, entropy_threshold=0.2, eval_early_exit=True):
+    """
+    HDC Stage 2: 训练 off-ramp classifiers。
+    - 冻结 backbone + routers + final classifier
+    - 只有 off-ramp classifiers 有梯度
+    - Loss = (1/K) * sum CE(offramp_i, labels), K = split_layer
+    """
+    from eval import evaluate, evaluate_hdc_inference
+    os.makedirs(args.output_dir, exist_ok=True)
+    best_path = os.path.join(args.output_dir, "best_model_step2.pt")
+
+    model.freeze_for_stage2()
+
+    optimizer = AdamW(
+        filter(lambda p: p.requires_grad, model.parameters()),
+        lr=args.stage2_learning_rate,
+    )
+    print("===== HDC Stage 2 Trainable parameters =====")
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(f"  {name} {param.shape}")
+
+    scheduler = _build_scheduler(optimizer, len(train_loader), args.stage2_epochs)
+    loss_fn = torch.nn.CrossEntropyLoss()
+
+    history = {"hdc_step2_train_loss": [], "hdc_step2_test_acc_last": []}
+    if eval_early_exit:
+        history["hdc_step2_test_acc_hdc"] = []
+        history["hdc_step2_stage_a_exit_rate"] = []
+
+    best_acc = 0.0
+
+    for epoch in range(args.stage2_epochs):
+        print(f"\n===== HDC Stage 2: Epoch {epoch+1}/{args.stage2_epochs} =====")
+        model.train()
+        total_loss = 0.0
+
+        for batch in tqdm(train_loader, desc="Stage2 Train", leave=False):
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+            labels = batch["label"].to(device)
+
+            optimizer.zero_grad(set_to_none=True)
+
+            offramp_logits_list = model.forward_all_offramps(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+            )
+
+            loss = 0.0
+            for logits in offramp_logits_list:
+                loss = loss + loss_fn(logits, labels)
+            loss = loss / max(1, len(offramp_logits_list))
+
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(
+                [p for p in model.parameters() if p.requires_grad],
+                max_norm=1.0,
+            )
+            optimizer.step()
+            if scheduler is not None:
+                scheduler.step()
+            total_loss += loss.item()
+
+        avg_loss = total_loss / max(1, len(train_loader))
+        history["hdc_step2_train_loss"].append(avg_loss)
+
+        # Eval: last-head accuracy (frozen, 参考用)
+        test_acc_last = evaluate(model, test_loader, device)
+        history["hdc_step2_test_acc_last"].append(test_acc_last)
+
+        print(f"Stage2 train loss: {avg_loss:.4f}")
+        print(f"Stage2 test acc (last head, frozen): {test_acc_last:.4f}")
+
+        # Optional: HDC 推理评估
+        if eval_early_exit:
+            hdc_results = evaluate_hdc_inference(
+                model, test_loader_ee, device,
+                entropy_threshold=entropy_threshold,
+            )
+            history["hdc_step2_test_acc_hdc"].append(hdc_results["accuracy"])
+            history["hdc_step2_stage_a_exit_rate"].append(hdc_results["stage_a_exit_rate"])
+            print(f"Stage2 HDC acc: {hdc_results['accuracy']:.4f}, "
+                  f"Stage A exit rate: {hdc_results['stage_a_exit_rate']:.4f}")
+
+            # 以 HDC 推理 accuracy 为保存依据
+            if hdc_results["accuracy"] > best_acc:
+                best_acc = hdc_results["accuracy"]
+                torch.save(model.state_dict(), best_path)
+                print(f"Best HDC step2 model saved: {best_path} (acc={best_acc:.4f})")
+        else:
+            if test_acc_last > best_acc:
+                best_acc = test_acc_last
+                torch.save(model.state_dict(), best_path)
+                print(f"Best HDC step2 model saved: {best_path} (acc={best_acc:.4f})")
+
+    print(f"\nHDC Stage 2 finished. Best acc = {best_acc:.4f}")
+    return history, best_path
+
+
+def train_step3_hdc(model, train_loader, test_loader, args, device):
+    """
+    HDC Stage 3: 训练 token routers。
+    - 冻结 backbone + off-ramps + final classifier
+    - 只有 routers 有梯度
+    - Loss = CE(final_logits, labels) + lambda_mod * sum(l_mod_i)
+    """
+    from eval import evaluate_hdc
+    os.makedirs(args.output_dir, exist_ok=True)
+    best_path = os.path.join(args.output_dir, "best_model_step3.pt")
+
+    model.freeze_for_stage3()
+
+    optimizer = AdamW(
+        filter(lambda p: p.requires_grad, model.parameters()),
+        lr=args.stage3_learning_rate,
+    )
+    print("===== HDC Stage 3 Trainable parameters =====")
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            print(f"  {name} {param.shape}")
+
+    scheduler = _build_scheduler(optimizer, len(train_loader), args.stage3_epochs)
+    loss_fn = torch.nn.CrossEntropyLoss()
+
+    history = {
+        "hdc_step3_train_loss": [],
+        "hdc_step3_train_loss_task": [],
+        "hdc_step3_train_loss_mod": [],
+        "hdc_step3_test_acc": [],
+        "hdc_step3_keep_rates": [],
+    }
+    best_acc = 0.0
+
+    for epoch in range(args.stage3_epochs):
+        print(f"\n===== HDC Stage 3: Epoch {epoch+1}/{args.stage3_epochs} =====")
+        model.train()
+
+        total_loss = 0.0
+        total_task = 0.0
+        total_mod = 0.0
+        keep_rate_sums = None
+        keep_rate_counts = None
+
+        for batch in tqdm(train_loader, desc="Stage3 Train", leave=False):
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+            labels = batch["label"].to(device)
+
+            optimizer.zero_grad(set_to_none=True)
+
+            logits, router_stats, l_mod = model.forward_with_routing(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+            )
+
+            loss_task = loss_fn(logits, labels)
+            loss = loss_task + args.lambda_mod * l_mod
+
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(
+                [p for p in model.parameters() if p.requires_grad],
+                max_norm=1.0,
+            )
+            optimizer.step()
+            if scheduler is not None:
+                scheduler.step()
+
+            total_loss += loss.item()
+            total_task += loss_task.item()
+            total_mod += l_mod.item()
+
+            # 累加 keep_rates
+            keep_rates = router_stats.get("keep_rates", [])
+            if keep_rate_sums is None:
+                keep_rate_sums = [0.0] * len(keep_rates)
+                keep_rate_counts = [0] * len(keep_rates)
+            for idx, kr in enumerate(keep_rates):
+                if kr is not None:
+                    keep_rate_sums[idx] += float(kr)
+                    keep_rate_counts[idx] += 1
+
+        n_batches = max(1, len(train_loader))
+        avg_loss = total_loss / n_batches
+        avg_task = total_task / n_batches
+        avg_mod = total_mod / n_batches
+
+        keep_rate_avgs = []
+        if keep_rate_sums is not None:
+            for s, c in zip(keep_rate_sums, keep_rate_counts):
+                keep_rate_avgs.append(s / c if c > 0 else None)
+
+        # Eval
+        test_acc = evaluate_hdc(model, test_loader, device)
+
+        history["hdc_step3_train_loss"].append(avg_loss)
+        history["hdc_step3_train_loss_task"].append(avg_task)
+        history["hdc_step3_train_loss_mod"].append(avg_mod)
+        history["hdc_step3_test_acc"].append(test_acc)
+        history["hdc_step3_keep_rates"].append(keep_rate_avgs)
+
+        print(f"Stage3 loss (total): {avg_loss:.4f}")
+        print(f"Stage3 loss (task):  {avg_task:.4f}")
+        print(f"Stage3 loss (MoD):   {avg_mod:.4f}")
+        print(f"Stage3 test acc:     {test_acc:.4f}")
+        if keep_rate_avgs:
+            kr_str = {f"B_layer_{i}": f"{kr:.3f}" for i, kr in enumerate(keep_rate_avgs) if kr is not None}
+            print(f"Keep rates: {kr_str}")
+
+        if test_acc > best_acc:
+            best_acc = test_acc
+            torch.save(model.state_dict(), best_path)
+            print(f"Best HDC step3 model saved: {best_path} (acc={best_acc:.4f})")
+
+    print(f"\nHDC Stage 3 finished. Best acc = {best_acc:.4f}")
+    return history
