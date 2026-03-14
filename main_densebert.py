@@ -6,11 +6,13 @@
 import argparse
 from pathlib import Path
 import time
+import torch
 
 from utils import set_seed, save_results, get_device, ensure_dir, setup_logger
 from data import load_data
 from models import BERTClassifier
 from train import train
+from eval import evaluate_with_time
 import sys
 
 def load_yaml_config(config_path: str) -> dict:
@@ -101,15 +103,21 @@ def main():
     
     logger.info("Starting training...")
     history = train(model, train_loader, test_loader, args, device)
-    
+
+    logger.info("Loading best checkpoint for final evaluation...")
+    best_path = str(Path(args.output_dir) / "best_model.pt")
+    model.load_state_dict(torch.load(best_path, map_location=device))
+    best_acc, inference_ms = evaluate_with_time(model, test_loader, device)
+    logger.info(f"Best model — acc: {best_acc:.4f}, inference: {inference_ms:.4f} ms/sample")
 
     results = {
-        'args': vars(args),
-        'history': history,
-        'final_test_acc': history['test_acc'][-1],
-        'best_test_acc': max(history['test_acc'])
+        'args':                    vars(args),
+        'history':                 history,
+        'final_test_acc':          history['test_acc'][-1],
+        'best_test_acc':           best_acc,
+        'inference_ms_per_sample': inference_ms,
     }
-    
+
     save_results(results, args.output_dir)
     logger.info("Experiment completed successfully!")
 
