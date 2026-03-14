@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 import torch
 from utils import set_seed, save_results, get_device, ensure_dir, setup_logger
-from data import load_ag_news_data
+from data import load_data
 
 
 def load_yaml_config(config_path: str) -> dict:
@@ -39,6 +39,7 @@ def parse_args():
     parser.add_argument("--model_key", type=str, default="hdc_bert")
 
     # ---- Data parameters ----
+    parser.add_argument("--dataset", type=str, default="ag_news", help="Dataset: ag_news or imdb")
     parser.add_argument("--batch_size", type=int, default=32, help="Train batch size")
     parser.add_argument("--max_length", type=int, default=128, help="Max sequence length")
 
@@ -110,13 +111,15 @@ def main():
 
     # -------- Data --------
     logger.info("Loading data (train/test)...")
-    train_loader, test_loader, num_labels = load_ag_news_data(
+    train_loader, test_loader, num_labels = load_data(
+        dataset=args.dataset,
         tokenizer_name=args.model_name,
         batch_size=args.batch_size,
         max_length=args.max_length,
     )
     # batch_size=1 loader for early-exit evaluation
-    _, test_loader_ee, _ = load_ag_news_data(
+    _, test_loader_ee, _ = load_data(
+        dataset=args.dataset,
         tokenizer_name=args.model_name,
         batch_size=1,
         max_length=args.max_length,

@@ -9,7 +9,7 @@ from pathlib import Path
 import torch
 from utils import set_seed, save_results, get_device, ensure_dir, setup_logger
 # from model import BERTClassifier
-from data import load_ag_news_data
+from data import load_data
 import sys
 
 
@@ -38,6 +38,7 @@ def parse_args():
     parser.add_argument("--model_key", type=str, default="deebert")
 
     # ---- Data parameters ----
+    parser.add_argument("--dataset", type=str, default="ag_news", help="Dataset: ag_news or imdb")
     parser.add_argument("--batch_size", type=int, default=32, help="Train batch size")
     parser.add_argument("--max_length", type=int, default=128, help="Max sequence length")
 
@@ -102,7 +103,8 @@ def main():
 
     # -------- Data --------
     logger.info("Loading data (train/test)...")
-    train_loader, test_loader, num_labels = load_ag_news_data(
+    train_loader, test_loader, num_labels = load_data(
+        dataset=args.dataset,
         tokenizer_name=args.model_name,
         batch_size=args.batch_size,
         max_length=args.max_length
@@ -112,7 +114,8 @@ def main():
 
     # early-exit eval loader: batch_size=1 (sample-level semantics)
     logger.info("Building early-exit test loader (batch_size=1)...")
-    _, test_loader_ee, _ = load_ag_news_data(
+    _, test_loader_ee, _ = load_data(
+        dataset=args.dataset,
         tokenizer_name=args.model_name,
         batch_size=1,
         max_length=args.max_length

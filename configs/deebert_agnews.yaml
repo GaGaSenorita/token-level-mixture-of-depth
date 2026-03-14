@@ -3,6 +3,7 @@ run_name: deebert_training_agnews
 model_key: deebert
 
 # Data
+dataset: ag_news
 batch_size: 32
 max_length: 128
 

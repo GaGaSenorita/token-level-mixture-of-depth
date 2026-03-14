@@ -8,7 +8,7 @@ from pathlib import Path
 import time
 
 from utils import set_seed, save_results, get_device, ensure_dir, setup_logger
-from data import load_ag_news_data
+from data import load_data
 from models import BERTClassifier
 from train import train
 import sys
@@ -37,6 +37,7 @@ def parse_args():
     parser.add_argument('--model_key', type=str, default='finetuned_dense_bert')
 
     # ---- Data parameters ----
+    parser.add_argument('--dataset', type=str, default='ag_news', help='Dataset: ag_news or imdb')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size')
     parser.add_argument('--max_length', type=int, default=128, help='Max sequence length')
     
@@ -80,7 +81,8 @@ def main():
     logger.info(f"Using device: {device}")
     
     logger.info("Loading data...")
-    train_loader, test_loader, num_labels = load_ag_news_data(
+    train_loader, test_loader, num_labels = load_data(
+        dataset=args.dataset,
         tokenizer_name=args.model_name,
         batch_size=args.batch_size,
         max_length=args.max_length

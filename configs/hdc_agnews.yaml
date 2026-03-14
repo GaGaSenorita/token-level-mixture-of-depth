@@ -7,6 +7,7 @@ run_name: hdc_bert_agnews
 model_key: hdc_bert
 
 # Data
+dataset: ag_news
 batch_size: 32
 max_length: 128
 
