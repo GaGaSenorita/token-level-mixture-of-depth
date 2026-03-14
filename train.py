@@ -150,6 +150,9 @@ def train_step2_deebert(model, train_loader, test_loader, test_loader_ee, args, 
         history["step2_test_acc_ee"] = []
         history["step2_avg_exit_layer"] = []
 
+    best_ee_acc = 0.0
+    best_path = os.path.join(args.output_dir, "best_model_step2.pt")
+
     for epoch in range(args.stage2_epochs):
         print(f"\n===== DeeBert Step2: Epoch {epoch+1}/{args.stage2_epochs} =====")
         model.train()
@@ -210,6 +213,11 @@ def train_step2_deebert(model, train_loader, test_loader, test_loader_ee, args, 
             print(f"Step2 early-exit acc (thr={entropy_threshold}): {ee_acc:.4f}")
             print(f"Step2 avg exit layer (thr={entropy_threshold}): {avg_exit_layer:.2f}")
             print(f"Exit histogram: {exit_hist}")
+
+            if ee_acc > best_ee_acc:
+                best_ee_acc = ee_acc
+                torch.save(model.state_dict(), best_path)
+                print(f"Best Step2 model saved: {best_path} (ee_acc={best_ee_acc:.4f})")
 
     return history
 

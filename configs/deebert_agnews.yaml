@@ -1,5 +1,5 @@
 # Experiment
-run_name: deebert_training_agnews
+run_name: run_01
 model_key: deebert
 
 # Data
@@ -23,9 +23,10 @@ grad_clip_norm: 1.0
 # Early Exit
 entropy_threshold: 0.2
 early_exit_fn: forward_early_exit_batchwise
+eval_early_exit: true
 
 # Reproducibility
 seed: 42
 
 # IO
-output_root: ./outputs
+output_root: ./experiments/deebert/agnews
