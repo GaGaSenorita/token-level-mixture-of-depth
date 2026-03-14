@@ -3,6 +3,7 @@ run_name: dense_bert_finetune_agnews
 model_key: finetuned_dense_bert
 
 # Data
+dataset: ag_news
 batch_size: 32
 max_length: 128
 
