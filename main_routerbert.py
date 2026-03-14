@@ -152,8 +152,10 @@ def main():
 
     total_params = sum(p.numel() for p in model.parameters())
     router_params = sum(p.numel() for p in model.routers.parameters())
-    logger.info(f"Total parameters: {total_params:,}")
-    logger.info(f"Router parameters: {router_params:,} ({router_params/total_params*100:.4f}%)")
+    backbone_params = total_params - router_params
+    logger.info(f"Total parameters:    {total_params:,}")
+    logger.info(f"Router parameters:   {router_params:,} ({router_params/total_params*100:.4f}%)")
+    logger.info(f"Backbone parameters: {backbone_params:,}")
 
     # -------- Step 1 --------
     step1_best_path = Path(args.output_dir) / "best_model_step1.pt"
@@ -183,20 +185,91 @@ def main():
         device,
     )
 
+    # -------- Load best Step2 checkpoint（确保 final eval 用的是最优模型）--------
+    best_step2_path = Path(args.output_dir) / "best_model_step2.pt"
+    if best_step2_path.exists():
+        logger.info(f"Loading best Step2 checkpoint: {best_step2_path}")
+        model.load_state_dict(torch.load(best_step2_path, map_location=device))
+    else:
+        logger.warning("best_model_step2.pt not found, final eval uses last-epoch model state.")
+
+    # -------- Final eval（推理路径，拿 eval-time keep_rates 用于 FLOPs 估算）--------
+    logger.info("Running final evaluation for report metrics...")
+    from eval import evaluate_router_full
+    final_acc, final_eval_keep_rates, final_avg_keep_rate = evaluate_router_full(
+        model, test_loader, device
+    )
+    logger.info(f"Final test accuracy:       {final_acc:.4f}")
+    logger.info(f"Final avg keep rate (eval): {final_avg_keep_rate:.4f}" if final_avg_keep_rate else "N/A")
+    if final_eval_keep_rates:
+        for i, kr in enumerate(final_eval_keep_rates):
+            if kr is not None:
+                logger.info(f"  Layer {i:2d} keep_rate: {kr:.4f}")
+
     # -------- Save results --------
     results = {
+        # ---- 实验参数 ----
         "args": vars(args),
+
+        # ---- 模型结构（report 用）----
+        "model_config": {
+            "model_name":  args.model_name,
+            "n_layers":    config.num_hidden_layers,
+            "hidden_size": config.hidden_size,
+            "n_heads":     config.num_attention_heads,
+            "seq_len":     args.max_length,
+            "routing_mode":      args.routing_mode,
+            "target_keep_ratio": args.target_keep_ratio,
+            "routed_layers":     sorted(list(model.routed_layers)),
+        },
+
+        # ---- 参数量统计（report 用）----
+        "parameter_counts": {
+            "total":          total_params,
+            "router":         router_params,
+            "backbone":       backbone_params,
+            "router_ratio_pct": round(router_params / total_params * 100, 6),
+        },
+
+        # ---- 训练历史 ----
         "step1_best_ckpt": str(step1_best_path),
-        "history_step1": history_step1,
-        "history_step2": history_step2,
+        "history_step1":   history_step1,
+        "history_step2":   history_step2,
+
+        # ---- 最终评估指标（report 核心数据）----
+        "final_eval": {
+            "accuracy":             final_acc,
+            "per_layer_keep_rates": final_eval_keep_rates,   # List[float|None], len=n_layers
+            "avg_keep_rate":        final_avg_keep_rate,      # 所有路由层平均
+        },
+
+        # ---- FLOPs 估算所需原始数据 ----
+        # 计算公式（单层 attention）:
+        #   baseline_attn_FLOPs = 2 * L * 3H^2 + 4 * L^2 * H + 2 * L * H^2
+        #   routed_attn_FLOPs_i = 2 * K_i * 3H^2 + 4 * K_i^2 * H + 2 * K_i * H^2
+        #   where K_i = keep_rate_i * L
+        #   FLOPs_saved_i = baseline - routed  (for routed layers only)
+        "flops_estimation_data": {
+            "n_layers":    config.num_hidden_layers,
+            "hidden_size": config.hidden_size,
+            "n_heads":     config.num_attention_heads,
+            "seq_len":     args.max_length,
+            "routing_mode":          args.routing_mode,
+            "routed_layers":         sorted(list(model.routed_layers)),
+            "eval_keep_rates_per_layer": final_eval_keep_rates,  # 核心：每层实际保留率
+            "avg_keep_rate":             final_avg_keep_rate,
+            "target_keep_ratio":         args.target_keep_ratio,
+        },
     }
 
-    # 从 step2 history 里提取最佳指标
+    # 从 step2 history 里提取最佳指标（兼容旧逻辑）
     if history_step2 is not None and isinstance(history_step2, dict):
         if "step2_test_acc" in history_step2 and history_step2["step2_test_acc"]:
             results["best_test_acc"] = max(history_step2["step2_test_acc"])
-        if "step2_keep_rates" in history_step2 and history_step2["step2_keep_rates"]:
-            results["final_keep_rates"] = history_step2["step2_keep_rates"][-1]
+        if "step2_eval_keep_rates" in history_step2 and history_step2["step2_eval_keep_rates"]:
+            results["best_epoch_eval_keep_rates"] = history_step2["step2_eval_keep_rates"][
+                history_step2["step2_test_acc"].index(max(history_step2["step2_test_acc"]))
+            ]
 
     save_results(results, args.output_dir)
     logger.info("Router-Tuning experiment completed successfully!")
@@ -212,6 +285,12 @@ if __name__ == "__main__":
 3. models/router_tuning_bert.py → 初始化 Router-Tuning BERT 模型
 4. Step1: train.py → train_step1_router_tuning() → 标准 fine-tune BERT（和 baseline 一样）
 5. Step2: train.py → train_step2_router_tuning() → 冻住 backbone，只训练 router
-6. eval.py → evaluate_router() 每个 epoch 后评估准确率
-7. 保存最佳模型 checkpoint 和实验结果（JSON）
+6. eval.py → evaluate_router_full() 每个 epoch 后评估准确率 + 推理路径 keep_rates
+7. Final eval → evaluate_router_full() → 获取最终 per-layer keep_rates（用于 FLOPs 估算）
+8. 保存最佳模型 checkpoint 和实验结果（JSON），results 包含：
+   - model_config: 模型结构参数（n_layers, hidden_size, n_heads, seq_len）
+   - parameter_counts: 总参数 / router 参数 / backbone 参数
+   - history_step1/2: 每个 epoch 的 loss、acc、keep_rates
+   - final_eval: 最终 accuracy + 每层 eval-time keep_rate + 平均 keep_rate
+   - flops_estimation_data: 计算 FLOPs 节省所需的全部原始数据
 '''

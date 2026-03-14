@@ -262,6 +262,14 @@ class RouterTuningBERTClassifier(nn.Module):
             prob = router(hidden_states, attention_mask)   # [B, 1]
 
         mask, mask_hard = ste_binarize(prob, self.tau)
+
+        # 始终保留 CLS token（position 0），确保分类 head 的输入不被跳过
+        if self.routing_mode == "token":
+            mask = mask.clone()
+            mask_hard = mask_hard.clone()
+            mask[:, 0, :] = 1.0
+            mask_hard[:, 0, :] = 1.0
+
         keep_rate, l_mod = self._compute_budget_loss(mask, mask_hard, attention_mask)
 
         # 2. Gated attention: attn_out = M ⊙ F(x)

@@ -66,6 +66,65 @@ def evaluate_router(model, dataloader, device):
     return correct / max(1, total)
 
 
+def evaluate_router_full(model, dataloader, device):
+    """
+    Router-Tuning 完整评估：返回 accuracy + 每层 keep_rate。
+
+    keep_rate 来自推理路径的 mask_hard（真实跳过比例），可直接用于：
+      - report 中汇报各层实际保留比例
+      - 后续 FLOPs 估算（FLOPs_saved ∝ 1 - keep_rate_i）
+
+    Returns:
+        acc            : float，测试准确率
+        eval_keep_rates: List[float|None]，长度=n_layers，每层平均 keep_rate
+                         None 表示该层为 NoRouter（不做路由）
+        avg_keep_rate  : float，所有路由层 keep_rate 的平均值
+    """
+    model.eval()
+    correct = 0
+    total = 0
+    keep_rate_sums = None
+    keep_rate_counts = None
+
+    with torch.no_grad():
+        for batch in dataloader:
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+            labels = batch["label"].to(device)
+
+            # 用 forward_with_routing 拿到 router_stats（含每层 keep_rate）
+            logits, router_stats, _ = model.forward_with_routing(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+            )
+            preds = logits.argmax(dim=-1)
+            correct += (preds == labels).sum().item()
+            total += labels.size(0)
+
+            keep_rates = router_stats.get("keep_rates", [])
+            if keep_rate_sums is None:
+                keep_rate_sums = [0.0] * len(keep_rates)
+                keep_rate_counts = [0] * len(keep_rates)
+            for i, kr in enumerate(keep_rates):
+                if kr is not None:
+                    keep_rate_sums[i] += kr
+                    keep_rate_counts[i] += 1
+
+    acc = correct / max(1, total)
+
+    eval_keep_rates = None
+    avg_keep_rate = None
+    if keep_rate_sums is not None:
+        eval_keep_rates = [
+            s / c if c > 0 else None
+            for s, c in zip(keep_rate_sums, keep_rate_counts)
+        ]
+        valid = [kr for kr in eval_keep_rates if kr is not None]
+        avg_keep_rate = sum(valid) / len(valid) if valid else None
+
+    return acc, eval_keep_rates, avg_keep_rate
+
+
 @torch.no_grad()
 def evaluate_early_exit(model, dataloader, device, entropy_threshold, fn_name="forward_early_exit_batchwise"):
     '''
