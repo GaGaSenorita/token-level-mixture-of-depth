@@ -21,6 +21,27 @@ def evaluate(model, dataloader, device):
     return correct / max(1, total)
 
 
+def evaluate_with_time(model, dataloader, device):
+    """Returns (accuracy, inference_ms_per_sample). Called once on best checkpoint after training."""
+    import time
+    model.eval()
+    correct = 0
+    total = 0
+    t0 = time.time()
+    with torch.no_grad():
+        for batch in dataloader:
+            input_ids      = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+            labels         = batch["label"].to(device)
+            logits         = model(input_ids=input_ids, attention_mask=attention_mask)
+            preds          = logits.argmax(dim=-1)
+            correct += (preds == labels).sum().item()
+            total   += labels.size(0)
+    elapsed_ms = (time.time() - t0) * 1000
+    acc = correct / max(1, total)
+    return round(acc, 4), round(elapsed_ms / total, 4)
+
+
 def evaluate_router(model, dataloader, device):
     """
     Router-Tuning 模型评估：

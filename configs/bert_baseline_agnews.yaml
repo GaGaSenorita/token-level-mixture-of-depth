@@ -1,5 +1,5 @@
 # Experiment
-run_name: dense_bert_finetune_agnews
+run_name: agnews
 model_key: finetuned_dense_bert
 
 # Data
@@ -17,4 +17,4 @@ epochs: 3
 seed: 42
 
 # IO
-output_root: ./outputs
+output_root: ./experiments/baseline
