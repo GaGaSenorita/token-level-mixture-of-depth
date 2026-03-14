@@ -1,0 +1,58 @@
+{
+  "args": {
+    "batch_size": 32,
+    "config": "configs/deebert_imdb.yaml",
+    "dataset": "imdb",
+    "dropout": 0.1,
+    "early_exit_fn": "forward_early_exit_batchwise",
+    "entropy_threshold": 0.2,
+    "eval_early_exit": true,
+    "grad_clip_norm": 1.0,
+    "max_length": 256,
+    "model_key": "deebert",
+    "model_name": "bert-base-uncased",
+    "output_dir": "experiments/deebert/imdb/run_02",
+    "output_root": "./experiments/deebert/imdb",
+    "resume_step1_ckpt": "./experiments/deebert/imdb/run_01/best_model_step1.pt",
+    "run_name": "run_02",
+    "seed": 123,
+    "stage1_epochs": 3,
+    "stage1_learning_rate": 2e-05,
+    "stage2_epochs": 5,
+    "stage2_learning_rate": 0.001
+  },
+  "best_avg_exit_layer": 9.1862,
+  "best_ee_acc": 0.9216,
+  "history_step1": null,
+  "history_step2": {
+    "step2_avg_exit_layer": [
+      9.1862,
+      8.70328,
+      8.5638,
+      8.53876,
+      8.5392
+    ],
+    "step2_test_acc_ee": [
+      0.9216,
+      0.91968,
+      0.92004,
+      0.91988,
+      0.92032
+    ],
+    "step2_test_acc_last": [
+      0.92208,
+      0.92208,
+      0.92208,
+      0.92208,
+      0.92208
+    ],
+    "step2_train_loss": [
+      0.4783007153845809,
+      0.39634903583227826,
+      0.3861699417576461,
+      0.38002393042187554,
+      0.3777892317460931
+    ]
+  },
+  "step1_best_ckpt": "experiments/deebert/imdb/run_01/best_model_step1.pt"
+}
