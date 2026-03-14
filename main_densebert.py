@@ -74,7 +74,7 @@ def main():
     output_dir = Path(args.output_root) / args.run_name
     ensure_dir(output_dir)
     args.output_dir = str(output_dir)
-    logger = setup_logger(output_dir, name="training")
+    logger = setup_logger(output_dir, name=f"{args.seed}_densebert")
     # logger.info("Final args:")
     # for k, v in vars(args).items():
     #     logger.info(f"{k}: {v}")
@@ -118,7 +118,7 @@ def main():
         'inference_ms_per_sample': inference_ms,
     }
 
-    save_results(results, args.output_dir)
+    save_results(results, args.output_dir, filename=f"{args.seed}_densebert_results.json")
     logger.info("Experiment completed successfully!")
 
 
