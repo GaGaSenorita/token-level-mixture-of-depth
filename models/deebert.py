@@ -81,27 +81,31 @@ class DeeBERTClassifier(nn.Module):
     @torch.no_grad()
     def forward_early_exit_batchwise(self, input_ids, attention_mask, entropy_threshold: float = 0.2):
         """
-        Batch-wise early exit (simple & stable).
+        True layer-by-layer early exit: computation stops at exit layer.
         Returns:
             logits: [B, C] from the exit layer
             exited_layer: int (1..n_layers)
         """
         self.eval()
 
-        outputs = self.bert(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            output_hidden_states=True,
-            return_dict=True
-        )
-        hidden_states = outputs.hidden_states
+        # Step 1: embedding layer
+        hidden_states = self.bert.embeddings(input_ids=input_ids)
 
-        for i in range(1, self.n_layers + 1):
-            cls = hidden_states[i][:, 0] # hidden_states[i]: [B, seq_len, H] -> cls: [B, H]
-            cls = self.dropout(cls)
-            logits = self.classifiers[i - 1](cls) # [B, C]
-            ent = entropy_from_logits(logits) # batch里每个样本的entropy [B], entropy越小越自信
+        # Step 2: extended attention mask (same as HuggingFace internal)
+        extended_attention_mask = self.bert.get_extended_attention_mask(
+            attention_mask, input_ids.shape
+        )
+
+        # Step 3: run transformer layers one by one, exit early if condition met
+        for i, layer_module in enumerate(self.bert.encoder.layer):
+            layer_outputs = layer_module(hidden_states, extended_attention_mask)
+            hidden_states = layer_outputs[0]  # [B, seq_len, H]
+
+            cls = self.dropout(hidden_states[:, 0])  # [B, H]
+            logits = self.classifiers[i](cls)         # [B, C]
+            ent = entropy_from_logits(logits)         # [B]
+
             if torch.all(ent < entropy_threshold):
-                return logits, i
+                return logits, i + 1  # 1-indexed
 
         return logits, self.n_layers
