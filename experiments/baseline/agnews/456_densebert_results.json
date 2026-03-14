@@ -1,0 +1,32 @@
+{
+  "args": {
+    "batch_size": 32,
+    "config": "configs/bert_baseline_agnews.yaml",
+    "dataset": "ag_news",
+    "dropout": 0.1,
+    "epochs": 3,
+    "learning_rate": 2e-05,
+    "max_length": 128,
+    "model_key": "finetuned_dense_bert",
+    "model_name": "bert-base-uncased",
+    "output_dir": "experiments/baseline/agnews",
+    "output_root": "./experiments/baseline",
+    "run_name": "agnews",
+    "seed": 456
+  },
+  "best_test_acc": 0.9488,
+  "final_test_acc": 0.9488157894736842,
+  "history": {
+    "test_acc": [
+      0.9443421052631579,
+      0.9481578947368421,
+      0.9488157894736842
+    ],
+    "train_loss": [
+      0.2641732928263644,
+      0.12998592856569838,
+      0.0823455696215853
+    ]
+  },
+  "inference_ms_per_sample": 0.7254
+}
