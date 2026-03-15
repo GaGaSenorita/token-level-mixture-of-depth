@@ -559,7 +559,7 @@ def train_step3_hdc(model, train_loader, test_loader, args, device):
     - 只有 routers 有梯度
     - Loss = CE(final_logits, labels) + lambda_mod * sum(l_mod_i)
     """
-    from eval import evaluate_hdc
+    from eval import evaluate_hdc_routing_full
     os.makedirs(args.output_dir, exist_ok=True)
     best_path = os.path.join(args.output_dir, "best_model_step3.pt")
 
@@ -582,7 +582,9 @@ def train_step3_hdc(model, train_loader, test_loader, args, device):
         "hdc_step3_train_loss_task": [],
         "hdc_step3_train_loss_mod": [],
         "hdc_step3_test_acc": [],
-        "hdc_step3_keep_rates": [],
+        "hdc_step3_keep_rates": [],       # train-time keep_rate per Stage-B layer
+        "hdc_step3_eval_keep_rates": [],  # eval-time keep_rate per Stage-B layer
+        "hdc_step3_avg_keep_rate": [],    # eval-time scalar avg keep_rate
     }
     best_acc = 0.0
 
@@ -644,14 +646,16 @@ def train_step3_hdc(model, train_loader, test_loader, args, device):
             for s, c in zip(keep_rate_sums, keep_rate_counts):
                 keep_rate_avgs.append(s / c if c > 0 else None)
 
-        # Eval
-        test_acc = evaluate_hdc(model, test_loader, device)
+        # Eval（推理路径，eval-time keep_rate 反映真实 token 跳过比例）
+        test_acc, eval_keep_rates, avg_keep_rate = evaluate_hdc_routing_full(model, test_loader, device)
 
         history["hdc_step3_train_loss"].append(avg_loss)
         history["hdc_step3_train_loss_task"].append(avg_task)
         history["hdc_step3_train_loss_mod"].append(avg_mod)
         history["hdc_step3_test_acc"].append(test_acc)
-        history["hdc_step3_keep_rates"].append(keep_rate_avgs)
+        history["hdc_step3_keep_rates"].append(keep_rate_avgs)       # train-time (STE)
+        history["hdc_step3_eval_keep_rates"].append(eval_keep_rates) # eval-time (hard mask)
+        history["hdc_step3_avg_keep_rate"].append(avg_keep_rate)      # scalar
 
         print(f"Stage3 loss (total): {avg_loss:.4f}")
         print(f"Stage3 loss (task):  {avg_task:.4f}")
@@ -659,7 +663,10 @@ def train_step3_hdc(model, train_loader, test_loader, args, device):
         print(f"Stage3 test acc:     {test_acc:.4f}")
         if keep_rate_avgs:
             kr_str = {f"B_layer_{i}": f"{kr:.3f}" for i, kr in enumerate(keep_rate_avgs) if kr is not None}
-            print(f"Keep rates: {kr_str}")
+            print(f"Train keep rates: {kr_str}")
+        if eval_keep_rates:
+            ekr_str = {f"B_layer_{i}": f"{kr:.3f}" for i, kr in enumerate(eval_keep_rates) if kr is not None}
+            print(f"Eval  keep rates: {ekr_str} | avg={avg_keep_rate:.3f}")
 
         if test_acc > best_acc:
             best_acc = test_acc
@@ -667,4 +674,4 @@ def train_step3_hdc(model, train_loader, test_loader, args, device):
             print(f"Best HDC step3 model saved: {best_path} (acc={best_acc:.4f})")
 
     print(f"\nHDC Stage 3 finished. Best acc = {best_acc:.4f}")
-    return history
+    return history, best_path

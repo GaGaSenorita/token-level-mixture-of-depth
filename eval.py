@@ -169,6 +169,59 @@ def evaluate_early_exit(model, dataloader, device, entropy_threshold, fn_name="f
 
 # ====================== HDC Evaluation ======================
 
+def evaluate_hdc_routing_full(model, dataloader, device):
+    """
+    HDC Stage 3 完整评估：routing accuracy + Stage B 每层 eval-time keep_rate。
+    使用 forward_with_routing()，model.eval() 模式（推理路径，token skipping）。
+
+    Returns:
+        acc             : float，routing 推理准确率
+        eval_keep_rates : List[float]，长度 = n_stage_b_layers（Stage B 每层 keep_rate）
+        avg_keep_rate   : float，Stage B 平均 keep_rate
+    """
+    model.eval()
+    correct = 0
+    total = 0
+    keep_rate_sums = None
+    keep_rate_counts = None
+
+    with torch.no_grad():
+        for batch in dataloader:
+            input_ids = batch["input_ids"].to(device)
+            attention_mask = batch["attention_mask"].to(device)
+            labels = batch["label"].to(device)
+
+            logits, router_stats, _ = model.forward_with_routing(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+            )
+            preds = logits.argmax(dim=-1)
+            correct += (preds == labels).sum().item()
+            total += labels.size(0)
+
+            keep_rates = router_stats.get("keep_rates", [])
+            if keep_rate_sums is None:
+                keep_rate_sums = [0.0] * len(keep_rates)
+                keep_rate_counts = [0] * len(keep_rates)
+            for i, kr in enumerate(keep_rates):
+                if kr is not None:
+                    keep_rate_sums[i] += kr
+                    keep_rate_counts[i] += 1
+
+    acc = correct / max(1, total)
+    eval_keep_rates = None
+    avg_keep_rate = None
+    if keep_rate_sums is not None:
+        eval_keep_rates = [
+            s / c if c > 0 else None
+            for s, c in zip(keep_rate_sums, keep_rate_counts)
+        ]
+        valid = [kr for kr in eval_keep_rates if kr is not None]
+        avg_keep_rate = sum(valid) / len(valid) if valid else None
+
+    return acc, eval_keep_rates, avg_keep_rate
+
+
 def evaluate_hdc(model, dataloader, device):
     """
     HDC 模型评估（带 routing 的 accuracy）。
