@@ -172,7 +172,7 @@ def main():
         model.load_state_dict(torch.load(args.resume_step2_ckpt, map_location=device))
         step2_best_path = Path(args.resume_step2_ckpt)
         history_step2 = None
-    else:
+    elif args.stage2_epochs > 0:
         logger.info("Starting Stage 2: Off-ramp training...")
         from train import train_step2_hdc
         history_step2, best_ckpt_path_2 = train_step2_hdc(
@@ -185,15 +185,24 @@ def main():
 
         logger.info(f"Loading best Stage 2 checkpoint: {step2_best_path}")
         model.load_state_dict(torch.load(step2_best_path, map_location=device))
+    else:
+        logger.info("Skipping Stage 2 (stage2_epochs=0).")
+        history_step2 = None
+        step2_best_path = step1_best_path
 
     # -------- Stage 3: Router training --------
-    logger.info("Starting Stage 3: Router training...")
-    from train import train_step3_hdc
-    history_step3, best_ckpt_path_3 = train_step3_hdc(model, train_loader, test_loader, args, device)
-    step3_best_path = Path(best_ckpt_path_3)
+    if args.stage3_epochs > 0:
+        logger.info("Starting Stage 3: Router training...")
+        from train import train_step3_hdc
+        history_step3, best_ckpt_path_3 = train_step3_hdc(model, train_loader, test_loader, args, device)
+        step3_best_path = Path(best_ckpt_path_3)
 
-    logger.info(f"Loading best Stage 3 checkpoint: {step3_best_path}")
-    model.load_state_dict(torch.load(step3_best_path, map_location=device))
+        logger.info(f"Loading best Stage 3 checkpoint: {step3_best_path}")
+        model.load_state_dict(torch.load(step3_best_path, map_location=device))
+    else:
+        logger.info("Skipping Stage 3 (stage3_epochs=0).")
+        history_step3 = None
+        step3_best_path = step2_best_path
 
     # -------- Final evaluation: routing accuracy + per-layer keep_rates --------
     logger.info("Running final routing evaluation (forward_with_routing)...")
