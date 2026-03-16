@@ -1,0 +1,51 @@
+2026-03-16 04:24:05,451 | INFO | Final args:
+2026-03-16 04:24:05,451 | INFO | config: configs/router_tuning_agnews.yaml
+2026-03-16 04:24:05,451 | INFO | run_name: keep_0.3
+2026-03-16 04:24:05,451 | INFO | model_key: router_tuning
+2026-03-16 04:24:05,451 | INFO | dataset: ag_news
+2026-03-16 04:24:05,451 | INFO | batch_size: 32
+2026-03-16 04:24:05,451 | INFO | max_length: 128
+2026-03-16 04:24:05,451 | INFO | model_name: bert-base-uncased
+2026-03-16 04:24:05,451 | INFO | dropout: 0.1
+2026-03-16 04:24:05,451 | INFO | stage1_learning_rate: 2e-05
+2026-03-16 04:24:05,451 | INFO | stage1_epochs: 3
+2026-03-16 04:24:05,451 | INFO | stage2_learning_rate: 0.001
+2026-03-16 04:24:05,451 | INFO | stage2_epochs: 5
+2026-03-16 04:24:05,451 | INFO | grad_clip_norm: 1.0
+2026-03-16 04:24:05,451 | INFO | routing_mode: token
+2026-03-16 04:24:05,451 | INFO | tau: 0.5
+2026-03-16 04:24:05,451 | INFO | lambda_mod: 0.001
+2026-03-16 04:24:05,451 | INFO | target_keep_ratio: 0.3
+2026-03-16 04:24:05,451 | INFO | routed_layers: None
+2026-03-16 04:24:05,451 | INFO | seed: 42
+2026-03-16 04:24:05,451 | INFO | output_root: ./experiments_pareto/routerbert/agnews
+2026-03-16 04:24:05,451 | INFO | resume_step1_ckpt: ./experiments_pareto/routerbert/agnews/shared_step1.pt
+2026-03-16 04:24:05,452 | INFO | output_dir: experiments_pareto/routerbert/agnews/keep_0.3
+2026-03-16 04:24:05,452 | INFO | Using device: cuda
+2026-03-16 04:24:05,452 | INFO | Loading data (train/test)...
+2026-03-16 04:24:12,918 | INFO | Train batches: 3750, Test batches: 238
+2026-03-16 04:24:12,918 | INFO | Data loaded. num_labels=4
+2026-03-16 04:24:13,196 | INFO | Routed layers: all
+2026-03-16 04:24:13,196 | INFO | Initializing Router-Tuning BERT model...
+2026-03-16 04:24:13,934 | INFO | Total parameters:    109,494,544
+2026-03-16 04:24:13,934 | INFO | Router parameters:   9,228 (0.0084%)
+2026-03-16 04:24:13,934 | INFO | Backbone parameters: 109,485,316
+2026-03-16 04:24:13,934 | INFO | Loading Step1 checkpoint from: ./experiments_pareto/routerbert/agnews/shared_step1.pt
+2026-03-16 04:24:14,310 | INFO | Starting Step2 training (freeze backbone，only training router)...
+2026-03-16 04:41:59,832 | INFO | Loading best Step2 checkpoint: experiments_pareto/routerbert/agnews/keep_0.3/best_model_step2.pt
+2026-03-16 04:42:00,161 | INFO | Running final evaluation for report metrics...
+2026-03-16 04:42:31,792 | INFO | Final test accuracy:       0.8275
+2026-03-16 04:42:31,792 | INFO | Final avg keep rate (eval): 0.2063
+2026-03-16 04:42:31,792 | INFO |   Layer  0 keep_rate: 0.2753
+2026-03-16 04:42:31,792 | INFO |   Layer  1 keep_rate: 0.1813
+2026-03-16 04:42:31,792 | INFO |   Layer  2 keep_rate: 0.2030
+2026-03-16 04:42:31,792 | INFO |   Layer  3 keep_rate: 0.1375
+2026-03-16 04:42:31,792 | INFO |   Layer  4 keep_rate: 0.1858
+2026-03-16 04:42:31,792 | INFO |   Layer  5 keep_rate: 0.2432
+2026-03-16 04:42:31,792 | INFO |   Layer  6 keep_rate: 0.2114
+2026-03-16 04:42:31,792 | INFO |   Layer  7 keep_rate: 0.1799
+2026-03-16 04:42:31,792 | INFO |   Layer  8 keep_rate: 0.2076
+2026-03-16 04:42:31,792 | INFO |   Layer  9 keep_rate: 0.1787
+2026-03-16 04:42:31,792 | INFO |   Layer 10 keep_rate: 0.2790
+2026-03-16 04:42:31,792 | INFO |   Layer 11 keep_rate: 0.1935
+2026-03-16 04:42:31,793 | INFO | Router-Tuning experiment completed successfully!
