@@ -1,0 +1,32 @@
+2026-03-15 03:39:19,156 | INFO | Final args:
+2026-03-15 03:39:19,156 | INFO | config: configs/deebert_imdb.yaml
+2026-03-15 03:39:19,156 | INFO | run_name: run_03
+2026-03-15 03:39:19,156 | INFO | model_key: deebert
+2026-03-15 03:39:19,156 | INFO | dataset: imdb
+2026-03-15 03:39:19,156 | INFO | batch_size: 32
+2026-03-15 03:39:19,156 | INFO | max_length: 256
+2026-03-15 03:39:19,156 | INFO | model_name: bert-base-uncased
+2026-03-15 03:39:19,156 | INFO | dropout: 0.1
+2026-03-15 03:39:19,156 | INFO | stage1_learning_rate: 2e-05
+2026-03-15 03:39:19,156 | INFO | stage1_epochs: 3
+2026-03-15 03:39:19,156 | INFO | stage2_learning_rate: 0.001
+2026-03-15 03:39:19,156 | INFO | stage2_epochs: 5
+2026-03-15 03:39:19,156 | INFO | grad_clip_norm: 1.0
+2026-03-15 03:39:19,156 | INFO | entropy_threshold: 0.2
+2026-03-15 03:39:19,156 | INFO | early_exit_fn: forward_early_exit_batchwise
+2026-03-15 03:39:19,156 | INFO | eval_early_exit: True
+2026-03-15 03:39:19,157 | INFO | seed: 456
+2026-03-15 03:39:19,157 | INFO | output_root: ./experiments/deebert/imdb
+2026-03-15 03:39:19,157 | INFO | resume_step1_ckpt: ./experiments/deebert/imdb/run_01/best_model_step1.pt
+2026-03-15 03:39:19,157 | INFO | output_dir: experiments/deebert/imdb/run_03
+2026-03-15 03:39:19,157 | INFO | Using device: cuda
+2026-03-15 03:39:19,157 | INFO | Loading data (train/test)...
+2026-03-15 03:39:31,256 | INFO | Train batches: 782, Test batches: 782
+2026-03-15 03:39:31,256 | INFO | Data loaded. num_labels=2
+2026-03-15 03:39:31,256 | INFO | Building early-exit test loader (batch_size=1)...
+2026-03-15 03:39:41,478 | INFO | Early-exit test loader batches: 25000
+2026-03-15 03:39:41,478 | INFO | Initializing DeeBERT model...
+2026-03-15 03:39:42,272 | INFO | Model parameters: 109,500,696
+2026-03-15 03:39:42,272 | INFO | Loading Step1 checkpoint from: ./experiments/deebert/imdb/run_01/best_model_step1.pt
+2026-03-15 03:39:42,632 | INFO | Starting Step2 training (train off-ramps)...
+2026-03-15 03:59:08,041 | INFO | DeeBERT experiment completed successfully!

@@ -150,6 +150,9 @@ def train_step2_deebert(model, train_loader, test_loader, test_loader_ee, args, 
         history["step2_test_acc_ee"] = []
         history["step2_avg_exit_layer"] = []
 
+    best_ee_acc = 0.0
+    best_path = os.path.join(args.output_dir, "best_model_step2.pt")
+
     for epoch in range(args.stage2_epochs):
         print(f"\n===== DeeBert Step2: Epoch {epoch+1}/{args.stage2_epochs} =====")
         model.train()
@@ -211,6 +214,11 @@ def train_step2_deebert(model, train_loader, test_loader, test_loader_ee, args, 
             print(f"Step2 avg exit layer (thr={entropy_threshold}): {avg_exit_layer:.2f}")
             print(f"Exit histogram: {exit_hist}")
 
+            if ee_acc > best_ee_acc:
+                best_ee_acc = ee_acc
+                torch.save(model.state_dict(), best_path)
+                print(f"Best Step2 model saved: {best_path} (ee_acc={best_ee_acc:.4f})")
+
     return history
 
 
@@ -267,7 +275,7 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
       L_task: 交叉熵，保证分类性能
       L_MoD:  ReLU(实际保留量 - 目标保留量)，鼓励跳过更多层
     """
-    from eval import evaluate_router
+    from eval import evaluate_router_full
 
     # ---- 冻结 backbone + classifier，解冻 router ----
     model.freeze_backbone()
@@ -296,7 +304,9 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
         "step2_train_loss_task": [],
         "step2_train_loss_mod": [],
         "step2_test_acc": [],
-        "step2_keep_rates": [],
+        "step2_keep_rates": [],         # 训练时每层 keep_rate（mask_hard，每 epoch 末尾平均）
+        "step2_eval_keep_rates": [],    # 推理路径下每层 keep_rate（eval 时统计，用于报告和 FLOPs）
+        "step2_avg_keep_rate": [],      # 推理路径下所有路由层 keep_rate 的平均（一个标量）
     }
     best_acc = 0.0
     best_path = os.path.join(args.output_dir, "best_model_step2.pt")
@@ -364,23 +374,30 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
             for s, c in zip(keep_rate_sums, keep_rate_counts):
                 keep_rate_avgs.append(s / c if c > 0 else None)
 
-        # ---- Eval ----
-        test_acc = evaluate_router(model, test_loader, device)
+        # ---- Eval（推理路径，统计真实 keep_rate）----
+        test_acc, eval_keep_rates, avg_keep_rate = evaluate_router_full(model, test_loader, device)
 
         history["step2_train_loss"].append(avg_loss)
         history["step2_train_loss_task"].append(avg_task)
         history["step2_train_loss_mod"].append(avg_mod)
         history["step2_test_acc"].append(test_acc)
         history["step2_keep_rates"].append(keep_rate_avgs)
+        history["step2_eval_keep_rates"].append(eval_keep_rates)
+        history["step2_avg_keep_rate"].append(avg_keep_rate)
 
         print(f"Step2 train loss (total): {avg_loss:.4f}")
         print(f"Step2 train loss (task):  {avg_task:.4f}")
         print(f"Step2 train loss (MoD):   {avg_mod:.4f}")
         print(f"Step2 test acc:           {test_acc:.4f}")
+        if avg_keep_rate is not None:
+            print(f"Step2 avg keep rate (eval): {avg_keep_rate:.4f}")
 
         if keep_rate_avgs is not None:
             routed_keep = {i: f"{kr:.3f}" for i, kr in enumerate(keep_rate_avgs) if kr is not None}
-            print(f"Keep rates: {routed_keep}")
+            print(f"Keep rates (train): {routed_keep}")
+        if eval_keep_rates is not None:
+            routed_eval = {i: f"{kr:.3f}" for i, kr in enumerate(eval_keep_rates) if kr is not None}
+            print(f"Keep rates (eval):  {routed_eval}")
 
         if test_acc > best_acc:
             best_acc = test_acc
@@ -542,7 +559,7 @@ def train_step3_hdc(model, train_loader, test_loader, args, device):
     - 只有 routers 有梯度
     - Loss = CE(final_logits, labels) + lambda_mod * sum(l_mod_i)
     """
-    from eval import evaluate_hdc
+    from eval import evaluate_hdc_routing_full
     os.makedirs(args.output_dir, exist_ok=True)
     best_path = os.path.join(args.output_dir, "best_model_step3.pt")
 
@@ -565,7 +582,9 @@ def train_step3_hdc(model, train_loader, test_loader, args, device):
         "hdc_step3_train_loss_task": [],
         "hdc_step3_train_loss_mod": [],
         "hdc_step3_test_acc": [],
-        "hdc_step3_keep_rates": [],
+        "hdc_step3_keep_rates": [],       # train-time keep_rate per Stage-B layer
+        "hdc_step3_eval_keep_rates": [],  # eval-time keep_rate per Stage-B layer
+        "hdc_step3_avg_keep_rate": [],    # eval-time scalar avg keep_rate
     }
     best_acc = 0.0
 
@@ -627,14 +646,16 @@ def train_step3_hdc(model, train_loader, test_loader, args, device):
             for s, c in zip(keep_rate_sums, keep_rate_counts):
                 keep_rate_avgs.append(s / c if c > 0 else None)
 
-        # Eval
-        test_acc = evaluate_hdc(model, test_loader, device)
+        # Eval（推理路径，eval-time keep_rate 反映真实 token 跳过比例）
+        test_acc, eval_keep_rates, avg_keep_rate = evaluate_hdc_routing_full(model, test_loader, device)
 
         history["hdc_step3_train_loss"].append(avg_loss)
         history["hdc_step3_train_loss_task"].append(avg_task)
         history["hdc_step3_train_loss_mod"].append(avg_mod)
         history["hdc_step3_test_acc"].append(test_acc)
-        history["hdc_step3_keep_rates"].append(keep_rate_avgs)
+        history["hdc_step3_keep_rates"].append(keep_rate_avgs)       # train-time (STE)
+        history["hdc_step3_eval_keep_rates"].append(eval_keep_rates) # eval-time (hard mask)
+        history["hdc_step3_avg_keep_rate"].append(avg_keep_rate)      # scalar
 
         print(f"Stage3 loss (total): {avg_loss:.4f}")
         print(f"Stage3 loss (task):  {avg_task:.4f}")
@@ -642,7 +663,10 @@ def train_step3_hdc(model, train_loader, test_loader, args, device):
         print(f"Stage3 test acc:     {test_acc:.4f}")
         if keep_rate_avgs:
             kr_str = {f"B_layer_{i}": f"{kr:.3f}" for i, kr in enumerate(keep_rate_avgs) if kr is not None}
-            print(f"Keep rates: {kr_str}")
+            print(f"Train keep rates: {kr_str}")
+        if eval_keep_rates:
+            ekr_str = {f"B_layer_{i}": f"{kr:.3f}" for i, kr in enumerate(eval_keep_rates) if kr is not None}
+            print(f"Eval  keep rates: {ekr_str} | avg={avg_keep_rate:.3f}")
 
         if test_acc > best_acc:
             best_acc = test_acc
@@ -650,4 +674,4 @@ def train_step3_hdc(model, train_loader, test_loader, args, device):
             print(f"Best HDC step3 model saved: {best_path} (acc={best_acc:.4f})")
 
     print(f"\nHDC Stage 3 finished. Best acc = {best_acc:.4f}")
-    return history
+    return history, best_path

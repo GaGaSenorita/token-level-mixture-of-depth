@@ -174,12 +174,20 @@ def main():
         "history_step2": history_step2,
     }
 
-    # 你 train_step2_deebert 里如果记录了 early-exit acc，就顺手算个 best
+    # Step1 best accuracy
+    if history_step1 is not None and "Deebert_step1_test_acc" in history_step1:
+        results["best_step1_acc"] = max(history_step1["Deebert_step1_test_acc"])
+
+    # Step2 early-exit: best ee_acc 及其对应同一 epoch 的 avg_exit_layer 和 FLOPs ratio
     if history_step2 is not None and isinstance(history_step2, dict):
-        if "step2_test_acc_ee" in history_step2 and history_step2["step2_test_acc_ee"]:
-            results["best_ee_acc"] = max(history_step2["step2_test_acc_ee"])
-        if "step2_avg_exit_layer" in history_step2 and history_step2["step2_avg_exit_layer"]:
-            results["best_avg_exit_layer"] = min(history_step2["step2_avg_exit_layer"])
+        ee_accs = history_step2.get("step2_test_acc_ee", [])
+        exit_layers = history_step2.get("step2_avg_exit_layer", [])
+        if ee_accs:
+            best_epoch = int(ee_accs.index(max(ee_accs)))
+            best_ee_acc = ee_accs[best_epoch]
+            best_avg_exit_layer = exit_layers[best_epoch] if exit_layers else None
+            results["best_ee_acc"] = best_ee_acc
+            results["best_avg_exit_layer"] = best_avg_exit_layer
 
     save_results(results, args.output_dir)
     logger.info("DeeBERT experiment completed successfully!")

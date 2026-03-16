@@ -1,0 +1,32 @@
+2026-03-15 02:41:38,957 | INFO | Final args:
+2026-03-15 02:41:38,957 | INFO | config: configs/deebert_agnews.yaml
+2026-03-15 02:41:38,957 | INFO | run_name: run_03
+2026-03-15 02:41:38,957 | INFO | model_key: deebert
+2026-03-15 02:41:38,957 | INFO | dataset: ag_news
+2026-03-15 02:41:38,957 | INFO | batch_size: 32
+2026-03-15 02:41:38,957 | INFO | max_length: 128
+2026-03-15 02:41:38,957 | INFO | model_name: bert-base-uncased
+2026-03-15 02:41:38,957 | INFO | dropout: 0.1
+2026-03-15 02:41:38,957 | INFO | stage1_learning_rate: 2e-05
+2026-03-15 02:41:38,957 | INFO | stage1_epochs: 3
+2026-03-15 02:41:38,957 | INFO | stage2_learning_rate: 0.001
+2026-03-15 02:41:38,957 | INFO | stage2_epochs: 5
+2026-03-15 02:41:38,957 | INFO | grad_clip_norm: 1.0
+2026-03-15 02:41:38,957 | INFO | entropy_threshold: 0.2
+2026-03-15 02:41:38,957 | INFO | early_exit_fn: forward_early_exit_batchwise
+2026-03-15 02:41:38,957 | INFO | eval_early_exit: True
+2026-03-15 02:41:38,958 | INFO | seed: 456
+2026-03-15 02:41:38,958 | INFO | output_root: ./experiments/deebert/agnews
+2026-03-15 02:41:38,958 | INFO | resume_step1_ckpt: ./experiments/deebert/agnews/run_01/best_model_step1.pt
+2026-03-15 02:41:38,958 | INFO | output_dir: experiments/deebert/agnews/run_03
+2026-03-15 02:41:38,958 | INFO | Using device: cuda
+2026-03-15 02:41:38,958 | INFO | Loading data (train/test)...
+2026-03-15 02:41:50,271 | INFO | Train batches: 3750, Test batches: 238
+2026-03-15 02:41:50,271 | INFO | Data loaded. num_labels=4
+2026-03-15 02:41:50,272 | INFO | Building early-exit test loader (batch_size=1)...
+2026-03-15 02:41:57,253 | INFO | Early-exit test loader batches: 7600
+2026-03-15 02:41:57,253 | INFO | Initializing DeeBERT model...
+2026-03-15 02:41:58,094 | INFO | Model parameters: 109,519,152
+2026-03-15 02:41:58,094 | INFO | Loading Step1 checkpoint from: ./experiments/deebert/agnews/run_01/best_model_step1.pt
+2026-03-15 02:41:58,464 | INFO | Starting Step2 training (train off-ramps)...
+2026-03-15 02:52:52,814 | INFO | DeeBERT experiment completed successfully!

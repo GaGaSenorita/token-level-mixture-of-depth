@@ -1,0 +1,51 @@
+2026-03-15 11:20:07,733 | INFO | Final args:
+2026-03-15 11:20:07,733 | INFO | config: configs/router_tuning_agnews.yaml
+2026-03-15 11:20:07,733 | INFO | run_name: run_03
+2026-03-15 11:20:07,733 | INFO | model_key: router_tuning
+2026-03-15 11:20:07,733 | INFO | dataset: ag_news
+2026-03-15 11:20:07,733 | INFO | batch_size: 32
+2026-03-15 11:20:07,733 | INFO | max_length: 128
+2026-03-15 11:20:07,733 | INFO | model_name: bert-base-uncased
+2026-03-15 11:20:07,733 | INFO | dropout: 0.1
+2026-03-15 11:20:07,733 | INFO | stage1_learning_rate: 2e-05
+2026-03-15 11:20:07,733 | INFO | stage1_epochs: 3
+2026-03-15 11:20:07,733 | INFO | stage2_learning_rate: 0.001
+2026-03-15 11:20:07,733 | INFO | stage2_epochs: 5
+2026-03-15 11:20:07,733 | INFO | grad_clip_norm: 1.0
+2026-03-15 11:20:07,733 | INFO | routing_mode: token
+2026-03-15 11:20:07,733 | INFO | tau: 0.5
+2026-03-15 11:20:07,733 | INFO | lambda_mod: 0.001
+2026-03-15 11:20:07,733 | INFO | target_keep_ratio: 0.7
+2026-03-15 11:20:07,733 | INFO | routed_layers: None
+2026-03-15 11:20:07,733 | INFO | seed: 456
+2026-03-15 11:20:07,733 | INFO | output_root: ./experiments/router_tuning/agnews
+2026-03-15 11:20:07,733 | INFO | resume_step1_ckpt: ./experiments/router_tuning/agnews/run_01/best_model_step1.pt
+2026-03-15 11:20:07,733 | INFO | output_dir: experiments/router_tuning/agnews/run_03
+2026-03-15 11:20:07,733 | INFO | Using device: cuda
+2026-03-15 11:20:07,733 | INFO | Loading data (train/test)...
+2026-03-15 11:20:15,531 | INFO | Train batches: 3750, Test batches: 238
+2026-03-15 11:20:15,532 | INFO | Data loaded. num_labels=4
+2026-03-15 11:20:15,858 | INFO | Routed layers: all
+2026-03-15 11:20:15,858 | INFO | Initializing Router-Tuning BERT model...
+2026-03-15 11:20:16,998 | INFO | Total parameters:    109,494,544
+2026-03-15 11:20:16,998 | INFO | Router parameters:   9,228 (0.0084%)
+2026-03-15 11:20:16,998 | INFO | Backbone parameters: 109,485,316
+2026-03-15 11:20:16,998 | INFO | Loading Step1 checkpoint from: ./experiments/router_tuning/agnews/run_01/best_model_step1.pt
+2026-03-15 11:20:17,369 | INFO | Starting Step2 training (freeze backbone，only training router)...
+2026-03-15 11:38:02,296 | INFO | Loading best Step2 checkpoint: experiments/router_tuning/agnews/run_03/best_model_step2.pt
+2026-03-15 11:38:02,621 | INFO | Running final evaluation for report metrics...
+2026-03-15 11:38:33,649 | INFO | Final test accuracy:       0.9280
+2026-03-15 11:38:33,650 | INFO | Final avg keep rate (eval): 0.6084
+2026-03-15 11:38:33,650 | INFO |   Layer  0 keep_rate: 0.6240
+2026-03-15 11:38:33,650 | INFO |   Layer  1 keep_rate: 0.5492
+2026-03-15 11:38:33,650 | INFO |   Layer  2 keep_rate: 0.5947
+2026-03-15 11:38:33,650 | INFO |   Layer  3 keep_rate: 0.5505
+2026-03-15 11:38:33,650 | INFO |   Layer  4 keep_rate: 0.5828
+2026-03-15 11:38:33,650 | INFO |   Layer  5 keep_rate: 0.6784
+2026-03-15 11:38:33,650 | INFO |   Layer  6 keep_rate: 0.6346
+2026-03-15 11:38:33,650 | INFO |   Layer  7 keep_rate: 0.6329
+2026-03-15 11:38:33,650 | INFO |   Layer  8 keep_rate: 0.6028
+2026-03-15 11:38:33,650 | INFO |   Layer  9 keep_rate: 0.6468
+2026-03-15 11:38:33,650 | INFO |   Layer 10 keep_rate: 0.6281
+2026-03-15 11:38:33,650 | INFO |   Layer 11 keep_rate: 0.5763
+2026-03-15 11:38:33,651 | INFO | Router-Tuning experiment completed successfully!

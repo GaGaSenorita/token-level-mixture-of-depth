@@ -262,6 +262,7 @@ class RouterTuningBERTClassifier(nn.Module):
             prob = router(hidden_states, attention_mask)   # [B, 1]
 
         mask, mask_hard = ste_binarize(prob, self.tau)
+
         keep_rate, l_mod = self._compute_budget_loss(mask, mask_hard, attention_mask)
 
         # 2. Gated attention: attn_out = M ⊙ F(x)

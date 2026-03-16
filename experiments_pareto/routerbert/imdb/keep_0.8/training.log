@@ -1,0 +1,51 @@
+2026-03-16 08:53:18,159 | INFO | Final args:
+2026-03-16 08:53:18,160 | INFO | config: configs/router_tuning_imdb.yaml
+2026-03-16 08:53:18,160 | INFO | run_name: keep_0.8
+2026-03-16 08:53:18,160 | INFO | model_key: router_tuning
+2026-03-16 08:53:18,160 | INFO | dataset: imdb
+2026-03-16 08:53:18,160 | INFO | batch_size: 32
+2026-03-16 08:53:18,160 | INFO | max_length: 256
+2026-03-16 08:53:18,160 | INFO | model_name: bert-base-uncased
+2026-03-16 08:53:18,160 | INFO | dropout: 0.1
+2026-03-16 08:53:18,160 | INFO | stage1_learning_rate: 2e-05
+2026-03-16 08:53:18,160 | INFO | stage1_epochs: 3
+2026-03-16 08:53:18,160 | INFO | stage2_learning_rate: 0.001
+2026-03-16 08:53:18,160 | INFO | stage2_epochs: 5
+2026-03-16 08:53:18,160 | INFO | grad_clip_norm: 1.0
+2026-03-16 08:53:18,160 | INFO | routing_mode: token
+2026-03-16 08:53:18,160 | INFO | tau: 0.5
+2026-03-16 08:53:18,160 | INFO | lambda_mod: 0.001
+2026-03-16 08:53:18,160 | INFO | target_keep_ratio: 0.8
+2026-03-16 08:53:18,160 | INFO | routed_layers: None
+2026-03-16 08:53:18,160 | INFO | seed: 42
+2026-03-16 08:53:18,160 | INFO | output_root: ./experiments_pareto/routerbert/imdb
+2026-03-16 08:53:18,160 | INFO | resume_step1_ckpt: ./experiments_pareto/routerbert/imdb/shared_step1.pt
+2026-03-16 08:53:18,160 | INFO | output_dir: experiments_pareto/routerbert/imdb/keep_0.8
+2026-03-16 08:53:18,161 | INFO | Using device: cuda
+2026-03-16 08:53:18,161 | INFO | Loading data (train/test)...
+2026-03-16 08:53:24,325 | INFO | Train batches: 782, Test batches: 782
+2026-03-16 08:53:24,325 | INFO | Data loaded. num_labels=2
+2026-03-16 08:53:24,648 | INFO | Routed layers: all
+2026-03-16 08:53:24,648 | INFO | Initializing Router-Tuning BERT model...
+2026-03-16 08:53:25,484 | INFO | Total parameters:    109,493,006
+2026-03-16 08:53:25,485 | INFO | Router parameters:   9,228 (0.0084%)
+2026-03-16 08:53:25,485 | INFO | Backbone parameters: 109,483,778
+2026-03-16 08:53:25,485 | INFO | Loading Step1 checkpoint from: ./experiments_pareto/routerbert/imdb/shared_step1.pt
+2026-03-16 08:53:25,862 | INFO | Starting Step2 training (freeze backbone，only training router)...
+2026-03-16 09:09:44,529 | INFO | Loading best Step2 checkpoint: experiments_pareto/routerbert/imdb/keep_0.8/best_model_step2.pt
+2026-03-16 09:09:44,853 | INFO | Running final evaluation for report metrics...
+2026-03-16 09:11:42,518 | INFO | Final test accuracy:       0.9150
+2026-03-16 09:11:42,519 | INFO | Final avg keep rate (eval): 0.6988
+2026-03-16 09:11:42,519 | INFO |   Layer  0 keep_rate: 0.6548
+2026-03-16 09:11:42,519 | INFO |   Layer  1 keep_rate: 0.7457
+2026-03-16 09:11:42,519 | INFO |   Layer  2 keep_rate: 0.6351
+2026-03-16 09:11:42,519 | INFO |   Layer  3 keep_rate: 0.6758
+2026-03-16 09:11:42,519 | INFO |   Layer  4 keep_rate: 0.6823
+2026-03-16 09:11:42,519 | INFO |   Layer  5 keep_rate: 0.8221
+2026-03-16 09:11:42,519 | INFO |   Layer  6 keep_rate: 0.7976
+2026-03-16 09:11:42,519 | INFO |   Layer  7 keep_rate: 0.7323
+2026-03-16 09:11:42,519 | INFO |   Layer  8 keep_rate: 0.7203
+2026-03-16 09:11:42,519 | INFO |   Layer  9 keep_rate: 0.6671
+2026-03-16 09:11:42,519 | INFO |   Layer 10 keep_rate: 0.7457
+2026-03-16 09:11:42,519 | INFO |   Layer 11 keep_rate: 0.5067
+2026-03-16 09:11:42,520 | INFO | Router-Tuning experiment completed successfully!
