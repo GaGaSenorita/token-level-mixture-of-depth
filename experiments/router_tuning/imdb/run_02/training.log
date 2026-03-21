@@ -1,0 +1,51 @@
+2026-03-15 12:08:34,737 | INFO | Final args:
+2026-03-15 12:08:34,737 | INFO | config: configs/router_tuning_imdb.yaml
+2026-03-15 12:08:34,737 | INFO | run_name: run_02
+2026-03-15 12:08:34,737 | INFO | model_key: router_tuning
+2026-03-15 12:08:34,737 | INFO | dataset: imdb
+2026-03-15 12:08:34,737 | INFO | batch_size: 32
+2026-03-15 12:08:34,737 | INFO | max_length: 256
+2026-03-15 12:08:34,737 | INFO | model_name: bert-base-uncased
+2026-03-15 12:08:34,737 | INFO | dropout: 0.1
+2026-03-15 12:08:34,737 | INFO | stage1_learning_rate: 2e-05
+2026-03-15 12:08:34,737 | INFO | stage1_epochs: 3
+2026-03-15 12:08:34,737 | INFO | stage2_learning_rate: 0.001
+2026-03-15 12:08:34,737 | INFO | stage2_epochs: 5
+2026-03-15 12:08:34,738 | INFO | grad_clip_norm: 1.0
+2026-03-15 12:08:34,738 | INFO | routing_mode: token
+2026-03-15 12:08:34,738 | INFO | tau: 0.5
+2026-03-15 12:08:34,738 | INFO | lambda_mod: 0.001
+2026-03-15 12:08:34,738 | INFO | target_keep_ratio: 0.7
+2026-03-15 12:08:34,738 | INFO | routed_layers: None
+2026-03-15 12:08:34,738 | INFO | seed: 123
+2026-03-15 12:08:34,738 | INFO | output_root: ./experiments/router_tuning/imdb
+2026-03-15 12:08:34,738 | INFO | resume_step1_ckpt: ./experiments/router_tuning/imdb/run_01/best_model_step1.pt
+2026-03-15 12:08:34,738 | INFO | output_dir: experiments/router_tuning/imdb/run_02
+2026-03-15 12:08:34,738 | INFO | Using device: cuda
+2026-03-15 12:08:34,738 | INFO | Loading data (train/test)...
+2026-03-15 12:08:42,398 | INFO | Train batches: 782, Test batches: 782
+2026-03-15 12:08:42,398 | INFO | Data loaded. num_labels=2
+2026-03-15 12:08:43,063 | INFO | Routed layers: all
+2026-03-15 12:08:43,063 | INFO | Initializing Router-Tuning BERT model...
+2026-03-15 12:08:43,914 | INFO | Total parameters:    109,493,006
+2026-03-15 12:08:43,914 | INFO | Router parameters:   9,228 (0.0084%)
+2026-03-15 12:08:43,915 | INFO | Backbone parameters: 109,483,778
+2026-03-15 12:08:43,915 | INFO | Loading Step1 checkpoint from: ./experiments/router_tuning/imdb/run_01/best_model_step1.pt
+2026-03-15 12:08:44,334 | INFO | Starting Step2 training (freeze backbone，only training router)...
+2026-03-15 12:24:57,026 | INFO | Loading best Step2 checkpoint: experiments/router_tuning/imdb/run_02/best_model_step2.pt
+2026-03-15 12:24:57,350 | INFO | Running final evaluation for report metrics...
+2026-03-15 12:26:54,154 | INFO | Final test accuracy:       0.9092
+2026-03-15 12:26:54,154 | INFO | Final avg keep rate (eval): 0.6549
+2026-03-15 12:26:54,154 | INFO |   Layer  0 keep_rate: 0.6928
+2026-03-15 12:26:54,154 | INFO |   Layer  1 keep_rate: 0.6606
+2026-03-15 12:26:54,154 | INFO |   Layer  2 keep_rate: 0.6682
+2026-03-15 12:26:54,154 | INFO |   Layer  3 keep_rate: 0.6698
+2026-03-15 12:26:54,154 | INFO |   Layer  4 keep_rate: 0.6818
+2026-03-15 12:26:54,155 | INFO |   Layer  5 keep_rate: 0.7081
+2026-03-15 12:26:54,155 | INFO |   Layer  6 keep_rate: 0.6561
+2026-03-15 12:26:54,155 | INFO |   Layer  7 keep_rate: 0.6686
+2026-03-15 12:26:54,155 | INFO |   Layer  8 keep_rate: 0.5882
+2026-03-15 12:26:54,155 | INFO |   Layer  9 keep_rate: 0.6288
+2026-03-15 12:26:54,155 | INFO |   Layer 10 keep_rate: 0.6186
+2026-03-15 12:26:54,155 | INFO |   Layer 11 keep_rate: 0.6174
+2026-03-15 12:26:54,156 | INFO | Router-Tuning experiment completed successfully!

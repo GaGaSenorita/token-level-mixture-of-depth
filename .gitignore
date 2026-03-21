@@ -1,8 +1,49 @@
-# python cache
+# ── macOS ──────────────────────────────────
+.DS_Store
+
+# ── Python ─────────────────────────────────
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
 
-# large checkpoints
-outputs/**/best_model.pt
+# ── Virtual environments ────────────────────
+.venv/
+venv/
+env/
+
+# ── Model weights & checkpoints ─────────────
 *.pt
+*.pth
+*.bin
+*.ckpt
+*.safetensors
+
+# ── Experiment outputs ───────────────────────
+# Keep results.json (experiment records), ignore generated logs
+outputs/**/*.log
+
+# ── HuggingFace / dataset cache ─────────────
+.cache/
+
+# ── Jupyter ─────────────────────────────────
+.ipynb_checkpoints/
+
+# ── Editor ──────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Claude Code ─────────────────────────────
+.claude/
+
+# ── Environment variables ────────────────────
+.env
+.env.*
+
+# ── Draft / scratch files ────────────────────
+draft.txt

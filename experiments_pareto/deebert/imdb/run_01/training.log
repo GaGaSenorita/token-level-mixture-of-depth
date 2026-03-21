@@ -1,0 +1,33 @@
+2026-03-15 04:34:43,300 | INFO | Final args:
+2026-03-15 04:34:43,300 | INFO | config: configs/deebert_imdb.yaml
+2026-03-15 04:34:43,300 | INFO | run_name: run_01
+2026-03-15 04:34:43,300 | INFO | model_key: deebert
+2026-03-15 04:34:43,300 | INFO | dataset: imdb
+2026-03-15 04:34:43,300 | INFO | batch_size: 32
+2026-03-15 04:34:43,300 | INFO | max_length: 256
+2026-03-15 04:34:43,300 | INFO | model_name: bert-base-uncased
+2026-03-15 04:34:43,300 | INFO | dropout: 0.1
+2026-03-15 04:34:43,300 | INFO | stage1_learning_rate: 2e-05
+2026-03-15 04:34:43,300 | INFO | stage1_epochs: 3
+2026-03-15 04:34:43,300 | INFO | stage2_learning_rate: 0.001
+2026-03-15 04:34:43,300 | INFO | stage2_epochs: 5
+2026-03-15 04:34:43,300 | INFO | grad_clip_norm: 1.0
+2026-03-15 04:34:43,300 | INFO | entropy_threshold: 0.2
+2026-03-15 04:34:43,300 | INFO | early_exit_fn: forward_early_exit_batchwise
+2026-03-15 04:34:43,300 | INFO | eval_early_exit: True
+2026-03-15 04:34:43,300 | INFO | seed: 42
+2026-03-15 04:34:43,300 | INFO | output_root: ./experiments_pareto/deebert/imdb
+2026-03-15 04:34:43,300 | INFO | resume_step1_ckpt: None
+2026-03-15 04:34:43,301 | INFO | output_dir: experiments_pareto/deebert/imdb/run_01
+2026-03-15 04:34:43,301 | INFO | Using device: cuda
+2026-03-15 04:34:43,301 | INFO | Loading data (train/test)...
+2026-03-15 04:34:51,439 | INFO | Train batches: 782, Test batches: 782
+2026-03-15 04:34:51,439 | INFO | Data loaded. num_labels=2
+2026-03-15 04:34:51,439 | INFO | Building early-exit test loader (batch_size=1)...
+2026-03-15 04:35:01,416 | INFO | Early-exit test loader batches: 25000
+2026-03-15 04:35:01,417 | INFO | Initializing DeeBERT model...
+2026-03-15 04:35:02,210 | INFO | Model parameters: 109,500,696
+2026-03-15 04:35:02,210 | INFO | Starting Step1 training (dense fine-tune)...
+2026-03-15 04:42:35,876 | INFO | Loading best Step1 checkpoint: experiments_pareto/deebert/imdb/run_01/best_model_step1.pt
+2026-03-15 04:42:36,332 | INFO | Starting Step2 training (train off-ramps)...
+2026-03-15 05:01:47,629 | INFO | DeeBERT experiment completed successfully!

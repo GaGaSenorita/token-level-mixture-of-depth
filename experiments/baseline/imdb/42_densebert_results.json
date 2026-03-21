@@ -1,0 +1,32 @@
+{
+  "args": {
+    "batch_size": 32,
+    "config": "configs/bert_baseline_imdb.yaml",
+    "dataset": "imdb",
+    "dropout": 0.1,
+    "epochs": 3,
+    "learning_rate": 2e-05,
+    "max_length": 256,
+    "model_key": "finetuned_dense_bert",
+    "model_name": "bert-base-uncased",
+    "output_dir": "experiments/baseline/imdb",
+    "output_root": "./experiments/baseline",
+    "run_name": "imdb",
+    "seed": 42
+  },
+  "best_test_acc": 0.9233,
+  "final_test_acc": 0.9218,
+  "history": {
+    "test_acc": [
+      0.91836,
+      0.92328,
+      0.9218
+    ],
+    "train_loss": [
+      0.3060989139977928,
+      0.1542622749872334,
+      0.08169992879995376
+    ]
+  },
+  "inference_ms_per_sample": 1.4127
+}

@@ -1,2 +1,4 @@
 from .bert_baseline import BERTClassifier
-from .sample_level_bert import BertSampleLevelForSequenceClassification
+from .deebert import DeeBERTClassifier
+from .router_tuning_bert import RouterTuningBERTClassifier
+from .hdc_bert import HDCBERTClassifier

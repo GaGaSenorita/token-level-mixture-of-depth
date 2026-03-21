@@ -1,0 +1,32 @@
+# Experiment
+run_name: run_01
+model_key: deebert
+
+# Data
+dataset: ag_news
+batch_size: 32
+max_length: 128
+
+# Model
+model_name: bert-base-uncased
+dropout: 0.1
+
+# Training: Step 1 (Dense BERT)
+stage1_epochs: 3
+stage1_learning_rate: 2e-5
+
+# Training: Step 2 (DeeBERT off-ramps)
+stage2_epochs: 5
+stage2_learning_rate: 1e-3
+grad_clip_norm: 1.0
+
+# Early Exit
+entropy_threshold: 0.2
+early_exit_fn: forward_early_exit_batchwise
+eval_early_exit: true
+
+# Reproducibility
+seed: 42
+
+# IO
+output_root: ./experiments/deebert/agnews

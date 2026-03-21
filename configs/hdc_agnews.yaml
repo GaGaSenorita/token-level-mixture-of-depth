@@ -1,0 +1,44 @@
+# HDC-BERT (Hierarchical Dynamic Computation) 配置
+# Stage A (layers 0..split_layer-1): DeeBERT 风格 early-exit
+# Stage B (layers split_layer..11):  Token-level routing
+
+# Experiment
+run_name: hdc_bert_agnews
+model_key: hdc_bert
+
+# Data
+dataset: ag_news
+batch_size: 32
+max_length: 128
+
+# Model
+model_name: bert-base-uncased
+dropout: 0.1
+
+# HDC-specific
+split_layer: 6                # [0..5] = Stage A (early-exit), [6..11] = Stage B (token routing)
+tau: 0.5                      # STE 二值化阈值
+target_keep_ratio: 0.7        # token routing 保留目标
+lambda_mod: 1e-3              # budget loss 系数 (Stage 3)
+
+# Training: Stage 1 (dense fine-tune backbone + final classifier)
+stage1_epochs: 3
+stage1_learning_rate: 2e-5
+
+# Training: Stage 2 (train off-ramp classifiers)
+stage2_epochs: 5
+stage2_learning_rate: 1e-3
+
+# Training: Stage 3 (train token routers)
+stage3_epochs: 5
+stage3_learning_rate: 1e-3
+
+# Early-exit evaluation
+entropy_threshold: 0.2
+eval_early_exit: true
+
+# Reproducibility
+seed: 42
+
+# IO
+output_root: ./outputs

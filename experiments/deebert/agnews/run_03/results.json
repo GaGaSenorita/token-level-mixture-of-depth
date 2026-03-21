@@ -1,0 +1,58 @@
+{
+  "args": {
+    "batch_size": 32,
+    "config": "configs/deebert_agnews.yaml",
+    "dataset": "ag_news",
+    "dropout": 0.1,
+    "early_exit_fn": "forward_early_exit_batchwise",
+    "entropy_threshold": 0.2,
+    "eval_early_exit": true,
+    "grad_clip_norm": 1.0,
+    "max_length": 128,
+    "model_key": "deebert",
+    "model_name": "bert-base-uncased",
+    "output_dir": "experiments/deebert/agnews/run_03",
+    "output_root": "./experiments/deebert/agnews",
+    "resume_step1_ckpt": "./experiments/deebert/agnews/run_01/best_model_step1.pt",
+    "run_name": "run_03",
+    "seed": 456,
+    "stage1_epochs": 3,
+    "stage1_learning_rate": 2e-05,
+    "stage2_epochs": 5,
+    "stage2_learning_rate": 0.001
+  },
+  "best_avg_exit_layer": 4.521184210526315,
+  "best_ee_acc": 0.9418421052631579,
+  "history_step1": null,
+  "history_step2": {
+    "step2_avg_exit_layer": [
+      5.107105263157894,
+      4.58421052631579,
+      4.530263157894737,
+      4.513421052631579,
+      4.521184210526315
+    ],
+    "step2_test_acc_ee": [
+      0.9413157894736842,
+      0.9410526315789474,
+      0.9410526315789474,
+      0.9417105263157894,
+      0.9418421052631579
+    ],
+    "step2_test_acc_last": [
+      0.9460526315789474,
+      0.9460526315789474,
+      0.9460526315789474,
+      0.9460526315789474,
+      0.9460526315789474
+    ],
+    "step2_train_loss": [
+      0.42730626269976296,
+      0.26414550917347274,
+      0.2555945135315259,
+      0.2520373125175635,
+      0.24856851261059443
+    ]
+  },
+  "step1_best_ckpt": "experiments/deebert/agnews/run_01/best_model_step1.pt"
+}
