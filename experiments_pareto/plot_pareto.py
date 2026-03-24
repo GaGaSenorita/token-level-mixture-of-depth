@@ -88,21 +88,17 @@ def load_routerbert_pareto(dataset):
     return points
 
 def load_hdc_pareto(dataset):
-    split_dir = ROOT / "experiments_split" / dataset
+    f = ROOT / "experiments_pareto/hdcbert" / dataset / "pareto.json"
+    data = json.loads(f.read_text())
     seq_len = 128 if dataset == "agnews" else 256
+    split_layer = 6 if dataset == "agnews" else 8   # best split
     base = baseline_flops(seq_len)
     points = []
-    for split in [2, 4, 6, 8, 10]:
-        f = split_dir / f"split_{split}/results.json"
-        if not f.exists():
-            continue
-        r = json.loads(f.read_text())
-        fed = r["flops_estimation_data"]
-        hist = fed["exit_histogram"]
-        keeps = fed["stage_b_eval_keep_rates"]
-        flops = hdc_flops(seq_len, hist, keeps, split)
-        acc = r["hdc_inference"]["accuracy"] * 100
-        points.append((flops / base * 100, acc))
+    for pt in data["sweep"]:
+        hist  = pt["exit_histogram"]
+        keeps = pt["per_layer_keep_rates_b"]
+        flops = hdc_flops(seq_len, hist, keeps, split_layer)
+        points.append((flops / base * 100, pt["accuracy"] * 100))
     return points
 
 # ── Plotting ──────────────────────────────────────────────────────────

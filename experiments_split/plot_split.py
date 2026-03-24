@@ -168,3 +168,65 @@ plt.tight_layout()
 out = ROOT / "experiments_split/split_ablation.png"
 plt.savefig(out, dpi=150, bbox_inches="tight")
 print(f"Saved → {out}")
+
+# ── Figure 2: FLOPs vs Accuracy (improved) ───────────────────────────
+fig2, ax2 = plt.subplots(figsize=(8, 5.5))
+
+# manual label offsets to avoid overlapping:  (dx, dy) in points
+OFFSETS_AG   = {2: (-8, -14), 4: (-8, -14), 6: (6, 7), 8: (6, 7), 10: (6, 7)}
+OFFSETS_IMDB = {2: (6, 7), 4: (6, -12), 6: (-10, -14), 8: (6, 7), 10: (6, 7)}
+
+for label, rows, color, base_acc, offsets in [
+        ("AG News", agnews, C_AG,   94.66, OFFSETS_AG),
+        ("IMDB",    imdb,   C_IMDB, 92.34, OFFSETS_IMDB)]:
+    flops_pct = [r["total_pct"] for r in rows]
+    accs      = [r["acc"]       for r in rows]
+
+    # manually chosen best split per dataset
+    best_split = {"AG News": 6, "IMDB": 8}[label]
+    best_idx = next(i for i, r in enumerate(rows) if r["split"] == best_split)
+
+    # plot all points as scatter (no connecting line — avoids zigzag)
+    ax2.scatter(flops_pct, accs, color=color, s=70, zorder=3, alpha=0.7,
+                edgecolors="white", linewidths=0.8, label=label)
+
+    # highlight best split with a star
+    ax2.scatter(flops_pct[best_idx], accs[best_idx], color=color,
+                marker="*", s=350, zorder=5, edgecolors="white", linewidths=0.8)
+
+    for r in rows:
+        dx, dy = offsets[r["split"]]
+        is_best = (r["split"] == rows[best_idx]["split"])
+        txt = f"s={r['split']}"
+        if is_best:
+            txt += " (best)"
+        ax2.annotate(txt, (r["total_pct"], r["acc"]),
+                     textcoords="offset points", xytext=(dx, dy),
+                     fontsize=8.5, color=color,
+                     fontweight="bold" if is_best else "normal")
+
+    # baseline reference: 100% FLOPs
+    ax2.plot(100, base_acc, marker="D", markersize=9, color=color,
+             zorder=4, markeredgecolor="white", markeredgewidth=1.0)
+    ax2.annotate(f"Dense\n{base_acc:.2f}%", (100, base_acc),
+                 textcoords="offset points", xytext=(-45, -8),
+                 fontsize=8, color=color, fontstyle="italic",
+                 ha="center")
+
+    # dashed line connecting best to baseline to show savings
+    ax2.plot([flops_pct[best_idx], 100], [accs[best_idx], base_acc],
+             color=color, linestyle="--", linewidth=1.0, alpha=0.4, zorder=2)
+
+ax2.set_xlabel("FLOPs (% of Dense BERT)", fontsize=12)
+ax2.set_ylabel("Accuracy (%)", fontsize=12)
+ax2.set_title("HDC-BERT: FLOPs vs Accuracy Trade-off",
+              fontsize=13, fontweight="bold")
+ax2.legend(fontsize=10, loc="lower right")
+ax2.spines["top"].set_visible(False)
+ax2.spines["right"].set_visible(False)
+ax2.grid(True, alpha=0.25, linestyle="--")
+
+fig2.tight_layout()
+out2 = ROOT / "experiments_split/split_flops_accuracy.png"
+fig2.savefig(out2, dpi=150, bbox_inches="tight")
+print(f"Saved → {out2}")
