@@ -1,0 +1,61 @@
+2026-03-24 13:24:43,964 | INFO | Final args:
+2026-03-24 13:24:43,964 | INFO |   config: configs/hdc_agnews.yaml
+2026-03-24 13:24:43,964 | INFO |   run_name: split_4
+2026-03-24 13:24:43,964 | INFO |   model_key: hdc_bert
+2026-03-24 13:24:43,964 | INFO |   dataset: ag_news
+2026-03-24 13:24:43,964 | INFO |   batch_size: 32
+2026-03-24 13:24:43,964 | INFO |   max_length: 128
+2026-03-24 13:24:43,964 | INFO |   model_name: bert-base-uncased
+2026-03-24 13:24:43,964 | INFO |   dropout: 0.1
+2026-03-24 13:24:43,964 | INFO |   split_layer: 4
+2026-03-24 13:24:43,964 | INFO |   tau: 0.5
+2026-03-24 13:24:43,964 | INFO |   target_keep_ratio: 0.5
+2026-03-24 13:24:43,964 | INFO |   lambda_mod: 0.001
+2026-03-24 13:24:43,964 | INFO |   stage1_learning_rate: 2e-05
+2026-03-24 13:24:43,964 | INFO |   stage1_epochs: 3
+2026-03-24 13:24:43,964 | INFO |   stage2_learning_rate: 0.001
+2026-03-24 13:24:43,964 | INFO |   stage2_epochs: 5
+2026-03-24 13:24:43,964 | INFO |   stage3_learning_rate: 0.001
+2026-03-24 13:24:43,964 | INFO |   stage3_epochs: 5
+2026-03-24 13:24:43,964 | INFO |   entropy_threshold: 0.3
+2026-03-24 13:24:43,964 | INFO |   eval_early_exit: True
+2026-03-24 13:24:43,965 | INFO |   seed: 42
+2026-03-24 13:24:43,965 | INFO |   output_root: ./experiments_split/agnews
+2026-03-24 13:24:43,965 | INFO |   resume_step1_ckpt: ./experiments_split/agnews/shared_step1.pt
+2026-03-24 13:24:43,965 | INFO |   resume_step2_ckpt: None
+2026-03-24 13:24:43,965 | INFO |   output_dir: experiments_split/agnews/split_4
+2026-03-24 13:24:43,965 | INFO | Using device: cuda
+2026-03-24 13:24:43,965 | INFO | Loading data (train/test)...
+2026-03-24 13:25:05,644 | INFO | Train batches: 3750, Test batches: 238
+2026-03-24 13:25:05,644 | INFO | Data loaded. num_labels=4
+2026-03-24 13:25:05,644 | INFO | Initializing HDC-BERT model...
+2026-03-24 13:25:06,466 | INFO | Total parameters: 109,503,772
+2026-03-24 13:25:06,466 | INFO | Off-ramp parameters: 12,304 (0.0112%)
+2026-03-24 13:25:06,466 | INFO | Router parameters: 6,152 (0.0056%)
+2026-03-24 13:25:06,466 | INFO | Stage A layers: 0..3 (4 layers)
+2026-03-24 13:25:06,466 | INFO | Stage B layers: 4..11 (8 layers)
+2026-03-24 13:25:06,466 | INFO | Loading Stage 1 checkpoint from: ./experiments_split/agnews/shared_step1.pt
+2026-03-24 13:25:06,817 | INFO | Starting Stage 2: Off-ramp training...
+2026-03-24 13:36:05,100 | INFO | Loading best Stage 2 checkpoint: experiments_split/agnews/split_4/best_model_step2.pt
+2026-03-24 13:36:05,362 | INFO | Starting Stage 3: Router training...
+2026-03-24 13:52:14,111 | INFO | Loading best Stage 3 checkpoint: experiments_split/agnews/split_4/best_model_step3.pt
+2026-03-24 13:52:14,305 | INFO | Running final routing evaluation (forward_with_routing)...
+2026-03-24 13:52:43,690 | INFO | Final routing accuracy:     0.9271
+2026-03-24 13:52:43,691 | INFO | Final avg keep rate (B):    0.3441
+2026-03-24 13:52:43,691 | INFO |   Stage B layer 0: keep_rate=0.4238
+2026-03-24 13:52:43,691 | INFO |   Stage B layer 1: keep_rate=0.4136
+2026-03-24 13:52:43,691 | INFO |   Stage B layer 2: keep_rate=0.3831
+2026-03-24 13:52:43,691 | INFO |   Stage B layer 3: keep_rate=0.2957
+2026-03-24 13:52:43,691 | INFO |   Stage B layer 4: keep_rate=0.2315
+2026-03-24 13:52:43,691 | INFO |   Stage B layer 5: keep_rate=0.4400
+2026-03-24 13:52:43,691 | INFO |   Stage B layer 6: keep_rate=0.3174
+2026-03-24 13:52:43,691 | INFO |   Stage B layer 7: keep_rate=0.2475
+2026-03-24 13:52:43,691 | INFO | Running final HDC inference evaluation...
+2026-03-24 13:53:20,960 | INFO | HDC inference accuracy:     0.9312
+2026-03-24 13:53:20,960 | INFO | Stage A exit rate:          0.7543
+2026-03-24 13:53:20,960 | INFO | Avg exit layer (Stage A):   2.34
+2026-03-24 13:53:20,961 | INFO | Avg keep rate (Stage B):    0.3958
+2026-03-24 13:53:20,961 | INFO | Exit histogram:             {'1': 723, '2': 3240, '3': 849, '4': 921, 'final': 1867}
+2026-03-24 13:53:20,961 | INFO | Measuring inference latency...
+2026-03-24 13:53:26,212 | INFO | Inference speed: 0.6909 ms/sample (acc=0.9466)
+2026-03-24 13:53:26,215 | INFO | HDC-BERT experiment completed successfully!

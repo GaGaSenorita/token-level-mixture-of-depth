@@ -7,6 +7,8 @@ echo "  sweep: split_layer in [2, 4, 6, 8, 10]"
 echo "=========================================="
 
 # ==================== AG News ====================
+# entropy_threshold=0.3  (略比0.2激进，exit rate更高)
+# target_keep_ratio=0.5  (实际keep约0.45，Stage B更激进)
 echo ""
 echo "---------- AG News ----------"
 
@@ -34,6 +36,8 @@ for SL in 2 4 6 8 10; do
         --config configs/hdc_agnews.yaml \
         --run_name "split_${SL}" --seed 42 \
         --split_layer ${SL} \
+        --entropy_threshold 0.3 \
+        --target_keep_ratio 0.5 \
         --resume_step1_ckpt ${AGNEWS_SHARED_STEP1} \
         --output_root ./experiments_split/agnews
 
@@ -46,6 +50,8 @@ done
 rm -f "${AGNEWS_SHARED_STEP1}"
 
 # ==================== IMDB ====================
+# entropy_threshold=0.4  (IMDB长文本需要更高阈值才能让样本更早退出)
+# target_keep_ratio=0.6  (当前实际是0.62，稍微推一下)
 echo "---------- IMDB ----------"
 
 IMDB_SHARED_STEP1="./experiments_split/imdb/shared_step1.pt"
@@ -72,6 +78,8 @@ for SL in 2 4 6 8 10; do
         --config configs/hdc_imdb.yaml \
         --run_name "split_${SL}" --seed 42 \
         --split_layer ${SL} \
+        --entropy_threshold 0.4 \
+        --target_keep_ratio 0.6 \
         --resume_step1_ckpt ${IMDB_SHARED_STEP1} \
         --output_root ./experiments_split/imdb
 

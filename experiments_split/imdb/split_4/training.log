@@ -1,0 +1,61 @@
+2026-03-24 16:10:50,359 | INFO | Final args:
+2026-03-24 16:10:50,359 | INFO |   config: configs/hdc_imdb.yaml
+2026-03-24 16:10:50,359 | INFO |   run_name: split_4
+2026-03-24 16:10:50,359 | INFO |   model_key: hdc_bert
+2026-03-24 16:10:50,359 | INFO |   dataset: imdb
+2026-03-24 16:10:50,359 | INFO |   batch_size: 32
+2026-03-24 16:10:50,359 | INFO |   max_length: 256
+2026-03-24 16:10:50,359 | INFO |   model_name: bert-base-uncased
+2026-03-24 16:10:50,359 | INFO |   dropout: 0.1
+2026-03-24 16:10:50,359 | INFO |   split_layer: 4
+2026-03-24 16:10:50,359 | INFO |   tau: 0.5
+2026-03-24 16:10:50,359 | INFO |   target_keep_ratio: 0.6
+2026-03-24 16:10:50,359 | INFO |   lambda_mod: 0.001
+2026-03-24 16:10:50,359 | INFO |   stage1_learning_rate: 2e-05
+2026-03-24 16:10:50,359 | INFO |   stage1_epochs: 3
+2026-03-24 16:10:50,359 | INFO |   stage2_learning_rate: 0.001
+2026-03-24 16:10:50,359 | INFO |   stage2_epochs: 5
+2026-03-24 16:10:50,359 | INFO |   stage3_learning_rate: 0.001
+2026-03-24 16:10:50,359 | INFO |   stage3_epochs: 5
+2026-03-24 16:10:50,359 | INFO |   entropy_threshold: 0.4
+2026-03-24 16:10:50,359 | INFO |   eval_early_exit: True
+2026-03-24 16:10:50,359 | INFO |   seed: 42
+2026-03-24 16:10:50,359 | INFO |   output_root: ./experiments_split/imdb
+2026-03-24 16:10:50,359 | INFO |   resume_step1_ckpt: ./experiments_split/imdb/shared_step1.pt
+2026-03-24 16:10:50,359 | INFO |   resume_step2_ckpt: None
+2026-03-24 16:10:50,359 | INFO |   output_dir: experiments_split/imdb/split_4
+2026-03-24 16:10:50,360 | INFO | Using device: cuda
+2026-03-24 16:10:50,360 | INFO | Loading data (train/test)...
+2026-03-24 16:11:11,504 | INFO | Train batches: 782, Test batches: 782
+2026-03-24 16:11:11,504 | INFO | Data loaded. num_labels=2
+2026-03-24 16:11:11,504 | INFO | Initializing HDC-BERT model...
+2026-03-24 16:11:12,349 | INFO | Total parameters: 109,496,082
+2026-03-24 16:11:12,349 | INFO | Off-ramp parameters: 6,152 (0.0056%)
+2026-03-24 16:11:12,349 | INFO | Router parameters: 6,152 (0.0056%)
+2026-03-24 16:11:12,349 | INFO | Stage A layers: 0..3 (4 layers)
+2026-03-24 16:11:12,349 | INFO | Stage B layers: 4..11 (8 layers)
+2026-03-24 16:11:12,349 | INFO | Loading Stage 1 checkpoint from: ./experiments_split/imdb/shared_step1.pt
+2026-03-24 16:11:12,670 | INFO | Starting Stage 2: Off-ramp training...
+2026-03-24 16:36:04,068 | INFO | Loading best Stage 2 checkpoint: experiments_split/imdb/split_4/best_model_step2.pt
+2026-03-24 16:36:04,340 | INFO | Starting Stage 3: Router training...
+2026-03-24 16:50:19,768 | INFO | Loading best Stage 3 checkpoint: experiments_split/imdb/split_4/best_model_step3.pt
+2026-03-24 16:50:20,045 | INFO | Running final routing evaluation (forward_with_routing)...
+2026-03-24 16:52:07,957 | INFO | Final routing accuracy:     0.9159
+2026-03-24 16:52:07,957 | INFO | Final avg keep rate (B):    0.5072
+2026-03-24 16:52:07,957 | INFO |   Stage B layer 0: keep_rate=0.4788
+2026-03-24 16:52:07,957 | INFO |   Stage B layer 1: keep_rate=0.5122
+2026-03-24 16:52:07,957 | INFO |   Stage B layer 2: keep_rate=0.5685
+2026-03-24 16:52:07,957 | INFO |   Stage B layer 3: keep_rate=0.5439
+2026-03-24 16:52:07,958 | INFO |   Stage B layer 4: keep_rate=0.5461
+2026-03-24 16:52:07,958 | INFO |   Stage B layer 5: keep_rate=0.5414
+2026-03-24 16:52:07,958 | INFO |   Stage B layer 6: keep_rate=0.4408
+2026-03-24 16:52:07,958 | INFO |   Stage B layer 7: keep_rate=0.4255
+2026-03-24 16:52:07,958 | INFO | Running final HDC inference evaluation...
+2026-03-24 16:56:12,560 | INFO | HDC inference accuracy:     0.9146
+2026-03-24 16:56:12,560 | INFO | Stage A exit rate:          0.1060
+2026-03-24 16:56:12,560 | INFO | Avg exit layer (Stage A):   3.88
+2026-03-24 16:56:12,560 | INFO | Avg keep rate (Stage B):    0.5136
+2026-03-24 16:56:12,560 | INFO | Exit histogram:             {'2': 65, '3': 185, '4': 2400, 'final': 22350}
+2026-03-24 16:56:12,560 | INFO | Measuring inference latency...
+2026-03-24 16:56:47,302 | INFO | Inference speed: 1.3896 ms/sample (acc=0.9234)
+2026-03-24 16:56:47,305 | INFO | HDC-BERT experiment completed successfully!
