@@ -1,0 +1,56 @@
+2026-03-25 05:45:59,794 | INFO | Final args:
+2026-03-25 05:45:59,794 | INFO |   config: configs/hdc_imdb.yaml
+2026-03-25 05:45:59,794 | INFO |   run_name: shared_step1
+2026-03-25 05:45:59,794 | INFO |   model_key: hdc_bert
+2026-03-25 05:45:59,794 | INFO |   dataset: imdb
+2026-03-25 05:45:59,794 | INFO |   batch_size: 32
+2026-03-25 05:45:59,794 | INFO |   max_length: 256
+2026-03-25 05:45:59,794 | INFO |   model_name: bert-base-uncased
+2026-03-25 05:45:59,794 | INFO |   dropout: 0.1
+2026-03-25 05:45:59,794 | INFO |   split_layer: 8
+2026-03-25 05:45:59,794 | INFO |   tau: 0.5
+2026-03-25 05:45:59,794 | INFO |   target_keep_ratio: 0.5
+2026-03-25 05:45:59,794 | INFO |   lambda_mod: 0.001
+2026-03-25 05:45:59,794 | INFO |   stage1_learning_rate: 2e-05
+2026-03-25 05:45:59,794 | INFO |   stage1_epochs: 3
+2026-03-25 05:45:59,794 | INFO |   stage2_learning_rate: 0.001
+2026-03-25 05:45:59,794 | INFO |   stage2_epochs: 0
+2026-03-25 05:45:59,794 | INFO |   stage3_learning_rate: 0.001
+2026-03-25 05:45:59,794 | INFO |   stage3_epochs: 0
+2026-03-25 05:45:59,795 | INFO |   entropy_threshold: 0.2
+2026-03-25 05:45:59,795 | INFO |   eval_early_exit: True
+2026-03-25 05:45:59,795 | INFO |   seed: 42
+2026-03-25 05:45:59,795 | INFO |   output_root: ./experiments_pareto/hdcbert/imdb
+2026-03-25 05:45:59,795 | INFO |   resume_step1_ckpt: None
+2026-03-25 05:45:59,795 | INFO |   resume_step2_ckpt: None
+2026-03-25 05:45:59,795 | INFO |   output_dir: experiments_pareto/hdcbert/imdb/shared_step1
+2026-03-25 05:45:59,795 | INFO | Using device: cuda
+2026-03-25 05:45:59,795 | INFO | Loading data (train/test)...
+2026-03-25 05:46:10,161 | INFO | Train batches: 782, Test batches: 782
+2026-03-25 05:46:10,161 | INFO | Data loaded. num_labels=2
+2026-03-25 05:46:10,162 | INFO | Initializing HDC-BERT model...
+2026-03-25 05:46:10,867 | INFO | Total parameters: 109,499,158
+2026-03-25 05:46:10,867 | INFO | Off-ramp parameters: 12,304 (0.0112%)
+2026-03-25 05:46:10,867 | INFO | Router parameters: 3,076 (0.0028%)
+2026-03-25 05:46:10,867 | INFO | Stage A layers: 0..7 (8 layers)
+2026-03-25 05:46:10,867 | INFO | Stage B layers: 8..11 (4 layers)
+2026-03-25 05:46:10,867 | INFO | Starting Stage 1: Dense fine-tuning...
+2026-03-25 05:53:29,329 | INFO | Loading best Stage 1 checkpoint: experiments_pareto/hdcbert/imdb/shared_step1/best_model_step1.pt
+2026-03-25 05:53:29,614 | INFO | Skipping Stage 2 (stage2_epochs=0).
+2026-03-25 05:53:29,614 | INFO | Skipping Stage 3 (stage3_epochs=0).
+2026-03-25 05:53:29,614 | INFO | Running final routing evaluation (forward_with_routing)...
+2026-03-25 05:54:38,182 | INFO | Final routing accuracy:     0.9215
+2026-03-25 05:54:38,182 | INFO | Final avg keep rate (B):    1.0000
+2026-03-25 05:54:38,182 | INFO |   Stage B layer 0: keep_rate=1.0000
+2026-03-25 05:54:38,182 | INFO |   Stage B layer 1: keep_rate=1.0000
+2026-03-25 05:54:38,182 | INFO |   Stage B layer 2: keep_rate=1.0000
+2026-03-25 05:54:38,182 | INFO |   Stage B layer 3: keep_rate=1.0000
+2026-03-25 05:54:38,183 | INFO | Running final HDC inference evaluation...
+2026-03-25 05:58:31,180 | INFO | HDC inference accuracy:     0.9215
+2026-03-25 05:58:31,180 | INFO | Stage A exit rate:          0.0000
+2026-03-25 05:58:31,180 | INFO | Avg exit layer (Stage A):   0.00
+2026-03-25 05:58:31,180 | INFO | Avg keep rate (Stage B):    1.0000
+2026-03-25 05:58:31,180 | INFO | Exit histogram:             {'final': 25000}
+2026-03-25 05:58:31,180 | INFO | Measuring inference latency...
+2026-03-25 05:59:05,913 | INFO | Inference speed: 1.3893 ms/sample (acc=0.9215)
+2026-03-25 05:59:05,915 | INFO | HDC-BERT experiment completed successfully!
