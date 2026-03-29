@@ -1,0 +1,853 @@
+{
+  "dataset": "imdb",
+  "seed": 42,
+  "sweep": [
+    {
+      "target_keep_ratio": 0.3,
+      "entropy_threshold": 0.05,
+      "accuracy": 0.9153,
+      "stage_a_exit_rate": 0.0146,
+      "avg_exit_layer_a": 6.9671,
+      "exit_histogram": {
+        "6": 69,
+        "7": 239,
+        "8": 57,
+        "final": 24635
+      },
+      "avg_keep_rate_b": 0.2273,
+      "attn_flops_ratio_b": 0.2022,
+      "per_layer_keep_rates_b": [
+        0.2573,
+        0.2215,
+        0.2018,
+        0.2287
+      ]
+    },
+    {
+      "target_keep_ratio": 0.3,
+      "entropy_threshold": 0.2,
+      "accuracy": 0.9155,
+      "stage_a_exit_rate": 0.1553,
+      "avg_exit_layer_a": 6.651,
+      "exit_histogram": {
+        "4": 97,
+        "5": 38,
+        "6": 1347,
+        "7": 2041,
+        "8": 359,
+        "final": 21118
+      },
+      "avg_keep_rate_b": 0.2273,
+      "attn_flops_ratio_b": 0.2022,
+      "per_layer_keep_rates_b": [
+        0.2573,
+        0.2215,
+        0.2018,
+        0.2287
+      ]
+    },
+    {
+      "target_keep_ratio": 0.3,
+      "entropy_threshold": 0.4,
+      "accuracy": 0.9089,
+      "stage_a_exit_rate": 0.4472,
+      "avg_exit_layer_a": 5.9071,
+      "exit_histogram": {
+        "2": 15,
+        "3": 1,
+        "4": 2307,
+        "5": 909,
+        "6": 3993,
+        "7": 3365,
+        "8": 591,
+        "final": 13819
+      },
+      "avg_keep_rate_b": 0.2273,
+      "attn_flops_ratio_b": 0.2022,
+      "per_layer_keep_rates_b": [
+        0.2573,
+        0.2215,
+        0.2018,
+        0.2287
+      ]
+    },
+    {
+      "target_keep_ratio": 0.3,
+      "entropy_threshold": 0.6,
+      "accuracy": 0.8504,
+      "stage_a_exit_rate": 0.8355,
+      "avg_exit_layer_a": 4.6772,
+      "exit_histogram": {
+        "1": 11,
+        "2": 2740,
+        "3": 201,
+        "4": 8650,
+        "5": 2053,
+        "6": 4390,
+        "7": 2345,
+        "8": 498,
+        "final": 4112
+      },
+      "avg_keep_rate_b": 0.2273,
+      "attn_flops_ratio_b": 0.2022,
+      "per_layer_keep_rates_b": [
+        0.2573,
+        0.2215,
+        0.2018,
+        0.2287
+      ]
+    },
+    {
+      "target_keep_ratio": 0.3,
+      "entropy_threshold": 0.69,
+      "accuracy": 0.6935,
+      "stage_a_exit_rate": 1.0,
+      "avg_exit_layer_a": 1.5566,
+      "exit_histogram": {
+        "1": 13874,
+        "2": 9458,
+        "3": 719,
+        "4": 812,
+        "5": 101,
+        "6": 32,
+        "7": 2,
+        "8": 1,
+        "final": 1
+      },
+      "avg_keep_rate_b": 0.2273,
+      "attn_flops_ratio_b": 0.2022,
+      "per_layer_keep_rates_b": [
+        0.2573,
+        0.2215,
+        0.2018,
+        0.2287
+      ]
+    },
+    {
+      "target_keep_ratio": 0.4,
+      "entropy_threshold": 0.05,
+      "accuracy": 0.9157,
+      "stage_a_exit_rate": 0.0146,
+      "avg_exit_layer_a": 6.9671,
+      "exit_histogram": {
+        "6": 69,
+        "7": 239,
+        "8": 57,
+        "final": 24635
+      },
+      "avg_keep_rate_b": 0.2997,
+      "attn_flops_ratio_b": 0.2697,
+      "per_layer_keep_rates_b": [
+        0.3182,
+        0.2526,
+        0.3056,
+        0.3225
+      ]
+    },
+    {
+      "target_keep_ratio": 0.4,
+      "entropy_threshold": 0.2,
+      "accuracy": 0.9159,
+      "stage_a_exit_rate": 0.1553,
+      "avg_exit_layer_a": 6.651,
+      "exit_histogram": {
+        "4": 97,
+        "5": 38,
+        "6": 1347,
+        "7": 2041,
+        "8": 359,
+        "final": 21118
+      },
+      "avg_keep_rate_b": 0.2997,
+      "attn_flops_ratio_b": 0.2697,
+      "per_layer_keep_rates_b": [
+        0.3182,
+        0.2526,
+        0.3056,
+        0.3225
+      ]
+    },
+    {
+      "target_keep_ratio": 0.4,
+      "entropy_threshold": 0.4,
+      "accuracy": 0.9091,
+      "stage_a_exit_rate": 0.4472,
+      "avg_exit_layer_a": 5.9071,
+      "exit_histogram": {
+        "2": 15,
+        "3": 1,
+        "4": 2307,
+        "5": 909,
+        "6": 3993,
+        "7": 3365,
+        "8": 591,
+        "final": 13819
+      },
+      "avg_keep_rate_b": 0.2997,
+      "attn_flops_ratio_b": 0.2697,
+      "per_layer_keep_rates_b": [
+        0.3182,
+        0.2526,
+        0.3056,
+        0.3225
+      ]
+    },
+    {
+      "target_keep_ratio": 0.4,
+      "entropy_threshold": 0.6,
+      "accuracy": 0.8501,
+      "stage_a_exit_rate": 0.8355,
+      "avg_exit_layer_a": 4.6772,
+      "exit_histogram": {
+        "1": 11,
+        "2": 2740,
+        "3": 201,
+        "4": 8650,
+        "5": 2053,
+        "6": 4390,
+        "7": 2345,
+        "8": 498,
+        "final": 4112
+      },
+      "avg_keep_rate_b": 0.2997,
+      "attn_flops_ratio_b": 0.2697,
+      "per_layer_keep_rates_b": [
+        0.3182,
+        0.2526,
+        0.3056,
+        0.3225
+      ]
+    },
+    {
+      "target_keep_ratio": 0.4,
+      "entropy_threshold": 0.69,
+      "accuracy": 0.6934,
+      "stage_a_exit_rate": 1.0,
+      "avg_exit_layer_a": 1.5566,
+      "exit_histogram": {
+        "1": 13874,
+        "2": 9458,
+        "3": 719,
+        "4": 812,
+        "5": 101,
+        "6": 32,
+        "7": 2,
+        "8": 1,
+        "final": 1
+      },
+      "avg_keep_rate_b": 0.2997,
+      "attn_flops_ratio_b": 0.2697,
+      "per_layer_keep_rates_b": [
+        0.3182,
+        0.2526,
+        0.3056,
+        0.3225
+      ]
+    },
+    {
+      "target_keep_ratio": 0.5,
+      "entropy_threshold": 0.05,
+      "accuracy": 0.9168,
+      "stage_a_exit_rate": 0.0146,
+      "avg_exit_layer_a": 6.9671,
+      "exit_histogram": {
+        "6": 69,
+        "7": 239,
+        "8": 57,
+        "final": 24635
+      },
+      "avg_keep_rate_b": 0.3229,
+      "attn_flops_ratio_b": 0.2917,
+      "per_layer_keep_rates_b": [
+        0.4127,
+        0.368,
+        0.3178,
+        0.1933
+      ]
+    },
+    {
+      "target_keep_ratio": 0.5,
+      "entropy_threshold": 0.2,
+      "accuracy": 0.9168,
+      "stage_a_exit_rate": 0.1553,
+      "avg_exit_layer_a": 6.651,
+      "exit_histogram": {
+        "4": 97,
+        "5": 38,
+        "6": 1347,
+        "7": 2041,
+        "8": 359,
+        "final": 21118
+      },
+      "avg_keep_rate_b": 0.3229,
+      "attn_flops_ratio_b": 0.2917,
+      "per_layer_keep_rates_b": [
+        0.4127,
+        0.368,
+        0.3178,
+        0.1933
+      ]
+    },
+    {
+      "target_keep_ratio": 0.5,
+      "entropy_threshold": 0.4,
+      "accuracy": 0.9104,
+      "stage_a_exit_rate": 0.4472,
+      "avg_exit_layer_a": 5.9071,
+      "exit_histogram": {
+        "2": 15,
+        "3": 1,
+        "4": 2307,
+        "5": 909,
+        "6": 3993,
+        "7": 3365,
+        "8": 591,
+        "final": 13819
+      },
+      "avg_keep_rate_b": 0.3229,
+      "attn_flops_ratio_b": 0.2917,
+      "per_layer_keep_rates_b": [
+        0.4127,
+        0.368,
+        0.3178,
+        0.1933
+      ]
+    },
+    {
+      "target_keep_ratio": 0.5,
+      "entropy_threshold": 0.6,
+      "accuracy": 0.8502,
+      "stage_a_exit_rate": 0.8355,
+      "avg_exit_layer_a": 4.6772,
+      "exit_histogram": {
+        "1": 11,
+        "2": 2740,
+        "3": 201,
+        "4": 8650,
+        "5": 2053,
+        "6": 4390,
+        "7": 2345,
+        "8": 498,
+        "final": 4112
+      },
+      "avg_keep_rate_b": 0.3229,
+      "attn_flops_ratio_b": 0.2917,
+      "per_layer_keep_rates_b": [
+        0.4127,
+        0.368,
+        0.3178,
+        0.1933
+      ]
+    },
+    {
+      "target_keep_ratio": 0.5,
+      "entropy_threshold": 0.69,
+      "accuracy": 0.6935,
+      "stage_a_exit_rate": 1.0,
+      "avg_exit_layer_a": 1.5566,
+      "exit_histogram": {
+        "1": 13874,
+        "2": 9458,
+        "3": 719,
+        "4": 812,
+        "5": 101,
+        "6": 32,
+        "7": 2,
+        "8": 1,
+        "final": 1
+      },
+      "avg_keep_rate_b": 0.3229,
+      "attn_flops_ratio_b": 0.2917,
+      "per_layer_keep_rates_b": [
+        0.4127,
+        0.368,
+        0.3178,
+        0.1933
+      ]
+    },
+    {
+      "target_keep_ratio": 0.6,
+      "entropy_threshold": 0.05,
+      "accuracy": 0.9195,
+      "stage_a_exit_rate": 0.0146,
+      "avg_exit_layer_a": 6.9671,
+      "exit_histogram": {
+        "6": 69,
+        "7": 239,
+        "8": 57,
+        "final": 24635
+      },
+      "avg_keep_rate_b": 0.4807,
+      "attn_flops_ratio_b": 0.4451,
+      "per_layer_keep_rates_b": [
+        0.5133,
+        0.4303,
+        0.4725,
+        0.5067
+      ]
+    },
+    {
+      "target_keep_ratio": 0.6,
+      "entropy_threshold": 0.2,
+      "accuracy": 0.9196,
+      "stage_a_exit_rate": 0.1553,
+      "avg_exit_layer_a": 6.651,
+      "exit_histogram": {
+        "4": 97,
+        "5": 38,
+        "6": 1347,
+        "7": 2041,
+        "8": 359,
+        "final": 21118
+      },
+      "avg_keep_rate_b": 0.4807,
+      "attn_flops_ratio_b": 0.4451,
+      "per_layer_keep_rates_b": [
+        0.5133,
+        0.4303,
+        0.4725,
+        0.5067
+      ]
+    },
+    {
+      "target_keep_ratio": 0.6,
+      "entropy_threshold": 0.4,
+      "accuracy": 0.9122,
+      "stage_a_exit_rate": 0.4472,
+      "avg_exit_layer_a": 5.9071,
+      "exit_histogram": {
+        "2": 15,
+        "3": 1,
+        "4": 2307,
+        "5": 909,
+        "6": 3993,
+        "7": 3365,
+        "8": 591,
+        "final": 13819
+      },
+      "avg_keep_rate_b": 0.4807,
+      "attn_flops_ratio_b": 0.4451,
+      "per_layer_keep_rates_b": [
+        0.5133,
+        0.4303,
+        0.4725,
+        0.5067
+      ]
+    },
+    {
+      "target_keep_ratio": 0.6,
+      "entropy_threshold": 0.6,
+      "accuracy": 0.8509,
+      "stage_a_exit_rate": 0.8355,
+      "avg_exit_layer_a": 4.6772,
+      "exit_histogram": {
+        "1": 11,
+        "2": 2740,
+        "3": 201,
+        "4": 8650,
+        "5": 2053,
+        "6": 4390,
+        "7": 2345,
+        "8": 498,
+        "final": 4112
+      },
+      "avg_keep_rate_b": 0.4807,
+      "attn_flops_ratio_b": 0.4451,
+      "per_layer_keep_rates_b": [
+        0.5133,
+        0.4303,
+        0.4725,
+        0.5067
+      ]
+    },
+    {
+      "target_keep_ratio": 0.6,
+      "entropy_threshold": 0.69,
+      "accuracy": 0.6934,
+      "stage_a_exit_rate": 1.0,
+      "avg_exit_layer_a": 1.5566,
+      "exit_histogram": {
+        "1": 13874,
+        "2": 9458,
+        "3": 719,
+        "4": 812,
+        "5": 101,
+        "6": 32,
+        "7": 2,
+        "8": 1,
+        "final": 1
+      },
+      "avg_keep_rate_b": 0.4807,
+      "attn_flops_ratio_b": 0.4451,
+      "per_layer_keep_rates_b": [
+        0.5133,
+        0.4303,
+        0.4725,
+        0.5067
+      ]
+    },
+    {
+      "target_keep_ratio": 0.7,
+      "entropy_threshold": 0.05,
+      "accuracy": 0.9203,
+      "stage_a_exit_rate": 0.0146,
+      "avg_exit_layer_a": 6.9671,
+      "exit_histogram": {
+        "6": 69,
+        "7": 239,
+        "8": 57,
+        "final": 24635
+      },
+      "avg_keep_rate_b": 0.5142,
+      "attn_flops_ratio_b": 0.4785,
+      "per_layer_keep_rates_b": [
+        0.6428,
+        0.5849,
+        0.5336,
+        0.2955
+      ]
+    },
+    {
+      "target_keep_ratio": 0.7,
+      "entropy_threshold": 0.2,
+      "accuracy": 0.9203,
+      "stage_a_exit_rate": 0.1553,
+      "avg_exit_layer_a": 6.651,
+      "exit_histogram": {
+        "4": 97,
+        "5": 38,
+        "6": 1347,
+        "7": 2041,
+        "8": 359,
+        "final": 21118
+      },
+      "avg_keep_rate_b": 0.5142,
+      "attn_flops_ratio_b": 0.4785,
+      "per_layer_keep_rates_b": [
+        0.6428,
+        0.5849,
+        0.5336,
+        0.2955
+      ]
+    },
+    {
+      "target_keep_ratio": 0.7,
+      "entropy_threshold": 0.4,
+      "accuracy": 0.9128,
+      "stage_a_exit_rate": 0.4472,
+      "avg_exit_layer_a": 5.9071,
+      "exit_histogram": {
+        "2": 15,
+        "3": 1,
+        "4": 2307,
+        "5": 909,
+        "6": 3993,
+        "7": 3365,
+        "8": 591,
+        "final": 13819
+      },
+      "avg_keep_rate_b": 0.5142,
+      "attn_flops_ratio_b": 0.4785,
+      "per_layer_keep_rates_b": [
+        0.6428,
+        0.5849,
+        0.5336,
+        0.2955
+      ]
+    },
+    {
+      "target_keep_ratio": 0.7,
+      "entropy_threshold": 0.6,
+      "accuracy": 0.8514,
+      "stage_a_exit_rate": 0.8355,
+      "avg_exit_layer_a": 4.6772,
+      "exit_histogram": {
+        "1": 11,
+        "2": 2740,
+        "3": 201,
+        "4": 8650,
+        "5": 2053,
+        "6": 4390,
+        "7": 2345,
+        "8": 498,
+        "final": 4112
+      },
+      "avg_keep_rate_b": 0.5142,
+      "attn_flops_ratio_b": 0.4785,
+      "per_layer_keep_rates_b": [
+        0.6428,
+        0.5849,
+        0.5336,
+        0.2955
+      ]
+    },
+    {
+      "target_keep_ratio": 0.7,
+      "entropy_threshold": 0.69,
+      "accuracy": 0.6935,
+      "stage_a_exit_rate": 1.0,
+      "avg_exit_layer_a": 1.5566,
+      "exit_histogram": {
+        "1": 13874,
+        "2": 9458,
+        "3": 719,
+        "4": 812,
+        "5": 101,
+        "6": 32,
+        "7": 2,
+        "8": 1,
+        "final": 1
+      },
+      "avg_keep_rate_b": 0.5142,
+      "attn_flops_ratio_b": 0.4785,
+      "per_layer_keep_rates_b": [
+        0.6428,
+        0.5849,
+        0.5336,
+        0.2955
+      ]
+    },
+    {
+      "target_keep_ratio": 0.8,
+      "entropy_threshold": 0.05,
+      "accuracy": 0.9185,
+      "stage_a_exit_rate": 0.0146,
+      "avg_exit_layer_a": 6.9671,
+      "exit_histogram": {
+        "6": 69,
+        "7": 239,
+        "8": 57,
+        "final": 24635
+      },
+      "avg_keep_rate_b": 0.5364,
+      "attn_flops_ratio_b": 0.5008,
+      "per_layer_keep_rates_b": [
+        0.7554,
+        0.6354,
+        0.5645,
+        0.1902
+      ]
+    },
+    {
+      "target_keep_ratio": 0.8,
+      "entropy_threshold": 0.2,
+      "accuracy": 0.9186,
+      "stage_a_exit_rate": 0.1553,
+      "avg_exit_layer_a": 6.651,
+      "exit_histogram": {
+        "4": 97,
+        "5": 38,
+        "6": 1347,
+        "7": 2041,
+        "8": 359,
+        "final": 21118
+      },
+      "avg_keep_rate_b": 0.5364,
+      "attn_flops_ratio_b": 0.5008,
+      "per_layer_keep_rates_b": [
+        0.7554,
+        0.6354,
+        0.5645,
+        0.1902
+      ]
+    },
+    {
+      "target_keep_ratio": 0.8,
+      "entropy_threshold": 0.4,
+      "accuracy": 0.9117,
+      "stage_a_exit_rate": 0.4472,
+      "avg_exit_layer_a": 5.9071,
+      "exit_histogram": {
+        "2": 15,
+        "3": 1,
+        "4": 2307,
+        "5": 909,
+        "6": 3993,
+        "7": 3365,
+        "8": 591,
+        "final": 13819
+      },
+      "avg_keep_rate_b": 0.5364,
+      "attn_flops_ratio_b": 0.5008,
+      "per_layer_keep_rates_b": [
+        0.7554,
+        0.6354,
+        0.5645,
+        0.1902
+      ]
+    },
+    {
+      "target_keep_ratio": 0.8,
+      "entropy_threshold": 0.6,
+      "accuracy": 0.851,
+      "stage_a_exit_rate": 0.8355,
+      "avg_exit_layer_a": 4.6772,
+      "exit_histogram": {
+        "1": 11,
+        "2": 2740,
+        "3": 201,
+        "4": 8650,
+        "5": 2053,
+        "6": 4390,
+        "7": 2345,
+        "8": 498,
+        "final": 4112
+      },
+      "avg_keep_rate_b": 0.5364,
+      "attn_flops_ratio_b": 0.5008,
+      "per_layer_keep_rates_b": [
+        0.7554,
+        0.6354,
+        0.5645,
+        0.1902
+      ]
+    },
+    {
+      "target_keep_ratio": 0.8,
+      "entropy_threshold": 0.69,
+      "accuracy": 0.6935,
+      "stage_a_exit_rate": 1.0,
+      "avg_exit_layer_a": 1.5566,
+      "exit_histogram": {
+        "1": 13874,
+        "2": 9458,
+        "3": 719,
+        "4": 812,
+        "5": 101,
+        "6": 32,
+        "7": 2,
+        "8": 1,
+        "final": 1
+      },
+      "avg_keep_rate_b": 0.5364,
+      "attn_flops_ratio_b": 0.5008,
+      "per_layer_keep_rates_b": [
+        0.7554,
+        0.6354,
+        0.5645,
+        0.1902
+      ]
+    },
+    {
+      "target_keep_ratio": 0.9,
+      "entropy_threshold": 0.05,
+      "accuracy": 0.922,
+      "stage_a_exit_rate": 0.0146,
+      "avg_exit_layer_a": 6.9671,
+      "exit_histogram": {
+        "6": 69,
+        "7": 239,
+        "8": 57,
+        "final": 24635
+      },
+      "avg_keep_rate_b": 0.6344,
+      "attn_flops_ratio_b": 0.6012,
+      "per_layer_keep_rates_b": [
+        0.7931,
+        0.6841,
+        0.5469,
+        0.5134
+      ]
+    },
+    {
+      "target_keep_ratio": 0.9,
+      "entropy_threshold": 0.2,
+      "accuracy": 0.9218,
+      "stage_a_exit_rate": 0.1553,
+      "avg_exit_layer_a": 6.651,
+      "exit_histogram": {
+        "4": 97,
+        "5": 38,
+        "6": 1347,
+        "7": 2041,
+        "8": 359,
+        "final": 21118
+      },
+      "avg_keep_rate_b": 0.6344,
+      "attn_flops_ratio_b": 0.6012,
+      "per_layer_keep_rates_b": [
+        0.7931,
+        0.6841,
+        0.5469,
+        0.5134
+      ]
+    },
+    {
+      "target_keep_ratio": 0.9,
+      "entropy_threshold": 0.4,
+      "accuracy": 0.914,
+      "stage_a_exit_rate": 0.4472,
+      "avg_exit_layer_a": 5.9071,
+      "exit_histogram": {
+        "2": 15,
+        "3": 1,
+        "4": 2307,
+        "5": 909,
+        "6": 3993,
+        "7": 3365,
+        "8": 591,
+        "final": 13819
+      },
+      "avg_keep_rate_b": 0.6344,
+      "attn_flops_ratio_b": 0.6012,
+      "per_layer_keep_rates_b": [
+        0.7931,
+        0.6841,
+        0.5469,
+        0.5134
+      ]
+    },
+    {
+      "target_keep_ratio": 0.9,
+      "entropy_threshold": 0.6,
+      "accuracy": 0.852,
+      "stage_a_exit_rate": 0.8355,
+      "avg_exit_layer_a": 4.6772,
+      "exit_histogram": {
+        "1": 11,
+        "2": 2740,
+        "3": 201,
+        "4": 8650,
+        "5": 2053,
+        "6": 4390,
+        "7": 2345,
+        "8": 498,
+        "final": 4112
+      },
+      "avg_keep_rate_b": 0.6344,
+      "attn_flops_ratio_b": 0.6012,
+      "per_layer_keep_rates_b": [
+        0.7931,
+        0.6841,
+        0.5469,
+        0.5134
+      ]
+    },
+    {
+      "target_keep_ratio": 0.9,
+      "entropy_threshold": 0.69,
+      "accuracy": 0.6935,
+      "stage_a_exit_rate": 1.0,
+      "avg_exit_layer_a": 1.5566,
+      "exit_histogram": {
+        "1": 13874,
+        "2": 9458,
+        "3": 719,
+        "4": 812,
+        "5": 101,
+        "6": 32,
+        "7": 2,
+        "8": 1,
+        "final": 1
+      },
+      "avg_keep_rate_b": 0.6344,
+      "attn_flops_ratio_b": 0.6012,
+      "per_layer_keep_rates_b": [
+        0.7931,
+        0.6841,
+        0.5469,
+        0.5134
+      ]
+    }
+  ]
+}

@@ -1,0 +1,240 @@
+{
+  "args": {
+    "batch_size": 32,
+    "config": "configs/hdc_imdb.yaml",
+    "dataset": "imdb",
+    "dropout": 0.1,
+    "entropy_threshold": 0.2,
+    "eval_early_exit": true,
+    "lambda_mod": 0.001,
+    "max_length": 256,
+    "model_key": "hdc_bert",
+    "model_name": "bert-base-uncased",
+    "output_dir": "experiments_pareto/hdcbert/imdb/keep_0.6",
+    "output_root": "./experiments_pareto/hdcbert/imdb",
+    "resume_step1_ckpt": "./experiments_pareto/hdcbert/imdb/shared_step1.pt",
+    "resume_step2_ckpt": "./experiments_pareto/hdcbert/imdb/shared_step2.pt",
+    "run_name": "keep_0.6",
+    "seed": 42,
+    "split_layer": 8,
+    "stage1_epochs": 3,
+    "stage1_learning_rate": 2e-05,
+    "stage2_epochs": 5,
+    "stage2_learning_rate": 0.001,
+    "stage3_epochs": 5,
+    "stage3_learning_rate": 0.001,
+    "target_keep_ratio": 0.6,
+    "tau": 0.5
+  },
+  "final_avg_keep_rate": 0.48071719790854117,
+  "final_eval_keep_rates": [
+    0.5133225024889803,
+    0.4303326189441754,
+    0.4725008391205917,
+    0.5067128310804172
+  ],
+  "final_routing_acc": 0.91948,
+  "flops_estimation_data": {
+    "avg_exit_layer_a": 6.650953116950026,
+    "exit_histogram": {
+      "4": 97,
+      "5": 38,
+      "6": 1347,
+      "7": 2041,
+      "8": 359,
+      "final": 21118
+    },
+    "hidden_size": 768,
+    "intermediate_size": 3072,
+    "max_length": 256,
+    "n_layers": 12,
+    "n_stage_a_layers": 8,
+    "n_stage_b_layers": 4,
+    "num_attention_heads": 12,
+    "split_layer": 8,
+    "stage_a_exit_rate": 0.15528,
+    "stage_b_avg_keep_rate": 0.48071719790854117,
+    "stage_b_eval_keep_rates": [
+      0.5133225024889803,
+      0.4303326189441754,
+      0.4725008391205917,
+      0.5067128310804172
+    ]
+  },
+  "hdc_inference": {
+    "accuracy": 0.9196,
+    "avg_exit_layer_a": 6.650953116950026,
+    "avg_keep_rate_b": 0.48612450963116066,
+    "exit_histogram": {
+      "4": 97,
+      "5": 38,
+      "6": 1347,
+      "7": 2041,
+      "8": 359,
+      "final": 21118
+    },
+    "stage_a_exit_rate": 0.15528
+  },
+  "history_step1": null,
+  "history_step2": null,
+  "history_step3": {
+    "hdc_step3_avg_keep_rate": [
+      0.33054617136869285,
+      0.48071719790854117,
+      0.38499231737159434,
+      0.35687944833594176,
+      0.37618631855739504
+    ],
+    "hdc_step3_eval_keep_rates": [
+      [
+        0.4021093008082236,
+        0.31273582737769007,
+        0.25521931463800124,
+        0.35212024265085645
+      ],
+      [
+        0.5133225024889803,
+        0.4303326189441754,
+        0.4725008391205917,
+        0.5067128310804172
+      ],
+      [
+        0.4976104133574249,
+        0.4042088316605829,
+        0.5156811482613654,
+        0.12246887620700442
+      ],
+      [
+        0.44430232966494987,
+        0.45330224961728394,
+        0.4315688785384683,
+        0.09834433552306479
+      ],
+      [
+        0.5381879565279807,
+        0.4862766951093893,
+        0.39415576188917967,
+        0.0861248607030305
+      ]
+    ],
+    "hdc_step3_keep_rates": [
+      [
+        0.404193826550332,
+        0.378717364481343,
+        0.347893794422107,
+        0.2705727116969388
+      ],
+      [
+        0.4862304946117084,
+        0.46605315339534786,
+        0.4336952104821534,
+        0.4778642903660874
+      ],
+      [
+        0.5092438614505637,
+        0.49440934141273696,
+        0.46207954420153136,
+        0.15079589345304253
+      ],
+      [
+        0.5422885425941414,
+        0.48836320962594904,
+        0.39474427387537553,
+        0.11092219295937691
+      ],
+      [
+        0.5415298993249074,
+        0.5454373584150354,
+        0.4951014301889693,
+        0.09900937700058188
+      ]
+    ],
+    "hdc_step3_test_acc": [
+      0.91564,
+      0.91948,
+      0.9174,
+      0.91592,
+      0.91684
+    ],
+    "hdc_step3_train_loss": [
+      0.07837686078686057,
+      0.03435571873655824,
+      0.04364919927997796,
+      0.06035069546655125,
+      0.0587853183752507
+    ],
+    "hdc_step3_train_loss_mod": [
+      32.67927602002078,
+      0.8930923188738811,
+      0.6759563943614131,
+      0.6429652533567775,
+      0.09155960278132992
+    ],
+    "hdc_step3_train_loss_task": [
+      0.04569758213949306,
+      0.03346262637423375,
+      0.04297324286981026,
+      0.0597077301808197,
+      0.0586937587714785
+    ]
+  },
+  "inference_ms_per_sample": 1.3763,
+  "model_config": {
+    "dropout": 0.1,
+    "entropy_threshold": 0.2,
+    "hidden_size": 768,
+    "intermediate_size": 3072,
+    "lambda_mod": 0.001,
+    "max_length": 256,
+    "model_name": "bert-base-uncased",
+    "n_layers": 12,
+    "num_attention_heads": 12,
+    "num_labels": 2,
+    "split_layer": 8,
+    "stage_a_layers": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "stage_b_layers": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "target_keep_ratio": 0.6,
+    "tau": 0.5
+  },
+  "parameter_counts": {
+    "bert_backbone": 109482240,
+    "final_classifier": 1538,
+    "new_params_added": 15380,
+    "new_params_pct": 0.014,
+    "offramp_classifiers": 12304,
+    "token_routers": 3076,
+    "total": 109499158
+  },
+  "step1_best_ckpt": "experiments_pareto/hdcbert/imdb/shared_step1.pt",
+  "step2_best_ckpt": "experiments_pareto/hdcbert/imdb/shared_step2.pt",
+  "step3_best_ckpt": "experiments_pareto/hdcbert/imdb/keep_0.6/best_model_step3.pt",
+  "step3_best_epoch": 2,
+  "step3_best_routing_acc": 0.91948,
+  "step3_final_avg_keep_rate": 0.37618631855739504,
+  "step3_final_eval_keep_rates": [
+    0.5381879565279807,
+    0.4862766951093893,
+    0.39415576188917967,
+    0.0861248607030305
+  ],
+  "step3_final_train_keep_rates": [
+    0.5415298993249074,
+    0.5454373584150354,
+    0.4951014301889693,
+    0.09900937700058188
+  ]
+}

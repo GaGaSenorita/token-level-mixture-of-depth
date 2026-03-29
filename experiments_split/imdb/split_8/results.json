@@ -1,0 +1,273 @@
+{
+  "args": {
+    "batch_size": 32,
+    "config": "configs/hdc_imdb.yaml",
+    "dataset": "imdb",
+    "dropout": 0.1,
+    "entropy_threshold": 0.4,
+    "eval_early_exit": true,
+    "lambda_mod": 0.001,
+    "max_length": 256,
+    "model_key": "hdc_bert",
+    "model_name": "bert-base-uncased",
+    "output_dir": "experiments_split/imdb/split_8",
+    "output_root": "./experiments_split/imdb",
+    "resume_step1_ckpt": "./experiments_split/imdb/shared_step1.pt",
+    "resume_step2_ckpt": null,
+    "run_name": "split_8",
+    "seed": 42,
+    "split_layer": 8,
+    "stage1_epochs": 3,
+    "stage1_learning_rate": 2e-05,
+    "stage2_epochs": 5,
+    "stage2_learning_rate": 0.001,
+    "stage3_epochs": 5,
+    "stage3_learning_rate": 0.001,
+    "target_keep_ratio": 0.6,
+    "tau": 0.5
+  },
+  "final_avg_keep_rate": 0.49120384921579413,
+  "final_eval_keep_rates": [
+    0.5559632867727133,
+    0.4368053819898449,
+    0.4808694109358751,
+    0.49117731716474305
+  ],
+  "final_routing_acc": 0.92188,
+  "flops_estimation_data": {
+    "avg_exit_layer_a": 5.900827173530447,
+    "exit_histogram": {
+      "2": 20,
+      "3": 25,
+      "4": 2596,
+      "5": 852,
+      "6": 3385,
+      "7": 3900,
+      "8": 586,
+      "final": 13636
+    },
+    "hidden_size": 768,
+    "intermediate_size": 3072,
+    "max_length": 256,
+    "n_layers": 12,
+    "n_stage_a_layers": 8,
+    "n_stage_b_layers": 4,
+    "num_attention_heads": 12,
+    "split_layer": 8,
+    "stage_a_exit_rate": 0.45456,
+    "stage_b_avg_keep_rate": 0.49120384921579413,
+    "stage_b_eval_keep_rates": [
+      0.5559632867727133,
+      0.4368053819898449,
+      0.4808694109358751,
+      0.49117731716474305
+    ]
+  },
+  "hdc_inference": {
+    "accuracy": 0.91568,
+    "avg_exit_layer_a": 5.900827173530447,
+    "avg_keep_rate_b": 0.49432623916764296,
+    "exit_histogram": {
+      "2": 20,
+      "3": 25,
+      "4": 2596,
+      "5": 852,
+      "6": 3385,
+      "7": 3900,
+      "8": 586,
+      "final": 13636
+    },
+    "stage_a_exit_rate": 0.45456
+  },
+  "history_step1": null,
+  "history_step2": {
+    "hdc_step2_stage_a_exit_rate": [
+      0.45456,
+      0.56396,
+      0.59756,
+      0.60968,
+      0.60884
+    ],
+    "hdc_step2_test_acc_hdc": [
+      0.91672,
+      0.9102,
+      0.9104,
+      0.90884,
+      0.90904
+    ],
+    "hdc_step2_test_acc_last": [
+      0.9234,
+      0.9234,
+      0.9234,
+      0.9234,
+      0.9234
+    ],
+    "hdc_step2_train_loss": [
+      0.5892090284839615,
+      0.50659807887681,
+      0.49108905103200534,
+      0.48576187794013403,
+      0.4826182067546698
+    ]
+  },
+  "history_step3": {
+    "hdc_step3_avg_keep_rate": [
+      0.45652841654656184,
+      0.49120384921579413,
+      0.49740888276482786,
+      0.4705215738252606,
+      0.48088472801953785
+    ],
+    "hdc_step3_eval_keep_rates": [
+      [
+        0.5017726882110776,
+        0.46275956459972256,
+        0.4310174557711462,
+        0.43056395760430094
+      ],
+      [
+        0.5559632867727133,
+        0.4368053819898449,
+        0.4808694109358751,
+        0.49117731716474305
+      ],
+      [
+        0.4906589634659345,
+        0.49937477357247295,
+        0.4779110834040605,
+        0.5216907106168435
+      ],
+      [
+        0.5273415118532108,
+        0.5206415307186448,
+        0.5335419031284044,
+        0.3005613496007822
+      ],
+      [
+        0.5467806294217439,
+        0.5279222636881387,
+        0.5341563602466413,
+        0.3146796587216275
+      ]
+    ],
+    "hdc_step3_keep_rates": [
+      [
+        0.49110928355999617,
+        0.4524383631170444,
+        0.46575816413459115,
+        0.4194007711556485
+      ],
+      [
+        0.5251960560031559,
+        0.518582880230206,
+        0.501670660227156,
+        0.48900473925768567
+      ],
+      [
+        0.5401865083848119,
+        0.5211860725413198,
+        0.5104831130913151,
+        0.525295544920675
+      ],
+      [
+        0.557999592188679,
+        0.5400791176216072,
+        0.5394231278039611,
+        0.36085282113698436
+      ],
+      [
+        0.5670232872676362,
+        0.5601104363760985,
+        0.5610218923872389,
+        0.3221767452519263
+      ]
+    ],
+    "hdc_step3_test_acc": [
+      0.92124,
+      0.92188,
+      0.92056,
+      0.92008,
+      0.92048
+    ],
+    "hdc_step3_train_loss": [
+      0.12169087168467624,
+      0.08681708624910402,
+      0.08524394512433758,
+      0.08487583579474112,
+      0.0844311289848936
+    ],
+    "hdc_step3_train_loss_mod": [
+      32.08259695692136,
+      1.427616675491528,
+      0.6447529122042839,
+      0.5843952305786445,
+      0.6258282673633312
+    ],
+    "hdc_step3_train_loss_task": [
+      0.0896082718920944,
+      0.08538946951322658,
+      0.0845991921851702,
+      0.08429144046631405,
+      0.08380530069193914
+    ]
+  },
+  "inference_ms_per_sample": 1.3944,
+  "model_config": {
+    "dropout": 0.1,
+    "entropy_threshold": 0.4,
+    "hidden_size": 768,
+    "intermediate_size": 3072,
+    "lambda_mod": 0.001,
+    "max_length": 256,
+    "model_name": "bert-base-uncased",
+    "n_layers": 12,
+    "num_attention_heads": 12,
+    "num_labels": 2,
+    "split_layer": 8,
+    "stage_a_layers": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "stage_b_layers": [
+      8,
+      9,
+      10,
+      11
+    ],
+    "target_keep_ratio": 0.6,
+    "tau": 0.5
+  },
+  "parameter_counts": {
+    "bert_backbone": 109482240,
+    "final_classifier": 1538,
+    "new_params_added": 15380,
+    "new_params_pct": 0.014,
+    "offramp_classifiers": 12304,
+    "token_routers": 3076,
+    "total": 109499158
+  },
+  "step1_best_ckpt": "experiments_split/imdb/shared_step1.pt",
+  "step2_best_ckpt": "experiments_split/imdb/split_8/best_model_step2.pt",
+  "step3_best_ckpt": "experiments_split/imdb/split_8/best_model_step3.pt",
+  "step3_best_epoch": 2,
+  "step3_best_routing_acc": 0.92188,
+  "step3_final_avg_keep_rate": 0.48088472801953785,
+  "step3_final_eval_keep_rates": [
+    0.5467806294217439,
+    0.5279222636881387,
+    0.5341563602466413,
+    0.3146796587216275
+  ],
+  "step3_final_train_keep_rates": [
+    0.5670232872676362,
+    0.5601104363760985,
+    0.5610218923872389,
+    0.3221767452519263
+  ]
+}

@@ -153,7 +153,7 @@ def main():
     step1_best_path = Path(args.output_dir) / "best_model_step1.pt"
     if args.resume_step1_ckpt:
         logger.info(f"Loading Stage 1 checkpoint from: {args.resume_step1_ckpt}")
-        model.load_state_dict(torch.load(args.resume_step1_ckpt, map_location=device))
+        model.load_state_dict(torch.load(args.resume_step1_ckpt, map_location=device), strict=False)
         step1_best_path = Path(args.resume_step1_ckpt)
         history_step1 = None
     else:

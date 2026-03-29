@@ -1,0 +1,135 @@
+{
+  "args": {
+    "batch_size": 32,
+    "config": "configs/hdc_imdb.yaml",
+    "dataset": "imdb",
+    "dropout": 0.1,
+    "entropy_threshold": 0.2,
+    "eval_early_exit": true,
+    "lambda_mod": 0.001,
+    "max_length": 256,
+    "model_key": "hdc_bert",
+    "model_name": "bert-base-uncased",
+    "output_dir": "experiments_split/imdb/shared_step1",
+    "output_root": "./experiments_split/imdb",
+    "resume_step1_ckpt": null,
+    "resume_step2_ckpt": null,
+    "run_name": "shared_step1",
+    "seed": 42,
+    "split_layer": 6,
+    "stage1_epochs": 3,
+    "stage1_learning_rate": 2e-05,
+    "stage2_epochs": 0,
+    "stage2_learning_rate": 0.001,
+    "stage3_epochs": 0,
+    "stage3_learning_rate": 0.001,
+    "target_keep_ratio": 0.7,
+    "tau": 0.5
+  },
+  "final_avg_keep_rate": 1.0,
+  "final_eval_keep_rates": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+  ],
+  "final_routing_acc": 0.9234,
+  "flops_estimation_data": {
+    "avg_exit_layer_a": 0.0,
+    "exit_histogram": {
+      "final": 25000
+    },
+    "hidden_size": 768,
+    "intermediate_size": 3072,
+    "max_length": 256,
+    "n_layers": 12,
+    "n_stage_a_layers": 6,
+    "n_stage_b_layers": 6,
+    "num_attention_heads": 12,
+    "split_layer": 6,
+    "stage_a_exit_rate": 0.0,
+    "stage_b_avg_keep_rate": 1.0,
+    "stage_b_eval_keep_rates": [
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ]
+  },
+  "hdc_inference": {
+    "accuracy": 0.9234,
+    "avg_exit_layer_a": 0.0,
+    "avg_keep_rate_b": 1.0,
+    "exit_histogram": {
+      "final": 25000
+    },
+    "stage_a_exit_rate": 0.0
+  },
+  "history_step1": {
+    "hdc_step1_test_acc": [
+      0.90648,
+      0.9234,
+      0.92324
+    ],
+    "hdc_step1_train_loss": [
+      0.3085049639748948,
+      0.16057417042972638,
+      0.08519517856648863
+    ]
+  },
+  "history_step2": null,
+  "history_step3": null,
+  "inference_ms_per_sample": 1.3872,
+  "model_config": {
+    "dropout": 0.1,
+    "entropy_threshold": 0.2,
+    "hidden_size": 768,
+    "intermediate_size": 3072,
+    "lambda_mod": 0.001,
+    "max_length": 256,
+    "model_name": "bert-base-uncased",
+    "n_layers": 12,
+    "num_attention_heads": 12,
+    "num_labels": 2,
+    "split_layer": 6,
+    "stage_a_layers": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "stage_b_layers": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "target_keep_ratio": 0.7,
+    "tau": 0.5
+  },
+  "parameter_counts": {
+    "bert_backbone": 109482240,
+    "final_classifier": 1538,
+    "new_params_added": 13842,
+    "new_params_pct": 0.0126,
+    "offramp_classifiers": 9228,
+    "token_routers": 4614,
+    "total": 109497620
+  },
+  "step1_best_ckpt": "experiments_split/imdb/shared_step1/best_model_step1.pt",
+  "step2_best_ckpt": "experiments_split/imdb/shared_step1/best_model_step1.pt",
+  "step3_best_ckpt": "experiments_split/imdb/shared_step1/best_model_step1.pt",
+  "step3_best_epoch": null,
+  "step3_best_routing_acc": null,
+  "step3_final_avg_keep_rate": null,
+  "step3_final_eval_keep_rates": null,
+  "step3_final_train_keep_rates": null
+}

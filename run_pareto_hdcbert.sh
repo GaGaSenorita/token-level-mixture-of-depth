@@ -64,6 +64,7 @@ for KR in 0.3 0.4 0.5 0.6 0.7 0.8 0.9; do
         --ckpt               "./experiments_pareto/hdcbert/agnews/keep_${KR}/best_model_step3.pt" \
         --keep_ratio         ${KR} \
         --dataset            ag_news \
+        --split_layer        6 \
         --output_root        ./experiments_pareto/hdcbert/agnews \
         --max_length         128 \
         --entropy_thresholds ${AGNEWS_THRESHOLDS}
@@ -131,6 +132,7 @@ for KR in 0.3 0.4 0.5 0.6 0.7 0.8 0.9; do
         --ckpt               "./experiments_pareto/hdcbert/imdb/keep_${KR}/best_model_step3.pt" \
         --keep_ratio         ${KR} \
         --dataset            imdb \
+        --split_layer        8 \
         --output_root        ./experiments_pareto/hdcbert/imdb \
         --max_length         256 \
         --entropy_thresholds ${IMDB_THRESHOLDS}

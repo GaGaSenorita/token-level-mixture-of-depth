@@ -1,0 +1,270 @@
+{
+  "args": {
+    "batch_size": 32,
+    "config": "configs/hdc_agnews.yaml",
+    "dataset": "ag_news",
+    "dropout": 0.1,
+    "entropy_threshold": 0.2,
+    "eval_early_exit": true,
+    "lambda_mod": 0.001,
+    "max_length": 128,
+    "model_key": "hdc_bert",
+    "model_name": "bert-base-uncased",
+    "output_dir": "experiments_pareto/hdcbert/agnews/keep_0.7",
+    "output_root": "./experiments_pareto/hdcbert/agnews",
+    "resume_step1_ckpt": "./experiments_pareto/hdcbert/agnews/shared_step1.pt",
+    "resume_step2_ckpt": "./experiments_pareto/hdcbert/agnews/shared_step2.pt",
+    "run_name": "keep_0.7",
+    "seed": 42,
+    "split_layer": 6,
+    "stage1_epochs": 3,
+    "stage1_learning_rate": 2e-05,
+    "stage2_epochs": 5,
+    "stage2_learning_rate": 0.001,
+    "stage3_epochs": 5,
+    "stage3_learning_rate": 0.001,
+    "target_keep_ratio": 0.7,
+    "tau": 0.5
+  },
+  "final_avg_keep_rate": 0.4670919451956488,
+  "final_eval_keep_rates": [
+    0.4254594284947179,
+    0.46147783263390807,
+    0.42010087801628754,
+    0.5752033484833581,
+    0.5760373367982752,
+    0.34427284674734626
+  ],
+  "final_routing_acc": 0.9428947368421052,
+  "flops_estimation_data": {
+    "avg_exit_layer_a": 2.8420609530223944,
+    "exit_histogram": {
+      "1": 399,
+      "2": 2932,
+      "3": 858,
+      "4": 971,
+      "5": 516,
+      "6": 263,
+      "final": 1661
+    },
+    "hidden_size": 768,
+    "intermediate_size": 3072,
+    "max_length": 128,
+    "n_layers": 12,
+    "n_stage_a_layers": 6,
+    "n_stage_b_layers": 6,
+    "num_attention_heads": 12,
+    "split_layer": 6,
+    "stage_a_exit_rate": 0.7814473684210527,
+    "stage_b_avg_keep_rate": 0.4670919451956488,
+    "stage_b_eval_keep_rates": [
+      0.4254594284947179,
+      0.46147783263390807,
+      0.42010087801628754,
+      0.5752033484833581,
+      0.5760373367982752,
+      0.34427284674734626
+    ]
+  },
+  "hdc_inference": {
+    "accuracy": 0.9396052631578947,
+    "avg_exit_layer_a": 2.8420609530223944,
+    "avg_keep_rate_b": 0.5508439315799953,
+    "exit_histogram": {
+      "1": 399,
+      "2": 2932,
+      "3": 858,
+      "4": 971,
+      "5": 516,
+      "6": 263,
+      "final": 1661
+    },
+    "stage_a_exit_rate": 0.7814473684210527
+  },
+  "history_step1": null,
+  "history_step2": null,
+  "history_step3": {
+    "hdc_step3_avg_keep_rate": [
+      0.4670919451956488,
+      0.5417605234878738,
+      0.5619394331753087,
+      0.5950968722168472,
+      0.5910680790742239
+    ],
+    "hdc_step3_eval_keep_rates": [
+      [
+        0.4254594284947179,
+        0.46147783263390807,
+        0.42010087801628754,
+        0.5752033484833581,
+        0.5760373367982752,
+        0.34427284674734626
+      ],
+      [
+        0.4954413979494271,
+        0.5736011413215589,
+        0.5480602498815841,
+        0.6413954303545111,
+        0.5583746282994246,
+        0.4336902931207368
+      ],
+      [
+        0.5170832654508222,
+        0.568572072547023,
+        0.5666323087546004,
+        0.5970543765721201,
+        0.5996926517045799,
+        0.5226019240227067
+      ],
+      [
+        0.5820245819181955,
+        0.5890784782020986,
+        0.6122775948097726,
+        0.642914229581336,
+        0.6362034167562213,
+        0.5080829320334587
+      ],
+      [
+        0.5815323994440191,
+        0.5805072582819882,
+        0.6095481308317986,
+        0.6367323178203166,
+        0.6117844328659923,
+        0.5263039352012282
+      ]
+    ],
+    "hdc_step3_keep_rates": [
+      [
+        0.47462388599912325,
+        0.47453672105421624,
+        0.49982966594994066,
+        0.48411612888077893,
+        0.46779043483436106,
+        0.38281426639954247
+      ],
+      [
+        0.5386315010150273,
+        0.5460666251977285,
+        0.5556802526156107,
+        0.5624213092168172,
+        0.5727498233874639,
+        0.3914070442477862
+      ],
+      [
+        0.5646943844954173,
+        0.5746551342884699,
+        0.5943914945999781,
+        0.5906883843104045,
+        0.586325526881218,
+        0.47121575241088864
+      ],
+      [
+        0.5690153177579244,
+        0.5885163862228393,
+        0.5895531649589538,
+        0.6029457710663477,
+        0.5992343315919241,
+        0.4412803073724111
+      ],
+      [
+        0.5933209699869156,
+        0.6050434473514557,
+        0.6036821878353754,
+        0.6075783257961274,
+        0.6118194624741872,
+        0.4608462196111679
+      ]
+    ],
+    "hdc_step3_test_acc": [
+      0.9428947368421052,
+      0.9401315789473684,
+      0.9348684210526316,
+      0.9360526315789474,
+      0.9364473684210526
+    ],
+    "hdc_step3_train_loss": [
+      0.05501034134759878,
+      0.04149125724366556,
+      0.04718196746803199,
+      0.061355706216953694,
+      0.061195793658774346
+    ],
+    "hdc_step3_train_loss_mod": [
+      2.3486141927083333,
+      0.20786691080729167,
+      0.172373388671875,
+      0.12232008463541667,
+      0.09488020833333333
+    ],
+    "hdc_step3_train_loss_task": [
+      0.05266172709232196,
+      0.04128339032419026,
+      0.04700959407001113,
+      0.06123338612932712,
+      0.061100913447669394
+    ]
+  },
+  "inference_ms_per_sample": 0.6949,
+  "model_config": {
+    "dropout": 0.1,
+    "entropy_threshold": 0.2,
+    "hidden_size": 768,
+    "intermediate_size": 3072,
+    "lambda_mod": 0.001,
+    "max_length": 128,
+    "model_name": "bert-base-uncased",
+    "n_layers": 12,
+    "num_attention_heads": 12,
+    "num_labels": 4,
+    "split_layer": 6,
+    "stage_a_layers": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "stage_b_layers": [
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "target_keep_ratio": 0.7,
+    "tau": 0.5
+  },
+  "parameter_counts": {
+    "bert_backbone": 109482240,
+    "final_classifier": 3076,
+    "new_params_added": 23070,
+    "new_params_pct": 0.0211,
+    "offramp_classifiers": 18456,
+    "token_routers": 4614,
+    "total": 109508386
+  },
+  "step1_best_ckpt": "experiments_pareto/hdcbert/agnews/shared_step1.pt",
+  "step2_best_ckpt": "experiments_pareto/hdcbert/agnews/shared_step2.pt",
+  "step3_best_ckpt": "experiments_pareto/hdcbert/agnews/keep_0.7/best_model_step3.pt",
+  "step3_best_epoch": 1,
+  "step3_best_routing_acc": 0.9428947368421052,
+  "step3_final_avg_keep_rate": 0.5910680790742239,
+  "step3_final_eval_keep_rates": [
+    0.5815323994440191,
+    0.5805072582819882,
+    0.6095481308317986,
+    0.6367323178203166,
+    0.6117844328659923,
+    0.5263039352012282
+  ],
+  "step3_final_train_keep_rates": [
+    0.5933209699869156,
+    0.6050434473514557,
+    0.6036821878353754,
+    0.6075783257961274,
+    0.6118194624741872,
+    0.4608462196111679
+  ]
+}

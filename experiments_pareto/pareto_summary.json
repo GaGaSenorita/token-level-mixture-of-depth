@@ -1,0 +1,1090 @@
+{
+  "agnews": {
+    "seq_len": 128,
+    "baseline_acc": 94.69,
+    "baseline_gflops": 11.174,
+    "DeeBERT": {
+      "all_points": [
+        {
+          "flops_pct": 56.39254385964912,
+          "gflops": 6.301091861557895,
+          "accuracy": 94.53,
+          "avg_exit_layer": 6.7671,
+          "threshold": 0.05
+        },
+        {
+          "flops_pct": 37.651315789473685,
+          "gflops": 4.207017156176843,
+          "accuracy": 94.16,
+          "avg_exit_layer": 4.5182,
+          "threshold": 0.2
+        },
+        {
+          "flops_pct": 24.25219298245614,
+          "gflops": 2.709849305734737,
+          "accuracy": 93.28999999999999,
+          "avg_exit_layer": 2.9103,
+          "threshold": 0.5
+        },
+        {
+          "flops_pct": 13.769736842105262,
+          "gflops": 1.5385788760926316,
+          "accuracy": 89.92999999999999,
+          "avg_exit_layer": 1.6524,
+          "threshold": 0.9
+        },
+        {
+          "flops_pct": 8.337719298245613,
+          "gflops": 0.9316255593094737,
+          "accuracy": 83.8,
+          "avg_exit_layer": 1.0005,
+          "threshold": 1.38
+        }
+      ],
+      "pareto_frontier": [
+        {
+          "flops_pct": 8.337719298245613,
+          "accuracy": 83.8
+        },
+        {
+          "flops_pct": 13.769736842105262,
+          "accuracy": 89.92999999999999
+        },
+        {
+          "flops_pct": 24.25219298245614,
+          "accuracy": 93.28999999999999
+        },
+        {
+          "flops_pct": 37.651315789473685,
+          "accuracy": 94.16
+        },
+        {
+          "flops_pct": 56.39254385964912,
+          "accuracy": 94.53
+        }
+      ]
+    },
+    "RouterBERT": {
+      "all_points": [
+        {
+          "flops_pct": 71.67662422972974,
+          "gflops": 8.008877817641043,
+          "accuracy": 82.75,
+          "avg_keep_rate": 0.2063,
+          "target_keep_ratio": 0.3
+        },
+        {
+          "flops_pct": 74.0199745135135,
+          "gflops": 8.270715010846557,
+          "accuracy": 89.14,
+          "avg_keep_rate": 0.2758,
+          "target_keep_ratio": 0.4
+        },
+        {
+          "flops_pct": 77.59583544594594,
+          "gflops": 8.670268332567428,
+          "accuracy": 90.34,
+          "avg_keep_rate": 0.3801,
+          "target_keep_ratio": 0.5
+        },
+        {
+          "flops_pct": 80.27270603378376,
+          "gflops": 8.969371836701734,
+          "accuracy": 91.01,
+          "avg_keep_rate": 0.4574,
+          "target_keep_ratio": 0.6
+        },
+        {
+          "flops_pct": 84.37946288513514,
+          "gflops": 9.428245482087384,
+          "accuracy": 91.8,
+          "avg_keep_rate": 0.5741,
+          "target_keep_ratio": 0.7
+        },
+        {
+          "flops_pct": 88.34264011486488,
+          "gflops": 9.87107607774757,
+          "accuracy": 93.24,
+          "avg_keep_rate": 0.6843,
+          "target_keep_ratio": 0.8
+        },
+        {
+          "flops_pct": 93.2052826936937,
+          "gflops": 10.414409566220453,
+          "accuracy": 94.28,
+          "avg_keep_rate": 0.8176,
+          "target_keep_ratio": 0.9
+        }
+      ],
+      "pareto_frontier": [
+        {
+          "flops_pct": 71.67662422972974,
+          "accuracy": 82.75
+        },
+        {
+          "flops_pct": 74.0199745135135,
+          "accuracy": 89.14
+        },
+        {
+          "flops_pct": 77.59583544594594,
+          "accuracy": 90.34
+        },
+        {
+          "flops_pct": 80.27270603378376,
+          "accuracy": 91.01
+        },
+        {
+          "flops_pct": 84.37946288513514,
+          "accuracy": 91.8
+        },
+        {
+          "flops_pct": 88.34264011486488,
+          "accuracy": 93.24
+        },
+        {
+          "flops_pct": 93.2052826936937,
+          "accuracy": 94.28
+        }
+      ]
+    },
+    "HDC-BERT": {
+      "all_points": [
+        {
+          "flops_pct": 54.53636138456378,
+          "gflops": 6.093688976587218,
+          "accuracy": 93.7,
+          "target_keep_ratio": 0.3,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.5525,
+          "avg_keep_rate_b": 0.2304
+        },
+        {
+          "flops_pct": 37.35613248067568,
+          "gflops": 4.174034477662392,
+          "accuracy": 93.53,
+          "target_keep_ratio": 0.3,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.7814,
+          "avg_keep_rate_b": 0.2304
+        },
+        {
+          "flops_pct": 24.597002128513516,
+          "gflops": 2.7483769896324564,
+          "accuracy": 93.24,
+          "target_keep_ratio": 0.3,
+          "entropy_threshold": 0.5,
+          "stage_a_exit_rate": 0.918,
+          "avg_keep_rate_b": 0.2304
+        },
+        {
+          "flops_pct": 14.21603001700806,
+          "gflops": 1.588446005677134,
+          "accuracy": 90.3,
+          "target_keep_ratio": 0.3,
+          "entropy_threshold": 0.9,
+          "stage_a_exit_rate": 0.9887,
+          "avg_keep_rate_b": 0.2304
+        },
+        {
+          "flops_pct": 8.341008771929824,
+          "gflops": 0.9319931127915789,
+          "accuracy": 83.22,
+          "target_keep_ratio": 0.3,
+          "entropy_threshold": 1.38,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.2304
+        },
+        {
+          "flops_pct": 54.9723014224523,
+          "gflops": 6.142399285377385,
+          "accuracy": 93.84,
+          "target_keep_ratio": 0.4,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.5525,
+          "avg_keep_rate_b": 0.288
+        },
+        {
+          "flops_pct": 37.56903939127045,
+          "gflops": 4.1978238992738195,
+          "accuracy": 93.58999999999999,
+          "target_keep_ratio": 0.4,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.7814,
+          "avg_keep_rate_b": 0.288
+        },
+        {
+          "flops_pct": 24.676858242481327,
+          "gflops": 2.7572998130303605,
+          "accuracy": 93.25,
+          "target_keep_ratio": 0.4,
+          "entropy_threshold": 0.5,
+          "stage_a_exit_rate": 0.918,
+          "avg_keep_rate_b": 0.288
+        },
+        {
+          "flops_pct": 14.227053493414536,
+          "gflops": 1.5896777276871177,
+          "accuracy": 90.29,
+          "target_keep_ratio": 0.4,
+          "entropy_threshold": 0.9,
+          "stage_a_exit_rate": 0.9887,
+          "avg_keep_rate_b": 0.288
+        },
+        {
+          "flops_pct": 8.341008771929824,
+          "gflops": 0.9319931127915789,
+          "accuracy": 83.22,
+          "target_keep_ratio": 0.4,
+          "entropy_threshold": 1.38,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.288
+        },
+        {
+          "flops_pct": 55.49060323766626,
+          "gflops": 6.20031239101425,
+          "accuracy": 94.17999999999999,
+          "target_keep_ratio": 0.5,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.5525,
+          "avg_keep_rate_b": 0.3558
+        },
+        {
+          "flops_pct": 37.82217062181158,
+          "gflops": 4.226107835899175,
+          "accuracy": 93.84,
+          "target_keep_ratio": 0.5,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.7814,
+          "avg_keep_rate_b": 0.3558
+        },
+        {
+          "flops_pct": 24.771801503545223,
+          "gflops": 2.7679084177971256,
+          "accuracy": 93.30000000000001,
+          "target_keep_ratio": 0.5,
+          "entropy_threshold": 0.5,
+          "stage_a_exit_rate": 0.918,
+          "avg_keep_rate_b": 0.3558
+        },
+        {
+          "flops_pct": 14.240159625760432,
+          "gflops": 1.5911421578796405,
+          "accuracy": 90.3,
+          "target_keep_ratio": 0.5,
+          "entropy_threshold": 0.9,
+          "stage_a_exit_rate": 0.9887,
+          "avg_keep_rate_b": 0.3558
+        },
+        {
+          "flops_pct": 8.341008771929824,
+          "gflops": 0.9319931127915789,
+          "accuracy": 83.22,
+          "target_keep_ratio": 0.5,
+          "entropy_threshold": 1.38,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.3558
+        },
+        {
+          "flops_pct": 56.216539497429764,
+          "gflops": 6.281425792633264,
+          "accuracy": 94.22,
+          "target_keep_ratio": 0.6,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.5525,
+          "avg_keep_rate_b": 0.4494
+        },
+        {
+          "flops_pct": 38.17670756020241,
+          "gflops": 4.265722466916283,
+          "accuracy": 93.92,
+          "target_keep_ratio": 0.6,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.7814,
+          "avg_keep_rate_b": 0.4494
+        },
+        {
+          "flops_pct": 24.904779536427515,
+          "gflops": 2.7827668856620615,
+          "accuracy": 93.30000000000001,
+          "target_keep_ratio": 0.6,
+          "entropy_threshold": 0.5,
+          "stage_a_exit_rate": 0.918,
+          "avg_keep_rate_b": 0.4494
+        },
+        {
+          "flops_pct": 14.25851614394322,
+          "gflops": 1.5931932465415737,
+          "accuracy": 90.28,
+          "target_keep_ratio": 0.6,
+          "entropy_threshold": 0.9,
+          "stage_a_exit_rate": 0.9887,
+          "avg_keep_rate_b": 0.4494
+        },
+        {
+          "flops_pct": 8.341008771929824,
+          "gflops": 0.9319931127915789,
+          "accuracy": 83.22,
+          "target_keep_ratio": 0.6,
+          "entropy_threshold": 1.38,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.4494
+        },
+        {
+          "flops_pct": 56.357361576162866,
+          "gflops": 6.297160724833544,
+          "accuracy": 94.28,
+          "target_keep_ratio": 0.7,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.5525,
+          "avg_keep_rate_b": 0.4671
+        },
+        {
+          "flops_pct": 38.24548305940137,
+          "gflops": 4.273407183877372,
+          "accuracy": 93.96,
+          "target_keep_ratio": 0.7,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.7814,
+          "avg_keep_rate_b": 0.4671
+        },
+        {
+          "flops_pct": 24.930575524387148,
+          "gflops": 2.78564923284253,
+          "accuracy": 93.36,
+          "target_keep_ratio": 0.7,
+          "entropy_threshold": 0.5,
+          "stage_a_exit_rate": 0.918,
+          "avg_keep_rate_b": 0.4671
+        },
+        {
+          "flops_pct": 14.262077066839735,
+          "gflops": 1.593591130743051,
+          "accuracy": 90.29,
+          "target_keep_ratio": 0.7,
+          "entropy_threshold": 0.9,
+          "stage_a_exit_rate": 0.9887,
+          "avg_keep_rate_b": 0.4671
+        },
+        {
+          "flops_pct": 8.341008771929824,
+          "gflops": 0.9319931127915789,
+          "accuracy": 83.22,
+          "target_keep_ratio": 0.7,
+          "entropy_threshold": 1.38,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.4671
+        },
+        {
+          "flops_pct": 57.826872065290125,
+          "gflops": 6.461358328803299,
+          "accuracy": 94.53,
+          "target_keep_ratio": 0.8,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.5525,
+          "avg_keep_rate_b": 0.6524
+        },
+        {
+          "flops_pct": 38.96317106952792,
+          "gflops": 4.353598956942283,
+          "accuracy": 94.13,
+          "target_keep_ratio": 0.8,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.7814,
+          "avg_keep_rate_b": 0.6524
+        },
+        {
+          "flops_pct": 25.199762538420163,
+          "gflops": 2.815727182643517,
+          "accuracy": 93.41000000000001,
+          "target_keep_ratio": 0.8,
+          "entropy_threshold": 0.5,
+          "stage_a_exit_rate": 0.918,
+          "avg_keep_rate_b": 0.6524
+        },
+        {
+          "flops_pct": 14.299236108905285,
+          "gflops": 1.5977431430751294,
+          "accuracy": 90.32,
+          "target_keep_ratio": 0.8,
+          "entropy_threshold": 0.9,
+          "stage_a_exit_rate": 0.9887,
+          "avg_keep_rate_b": 0.6524
+        },
+        {
+          "flops_pct": 8.341008771929824,
+          "gflops": 0.9319931127915789,
+          "accuracy": 83.22,
+          "target_keep_ratio": 0.8,
+          "entropy_threshold": 1.38,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.6524
+        },
+        {
+          "flops_pct": 57.92641757250296,
+          "gflops": 6.472481171335718,
+          "accuracy": 94.51,
+          "target_keep_ratio": 0.9,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.5525,
+          "avg_keep_rate_b": 0.6644
+        },
+        {
+          "flops_pct": 39.011787678607746,
+          "gflops": 4.359031194944738,
+          "accuracy": 94.11,
+          "target_keep_ratio": 0.9,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.7814,
+          "avg_keep_rate_b": 0.6644
+        },
+        {
+          "flops_pct": 25.217997425510312,
+          "gflops": 2.817764680702235,
+          "accuracy": 93.45,
+          "target_keep_ratio": 0.9,
+          "entropy_threshold": 0.5,
+          "stage_a_exit_rate": 0.918,
+          "avg_keep_rate_b": 0.6644
+        },
+        {
+          "flops_pct": 14.301753284330252,
+          "gflops": 1.598024402839254,
+          "accuracy": 90.32,
+          "target_keep_ratio": 0.9,
+          "entropy_threshold": 0.9,
+          "stage_a_exit_rate": 0.9887,
+          "avg_keep_rate_b": 0.6644
+        },
+        {
+          "flops_pct": 8.341008771929824,
+          "gflops": 0.9319931127915789,
+          "accuracy": 83.22,
+          "target_keep_ratio": 0.9,
+          "entropy_threshold": 1.38,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.6644
+        }
+      ],
+      "pareto_frontier": [
+        {
+          "flops_pct": 8.341008771929824,
+          "accuracy": 83.22
+        },
+        {
+          "flops_pct": 14.21603001700806,
+          "accuracy": 90.3
+        },
+        {
+          "flops_pct": 14.299236108905285,
+          "accuracy": 90.32
+        },
+        {
+          "flops_pct": 24.597002128513516,
+          "accuracy": 93.24
+        },
+        {
+          "flops_pct": 24.676858242481327,
+          "accuracy": 93.25
+        },
+        {
+          "flops_pct": 24.771801503545223,
+          "accuracy": 93.30000000000001
+        },
+        {
+          "flops_pct": 24.930575524387148,
+          "accuracy": 93.36
+        },
+        {
+          "flops_pct": 25.199762538420163,
+          "accuracy": 93.41000000000001
+        },
+        {
+          "flops_pct": 25.217997425510312,
+          "accuracy": 93.45
+        },
+        {
+          "flops_pct": 37.35613248067568,
+          "accuracy": 93.53
+        },
+        {
+          "flops_pct": 37.56903939127045,
+          "accuracy": 93.58999999999999
+        },
+        {
+          "flops_pct": 37.82217062181158,
+          "accuracy": 93.84
+        },
+        {
+          "flops_pct": 38.17670756020241,
+          "accuracy": 93.92
+        },
+        {
+          "flops_pct": 38.24548305940137,
+          "accuracy": 93.96
+        },
+        {
+          "flops_pct": 38.96317106952792,
+          "accuracy": 94.13
+        },
+        {
+          "flops_pct": 55.49060323766626,
+          "accuracy": 94.17999999999999
+        },
+        {
+          "flops_pct": 56.216539497429764,
+          "accuracy": 94.22
+        },
+        {
+          "flops_pct": 56.357361576162866,
+          "accuracy": 94.28
+        },
+        {
+          "flops_pct": 57.826872065290125,
+          "accuracy": 94.53
+        }
+      ]
+    }
+  },
+  "imdb": {
+    "seq_len": 256,
+    "baseline_acc": 92.32,
+    "baseline_gflops": 22.951,
+    "DeeBERT": {
+      "all_points": [
+        {
+          "flops_pct": 84.21433333333333,
+          "gflops": 19.32822658940928,
+          "accuracy": 92.17,
+          "avg_exit_layer": 10.1057,
+          "threshold": 0.05
+        },
+        {
+          "flops_pct": 76.262,
+          "gflops": 17.50306815737856,
+          "accuracy": 92.08,
+          "avg_exit_layer": 9.1514,
+          "threshold": 0.2
+        },
+        {
+          "flops_pct": 65.19633333333333,
+          "gflops": 14.963361385021441,
+          "accuracy": 91.12,
+          "avg_exit_layer": 7.8236,
+          "threshold": 0.4
+        },
+        {
+          "flops_pct": 45.743,
+          "gflops": 10.49858181955584,
+          "accuracy": 85.67,
+          "avg_exit_layer": 5.4892,
+          "threshold": 0.6
+        },
+        {
+          "flops_pct": 13.977333333333334,
+          "gflops": 3.20797012918272,
+          "accuracy": 69.96,
+          "avg_exit_layer": 1.6773,
+          "threshold": 0.69
+        }
+      ],
+      "pareto_frontier": [
+        {
+          "flops_pct": 13.977333333333334,
+          "accuracy": 69.96
+        },
+        {
+          "flops_pct": 45.743,
+          "accuracy": 85.67
+        },
+        {
+          "flops_pct": 65.19633333333333,
+          "accuracy": 91.12
+        },
+        {
+          "flops_pct": 76.262,
+          "accuracy": 92.08
+        },
+        {
+          "flops_pct": 84.21433333333333,
+          "accuracy": 92.17
+        }
+      ]
+    },
+    "RouterBERT": {
+      "all_points": [
+        {
+          "flops_pct": 71.08570211842104,
+          "gflops": 16.315044048068934,
+          "accuracy": 82.06,
+          "avg_keep_rate": 0.2411,
+          "target_keep_ratio": 0.3
+        },
+        {
+          "flops_pct": 73.62461518421054,
+          "gflops": 16.897755863077357,
+          "accuracy": 84.39999999999999,
+          "avg_keep_rate": 0.3148,
+          "target_keep_ratio": 0.4
+        },
+        {
+          "flops_pct": 77.46953795175438,
+          "gflops": 17.78021298799116,
+          "accuracy": 87.88,
+          "avg_keep_rate": 0.423,
+          "target_keep_ratio": 0.5
+        },
+        {
+          "flops_pct": 82.24438780263159,
+          "gflops": 18.876099830470412,
+          "accuracy": 89.94,
+          "avg_keep_rate": 0.5532,
+          "target_keep_ratio": 0.6
+        },
+        {
+          "flops_pct": 85.94290094736844,
+          "gflops": 19.724954143933076,
+          "accuracy": 91.05,
+          "avg_keep_rate": 0.6507,
+          "target_keep_ratio": 0.7
+        },
+        {
+          "flops_pct": 87.82823149561403,
+          "gflops": 20.1576607223749,
+          "accuracy": 91.5,
+          "avg_keep_rate": 0.6988,
+          "target_keep_ratio": 0.8
+        },
+        {
+          "flops_pct": 94.11431896929825,
+          "gflops": 21.600395209998336,
+          "accuracy": 91.95,
+          "avg_keep_rate": 0.8575,
+          "target_keep_ratio": 0.9
+        }
+      ],
+      "pareto_frontier": [
+        {
+          "flops_pct": 71.08570211842104,
+          "accuracy": 82.06
+        },
+        {
+          "flops_pct": 73.62461518421054,
+          "accuracy": 84.39999999999999
+        },
+        {
+          "flops_pct": 77.46953795175438,
+          "accuracy": 87.88
+        },
+        {
+          "flops_pct": 82.24438780263159,
+          "accuracy": 89.94
+        },
+        {
+          "flops_pct": 85.94290094736844,
+          "accuracy": 91.05
+        },
+        {
+          "flops_pct": 87.82823149561403,
+          "accuracy": 91.5
+        },
+        {
+          "flops_pct": 94.11431896929825,
+          "accuracy": 91.95
+        }
+      ]
+    },
+    "HDC-BERT": {
+      "all_points": [
+        {
+          "flops_pct": 89.73424417541142,
+          "gflops": 20.59511410470583,
+          "accuracy": 91.53,
+          "target_keep_ratio": 0.3,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.0146,
+          "avg_keep_rate_b": 0.2273
+        },
+        {
+          "flops_pct": 84.80307552248175,
+          "gflops": 19.463350172108253,
+          "accuracy": 91.55,
+          "target_keep_ratio": 0.3,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.1553,
+          "avg_keep_rate_b": 0.2273
+        },
+        {
+          "flops_pct": 71.87658059373562,
+          "gflops": 16.496560397727148,
+          "accuracy": 90.89,
+          "target_keep_ratio": 0.3,
+          "entropy_threshold": 0.4,
+          "stage_a_exit_rate": 0.4472,
+          "avg_keep_rate_b": 0.2273
+        },
+        {
+          "flops_pct": 47.40267979362526,
+          "gflops": 10.879498770950335,
+          "accuracy": 85.04,
+          "target_keep_ratio": 0.3,
+          "entropy_threshold": 0.6,
+          "stage_a_exit_rate": 0.8355,
+          "avg_keep_rate_b": 0.2273
+        },
+        {
+          "flops_pct": 12.974941475306492,
+          "gflops": 2.9779088534301152,
+          "accuracy": 69.35,
+          "target_keep_ratio": 0.3,
+          "entropy_threshold": 0.69,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.2273
+        },
+        {
+          "flops_pct": 90.5518509289886,
+          "gflops": 20.782764923380853,
+          "accuracy": 91.57,
+          "target_keep_ratio": 0.4,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.0146,
+          "avg_keep_rate_b": 0.2997
+        },
+        {
+          "flops_pct": 85.50395717143824,
+          "gflops": 19.62421114181717,
+          "accuracy": 91.59,
+          "target_keep_ratio": 0.4,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.1553,
+          "avg_keep_rate_b": 0.2997
+        },
+        {
+          "flops_pct": 72.33521699429105,
+          "gflops": 16.601823099706856,
+          "accuracy": 90.91,
+          "target_keep_ratio": 0.4,
+          "entropy_threshold": 0.4,
+          "stage_a_exit_rate": 0.4472,
+          "avg_keep_rate_b": 0.2997
+        },
+        {
+          "flops_pct": 47.5391522503214,
+          "gflops": 10.910820880404026,
+          "accuracy": 85.00999999999999,
+          "target_keep_ratio": 0.4,
+          "entropy_threshold": 0.6,
+          "stage_a_exit_rate": 0.8355,
+          "avg_keep_rate_b": 0.2997
+        },
+        {
+          "flops_pct": 12.974974664133509,
+          "gflops": 2.977916470674632,
+          "accuracy": 69.34,
+          "target_keep_ratio": 0.4,
+          "entropy_threshold": 0.69,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.2997
+        },
+        {
+          "flops_pct": 90.8280444638193,
+          "gflops": 20.846154740914734,
+          "accuracy": 91.67999999999999,
+          "target_keep_ratio": 0.5,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.0146,
+          "avg_keep_rate_b": 0.3229
+        },
+        {
+          "flops_pct": 85.74072011312911,
+          "gflops": 19.67855115264244,
+          "accuracy": 91.67999999999999,
+          "target_keep_ratio": 0.5,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.1553,
+          "avg_keep_rate_b": 0.3229
+        },
+        {
+          "flops_pct": 72.49014772121718,
+          "gflops": 16.637381609489715,
+          "accuracy": 91.03999999999999,
+          "target_keep_ratio": 0.5,
+          "entropy_threshold": 0.4,
+          "stage_a_exit_rate": 0.4472,
+          "avg_keep_rate_b": 0.3229
+        },
+        {
+          "flops_pct": 47.585253643267365,
+          "gflops": 10.921401717818247,
+          "accuracy": 85.02,
+          "target_keep_ratio": 0.5,
+          "entropy_threshold": 0.6,
+          "stage_a_exit_rate": 0.8355,
+          "avg_keep_rate_b": 0.3229
+        },
+        {
+          "flops_pct": 12.974985875561753,
+          "gflops": 2.9779190438354814,
+          "accuracy": 69.35,
+          "target_keep_ratio": 0.5,
+          "entropy_threshold": 0.69,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.3229
+        },
+        {
+          "flops_pct": 92.67373717221405,
+          "gflops": 21.26976394697555,
+          "accuracy": 91.95,
+          "target_keep_ratio": 0.6,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.0146,
+          "avg_keep_rate_b": 0.4807
+        },
+        {
+          "flops_pct": 87.32291368389755,
+          "gflops": 20.041684061657758,
+          "accuracy": 91.96,
+          "target_keep_ratio": 0.6,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.1553,
+          "avg_keep_rate_b": 0.4807
+        },
+        {
+          "flops_pct": 73.52548880249614,
+          "gflops": 16.87500513774441,
+          "accuracy": 91.22,
+          "target_keep_ratio": 0.6,
+          "entropy_threshold": 0.4,
+          "stage_a_exit_rate": 0.4472,
+          "avg_keep_rate_b": 0.4807
+        },
+        {
+          "flops_pct": 47.89333111097263,
+          "gflops": 10.992109290593651,
+          "accuracy": 85.09,
+          "target_keep_ratio": 0.6,
+          "entropy_threshold": 0.6,
+          "stage_a_exit_rate": 0.8355,
+          "avg_keep_rate_b": 0.4807
+        },
+        {
+          "flops_pct": 12.975060797124913,
+          "gflops": 2.977936239256877,
+          "accuracy": 69.34,
+          "target_keep_ratio": 0.6,
+          "entropy_threshold": 0.69,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.4807
+        },
+        {
+          "flops_pct": 93.10710266830002,
+          "gflops": 21.36922666517136,
+          "accuracy": 92.03,
+          "target_keep_ratio": 0.7,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.0146,
+          "avg_keep_rate_b": 0.5142
+        },
+        {
+          "flops_pct": 87.69441003244002,
+          "gflops": 20.126947048581204,
+          "accuracy": 92.03,
+          "target_keep_ratio": 0.7,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.1553,
+          "avg_keep_rate_b": 0.5142
+        },
+        {
+          "flops_pct": 73.76858512035334,
+          "gflops": 16.930798736394618,
+          "accuracy": 91.28,
+          "target_keep_ratio": 0.7,
+          "entropy_threshold": 0.4,
+          "stage_a_exit_rate": 0.4472,
+          "avg_keep_rate_b": 0.5142
+        },
+        {
+          "flops_pct": 47.96566717429334,
+          "gflops": 11.008711307935691,
+          "accuracy": 85.14,
+          "target_keep_ratio": 0.7,
+          "entropy_threshold": 0.6,
+          "stage_a_exit_rate": 0.8355,
+          "avg_keep_rate_b": 0.5142
+        },
+        {
+          "flops_pct": 12.975078388580002,
+          "gflops": 2.9779402767124563,
+          "accuracy": 69.35,
+          "target_keep_ratio": 0.7,
+          "entropy_threshold": 0.69,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.5142
+        },
+        {
+          "flops_pct": 93.4243537325851,
+          "gflops": 21.442039691333576,
+          "accuracy": 91.85,
+          "target_keep_ratio": 0.8,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.0146,
+          "avg_keep_rate_b": 0.5364
+        },
+        {
+          "flops_pct": 87.96636895168386,
+          "gflops": 20.18936496968912,
+          "accuracy": 91.86,
+          "target_keep_ratio": 0.8,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.1553,
+          "avg_keep_rate_b": 0.5364
+        },
+        {
+          "flops_pct": 73.94654706301036,
+          "gflops": 16.971643193814373,
+          "accuracy": 91.17,
+          "target_keep_ratio": 0.8,
+          "entropy_threshold": 0.4,
+          "stage_a_exit_rate": 0.4472,
+          "avg_keep_rate_b": 0.5364
+        },
+        {
+          "flops_pct": 48.01862176639158,
+          "gflops": 11.020865038951687,
+          "accuracy": 85.1,
+          "target_keep_ratio": 0.8,
+          "entropy_threshold": 0.6,
+          "stage_a_exit_rate": 0.8355,
+          "avg_keep_rate_b": 0.5364
+        },
+        {
+          "flops_pct": 12.97509126664228,
+          "gflops": 2.977943232386341,
+          "accuracy": 69.35,
+          "target_keep_ratio": 0.8,
+          "entropy_threshold": 0.69,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.5364
+        },
+        {
+          "flops_pct": 94.58370318771316,
+          "gflops": 21.708124668534882,
+          "accuracy": 92.2,
+          "target_keep_ratio": 0.9,
+          "entropy_threshold": 0.05,
+          "stage_a_exit_rate": 0.0146,
+          "avg_keep_rate_b": 0.6344
+        },
+        {
+          "flops_pct": 88.96020462423894,
+          "gflops": 20.41746249550756,
+          "accuracy": 92.17999999999999,
+          "target_keep_ratio": 0.9,
+          "entropy_threshold": 0.2,
+          "stage_a_exit_rate": 0.1553,
+          "avg_keep_rate_b": 0.6344
+        },
+        {
+          "flops_pct": 74.59688398691596,
+          "gflops": 17.120903526671885,
+          "accuracy": 91.4,
+          "target_keep_ratio": 0.9,
+          "entropy_threshold": 0.4,
+          "stage_a_exit_rate": 0.4472,
+          "avg_keep_rate_b": 0.6344
+        },
+        {
+          "flops_pct": 48.21213688551017,
+          "gflops": 11.065279141904872,
+          "accuracy": 85.2,
+          "target_keep_ratio": 0.9,
+          "entropy_threshold": 0.6,
+          "stage_a_exit_rate": 0.8355,
+          "avg_keep_rate_b": 0.6344
+        },
+        {
+          "flops_pct": 12.975138327712108,
+          "gflops": 2.9779540334814176,
+          "accuracy": 69.35,
+          "target_keep_ratio": 0.9,
+          "entropy_threshold": 0.69,
+          "stage_a_exit_rate": 1.0,
+          "avg_keep_rate_b": 0.6344
+        }
+      ],
+      "pareto_frontier": [
+        {
+          "flops_pct": 12.974941475306492,
+          "accuracy": 69.35
+        },
+        {
+          "flops_pct": 47.40267979362526,
+          "accuracy": 85.04
+        },
+        {
+          "flops_pct": 47.89333111097263,
+          "accuracy": 85.09
+        },
+        {
+          "flops_pct": 47.96566717429334,
+          "accuracy": 85.14
+        },
+        {
+          "flops_pct": 48.21213688551017,
+          "accuracy": 85.2
+        },
+        {
+          "flops_pct": 71.87658059373562,
+          "accuracy": 90.89
+        },
+        {
+          "flops_pct": 72.33521699429105,
+          "accuracy": 90.91
+        },
+        {
+          "flops_pct": 72.49014772121718,
+          "accuracy": 91.03999999999999
+        },
+        {
+          "flops_pct": 73.52548880249614,
+          "accuracy": 91.22
+        },
+        {
+          "flops_pct": 73.76858512035334,
+          "accuracy": 91.28
+        },
+        {
+          "flops_pct": 74.59688398691596,
+          "accuracy": 91.4
+        },
+        {
+          "flops_pct": 84.80307552248175,
+          "accuracy": 91.55
+        },
+        {
+          "flops_pct": 85.50395717143824,
+          "accuracy": 91.59
+        },
+        {
+          "flops_pct": 85.74072011312911,
+          "accuracy": 91.67999999999999
+        },
+        {
+          "flops_pct": 87.32291368389755,
+          "accuracy": 91.96
+        },
+        {
+          "flops_pct": 87.69441003244002,
+          "accuracy": 92.03
+        },
+        {
+          "flops_pct": 88.96020462423894,
+          "accuracy": 92.17999999999999
+        },
+        {
+          "flops_pct": 94.58370318771316,
+          "accuracy": 92.2
+        }
+      ]
+    }
+  }
+}
