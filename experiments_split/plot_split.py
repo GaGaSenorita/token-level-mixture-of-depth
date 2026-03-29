@@ -1,10 +1,10 @@
 """
-Split layer ablation — clean publication-style figure.
+HDC-BERT Split Layer Ablation — publication-quality figure.
 
-Three panels (horizontal):
-  1. Accuracy vs Split Layer
-  2. Stage A Exit Rate vs Split Layer  (key parameter)
-  3. FLOPs breakdown (Stage A + Stage B stacked) per dataset
+Three-panel figure embedding key conclusions:
+  (a) FLOPs vs Accuracy trade-off  → "sweet spot" is clear
+  (b) Stage A exit rate vs split   → AG News exits early, IMDB barely does
+  (c) FLOPs breakdown (Stage A / Stage B stacked) → where computation goes
 """
 
 import json
@@ -13,9 +13,12 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+from matplotlib.lines import Line2D
 import numpy as np
 
-ROOT = Path(__file__).parent.parent
+ROOT     = Path(__file__).parent.parent
+SPLIT_DIR = Path(__file__).parent
 
 # ── FLOPs ─────────────────────────────────────────────────────────────
 H, I_FFN = 768, 3072
@@ -36,197 +39,226 @@ def hdc_flops(L, hist, keeps, split):
             fb += cnt * sum(routed_layer_flops(L, k) for k in keeps)
         else:
             fa += cnt * int(key) * lf
-    return fa / N, fb / N          # per-sample Stage A / Stage B FLOPs
+    return fa / N, fb / N
 
-# ── Data ──────────────────────────────────────────────────────────────
+# ── Data loading ───────────────────────────────────────────────────────
+SEQ      = {"agnews": 128, "imdb": 256}
+BASELINE = {"agnews": 94.69, "imdb": 92.32}
+BEST_SPLIT = {"agnews": 6, "imdb": 8}   # chosen from ablation
+SPLITS   = [2, 4, 6, 8, 10]
+
 def load(dataset):
-    seq = 128 if dataset == "agnews" else 256
-    base = 12 * layer_flops(seq)
+    L    = SEQ[dataset]
+    base = 12 * layer_flops(L)
     rows = []
-    for s in [2, 4, 6, 8, 10]:
-        f = ROOT / f"experiments_split/{dataset}/split_{s}/results.json"
+    for s in SPLITS:
+        f = SPLIT_DIR / dataset / f"split_{s}/results.json"
         r = json.loads(f.read_text())
         fed = r["flops_estimation_data"]
-        fa, fb = hdc_flops(seq, fed["exit_histogram"],
-                            fed["stage_b_eval_keep_rates"], s)
+        fa, fb = hdc_flops(L, fed["exit_histogram"],
+                           fed["stage_b_eval_keep_rates"], s)
         rows.append({
-            "split":     s,
-            "acc":       r["hdc_inference"]["accuracy"] * 100,
-            "exit_rate": fed["stage_a_exit_rate"] * 100,
-            "fa_pct":    fa / base * 100,
-            "fb_pct":    fb / base * 100,
-            "total_pct": (fa + fb) / base * 100,
+            "split":      s,
+            "acc":        r["hdc_inference"]["accuracy"] * 100,
+            "exit_rate":  fed["stage_a_exit_rate"] * 100,
+            "keep_b":     fed["stage_b_avg_keep_rate"],
+            "avg_exit_a": fed["avg_exit_layer_a"],
+            "fa_pct":     fa / base * 100,
+            "fb_pct":     fb / base * 100,
+            "total_pct":  (fa + fb) / base * 100,
         })
     return rows
 
 agnews = load("agnews")
 imdb   = load("imdb")
 
-SPLITS     = [2, 4, 6, 8, 10]
-C_AG       = "#2196F3"
-C_IMDB     = "#E91E63"
-C_STAGE_A  = "#42A5F5"
-C_STAGE_B  = "#66BB6A"
-BASE_ACC   = {"AG News": 94.69, "IMDB": 92.32}
+# ── Colours ────────────────────────────────────────────────────────────
+C_AG      = "#2563EB"   # blue
+C_IMDB    = "#DC2626"   # red
+C_STA     = "#60A5FA"   # light blue – Stage A
+C_STB     = "#34D399"   # teal-green  – Stage B
+BEST_CLR  = "#F59E0B"   # amber – highlights best split
 
-# ── Style ─────────────────────────────────────────────────────────────
+# ── Style ──────────────────────────────────────────────────────────────
 plt.rcParams.update({
-    "font.family": "sans-serif",
-    "axes.spines.top": False,
+    "font.family":       "DejaVu Sans",
+    "axes.spines.top":   False,
     "axes.spines.right": False,
-    "axes.grid": True,
-    "grid.alpha": 0.25,
-    "grid.linestyle": "--",
+    "xtick.labelsize":   9,
+    "ytick.labelsize":   9,
 })
 
-fig, axes = plt.subplots(1, 3, figsize=(14, 4.5))
-fig.suptitle("HDC-BERT Split Layer Ablation", fontsize=13, fontweight="bold", y=1.02)
+fig, axes = plt.subplots(1, 3, figsize=(15, 4.8))
+fig.patch.set_facecolor("white")
+for ax in axes:
+    ax.set_facecolor("#FAFAFA")
 
-# ── Panel 1: Accuracy vs Split Layer ─────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════
+# Panel (a): FLOPs % vs Accuracy — "sweet spot"
+# ══════════════════════════════════════════════════════════════════════
 ax = axes[0]
+
+for label, rows, color, base_acc in [
+        ("AG News", agnews, C_AG,   BASELINE["agnews"]),
+        ("IMDB",    imdb,   C_IMDB, BASELINE["imdb"])]:
+
+    flops = [r["total_pct"] for r in rows]
+    accs  = [r["acc"]       for r in rows]
+    splits = [r["split"] for r in rows]
+    best_s = BEST_SPLIT[label.split()[0].lower() if "AG" not in label else "agnews"]
+    best_s = BEST_SPLIT["agnews" if "AG" in label else "imdb"]
+
+    # connect all points with a thin line
+    ax.plot(flops, accs, color=color, linewidth=1.4, alpha=0.5, zorder=2)
+
+    # scatter each point
+    for x, y, s in zip(flops, accs, splits):
+        is_best = (s == best_s)
+        ax.scatter(x, y,
+                   color=BEST_CLR if is_best else color,
+                   s=130 if is_best else 60,
+                   marker="*" if is_best else "o",
+                   zorder=5 if is_best else 3,
+                   edgecolors="white", linewidths=0.8)
+        offset = (4, 5) if x < 70 else (-22, 5)
+        weight = "bold" if is_best else "normal"
+        txt = f"s={s}{'★' if is_best else ''}"
+        ax.annotate(txt, (x, y),
+                    textcoords="offset points", xytext=offset,
+                    fontsize=8, color=BEST_CLR if is_best else color,
+                    fontweight=weight)
+
+    # baseline (100% FLOPs)
+    ax.scatter(100, base_acc, marker="D", s=80, color=color,
+               zorder=4, edgecolors="white", linewidths=0.8)
+    ax.annotate(f"Dense\n{base_acc:.1f}%", (100, base_acc),
+                textcoords="offset points", xytext=(-6, -22),
+                fontsize=7.5, color=color, ha="center", style="italic")
+
+ax.set_xlabel("FLOPs  (% of DenseBERT)", fontsize=10)
+ax.set_ylabel("Test Accuracy (%)", fontsize=10)
+ax.set_title("(a)  Accuracy–FLOPs Trade-off\n(★ = chosen split)", fontsize=10, fontweight="bold")
+ax.grid(True, color="#E5E7EB", linewidth=0.7)
+
+legend_elems = [
+    Line2D([0],[0], color=C_AG,   marker="o", linewidth=1.4, markersize=6, label="AG News"),
+    Line2D([0],[0], color=C_IMDB, marker="o", linewidth=1.4, markersize=6, label="IMDB"),
+    Line2D([0],[0], color=BEST_CLR, marker="*", linewidth=0, markersize=10, label="Best split"),
+]
+ax.legend(handles=legend_elems, fontsize=8.5, loc="lower right",
+          framealpha=0.9, edgecolor="#D1D5DB")
+
+# ══════════════════════════════════════════════════════════════════════
+# Panel (b): Stage A Exit Rate vs Split Layer
+# — Key story: AG News exits aggressively; IMDB barely does at low splits
+# ══════════════════════════════════════════════════════════════════════
+ax = axes[1]
+
 for label, rows, color in [("AG News", agnews, C_AG), ("IMDB", imdb, C_IMDB)]:
-    sp = [r["split"] for r in rows]
-    ac = [r["acc"]   for r in rows]
-    ax.plot(sp, ac, marker="o", color=color, linewidth=2.2,
-            markersize=8, label=label, zorder=3)
-    for s, a in zip(sp, ac):
-        ax.annotate(f"{a:.2f}%", (s, a),
+    sp    = [r["split"]     for r in rows]
+    rates = [r["exit_rate"] for r in rows]
+    ax.plot(sp, rates, color=color, marker="o", linewidth=2.2,
+            markersize=8, label=label, zorder=3,
+            markeredgecolor="white", markeredgewidth=0.8)
+    ax.fill_between(sp, rates, alpha=0.10, color=color)
+    for s, v in zip(sp, rates):
+        ax.annotate(f"{v:.0f}%", (s, v),
                     textcoords="offset points", xytext=(0, 8),
-                    fontsize=8, ha="center", color=color)
-    ax.axhline(BASE_ACC[label], color=color, linestyle=":", linewidth=1, alpha=0.5)
+                    fontsize=8, ha="center", color=color, fontweight="bold")
+
+# Annotate the key insight: IMDB barely exits at s=2
+ax.annotate(
+    "IMDB: ~0% exit\nat split=2\n(too few layers\nto decide)",
+    xy=(2, imdb[0]["exit_rate"]), xytext=(3.2, 18),
+    fontsize=7.5, color=C_IMDB,
+    arrowprops=dict(arrowstyle="->", color=C_IMDB, lw=0.9),
+    bbox=dict(boxstyle="round,pad=0.3", fc="white", ec=C_IMDB, alpha=0.85, lw=0.8),
+)
+ax.annotate(
+    "AG News: 85%+ exit\neven at split=6",
+    xy=(6, agnews[2]["exit_rate"]), xytext=(6.8, 65),
+    fontsize=7.5, color=C_AG,
+    arrowprops=dict(arrowstyle="->", color=C_AG, lw=0.9),
+    bbox=dict(boxstyle="round,pad=0.3", fc="white", ec=C_AG, alpha=0.85, lw=0.8),
+)
 
 ax.set_xticks(SPLITS)
-ax.set_xlabel("Split Layer", fontsize=11)
-ax.set_ylabel("Accuracy (%)", fontsize=11)
-ax.set_title("(a) Accuracy", fontsize=11, fontweight="bold")
-ax.legend(fontsize=9)
+ax.set_xlabel("Split Layer", fontsize=10)
+ax.set_ylabel("Stage A Exit Rate (%)", fontsize=10)
+ax.set_title("(b)  Stage A Exit Rate vs Split\n(early exit behavior)", fontsize=10, fontweight="bold")
+ax.set_ylim(-5, 108)
+ax.legend(fontsize=8.5, loc="upper left", framealpha=0.9, edgecolor="#D1D5DB")
+ax.grid(True, color="#E5E7EB", linewidth=0.7)
 
-# ── Panel 2: Stage A Exit Rate vs Split Layer ─────────────────────────
-ax = axes[1]
-x  = np.arange(len(SPLITS))
-w  = 0.35
-for i, (label, rows, color) in enumerate([("AG News", agnews, C_AG),
-                                           ("IMDB",    imdb,   C_IMDB)]):
-    rates = [r["exit_rate"] for r in rows]
-    bars  = ax.bar(x + (i - 0.5) * w, rates, w, label=label,
-                   color=color, alpha=0.85, edgecolor="white", linewidth=0.5)
-    for bar, val in zip(bars, rates):
-        ax.text(bar.get_x() + bar.get_width() / 2,
-                bar.get_height() + 1.5,
-                f"{val:.0f}%", ha="center", va="bottom",
-                fontsize=8, color=color, fontweight="bold")
+# ══════════════════════════════════════════════════════════════════════
+# Panel (c): Stacked FLOPs breakdown — where does computation go?
+# ══════════════════════════════════════════════════════════════════════
+ax = axes[2]
+
+x     = np.arange(len(SPLITS))
+w     = 0.32
+gap   = 0.06
+xs_ag   = x - (w + gap) / 2
+xs_imdb = x + (w + gap) / 2
+
+for xs, rows, lbl_suffix, alpha in [
+        (xs_ag,   agnews, "AG",   1.0),
+        (xs_imdb, imdb,   "IMDB", 0.65)]:
+
+    fa_vals = [r["fa_pct"] for r in rows]
+    fb_vals = [r["fb_pct"] for r in rows]
+    splits  = [r["split"]  for r in rows]
+
+    bars_a = ax.bar(xs, fa_vals, w,
+                    color=C_STA, alpha=alpha,
+                    edgecolor="white", linewidth=0.5,
+                    label=f"Stage A (early-exit)  {lbl_suffix}")
+    bars_b = ax.bar(xs, fb_vals, w, bottom=fa_vals,
+                    color=C_STB, alpha=alpha,
+                    edgecolor="white", linewidth=0.5,
+                    label=f"Stage B (routing)  {lbl_suffix}")
+
+    for xi, (a, b, s) in enumerate(zip(fa_vals, fb_vals, splits)):
+        total = a + b
+        # total label on top
+        ax.text(xs[xi], total + 1.0, f"{total:.0f}%",
+                ha="center", va="bottom", fontsize=7, fontweight="bold",
+                color="#374151")
+        # highlight best split with amber border
+        best_s = BEST_SPLIT["agnews" if lbl_suffix == "AG" else "imdb"]
+        if s == best_s:
+            for bar in [bars_a[xi], bars_b[xi]]:
+                bar.set_edgecolor(BEST_CLR)
+                bar.set_linewidth(2.0)
+
+# dataset labels below x-axis
+for xi in range(len(SPLITS)):
+    ax.text(xs_ag[xi],   -5, "AG",   ha="center", fontsize=7.5, color=C_AG,   fontweight="bold")
+    ax.text(xs_imdb[xi], -5, "IMDB", ha="center", fontsize=7.5, color=C_IMDB, fontweight="bold")
 
 ax.set_xticks(x)
 ax.set_xticklabels([f"s={s}" for s in SPLITS])
-ax.set_ylabel("Stage A Exit Rate (%)", fontsize=11)
-ax.set_title("(b) Stage A Exit Rate", fontsize=11, fontweight="bold")
-ax.set_ylim(0, 115)
-ax.legend(fontsize=9)
+ax.set_ylabel("FLOPs  (% of DenseBERT)", fontsize=10)
+ax.set_title("(c)  FLOPs Breakdown: Stage A + B\n(amber border = chosen split)", fontsize=10, fontweight="bold")
+ax.set_ylim(0, 105)
+ax.grid(True, axis="y", color="#E5E7EB", linewidth=0.7)
 
-# ── Panel 3: FLOPs breakdown per split, side-by-side datasets ────────
-ax = axes[2]
-n_splits = len(SPLITS)
-group_w  = 0.38          # width of each dataset's bar
-gap      = 0.08          # gap between the two datasets within a group
-xs_ag   = np.arange(n_splits) - (group_w + gap) / 2
-xs_imdb = np.arange(n_splits) + (group_w + gap) / 2
-
-for xs, rows, alpha_a, alpha_b, label_suffix in [
-        (xs_ag,   agnews, 1.0, 0.85, " (AG)"),
-        (xs_imdb, imdb,   0.6, 0.5,  " (IMDB)")]:
-    fa = [r["fa_pct"] for r in rows]
-    fb = [r["fb_pct"] for r in rows]
-    ax.bar(xs, fa, group_w, color=C_STAGE_A, alpha=alpha_a,
-           edgecolor="white", linewidth=0.4,
-           label="Stage A (early-exit)" + label_suffix)
-    ax.bar(xs, fb, group_w, bottom=fa, color=C_STAGE_B, alpha=alpha_b,
-           edgecolor="white", linewidth=0.4,
-           label="Stage B (routing)" + label_suffix)
-    for xi, (a, b) in enumerate(zip(fa, fb)):
-        ax.text(xs[xi], a + b + 0.6, f"{a+b:.0f}%",
-                ha="center", va="bottom", fontsize=7.5, fontweight="bold")
-
-# dataset labels under groups
-for xi in range(n_splits):
-    ax.text(xs_ag[xi],   -6, "AG",   ha="center", fontsize=7.5, color=C_AG)
-    ax.text(xs_imdb[xi], -6, "IMDB", ha="center", fontsize=7.5, color=C_IMDB)
-
-ax.set_xticks(np.arange(n_splits))
-ax.set_xticklabels([f"s={s}" for s in SPLITS])
-ax.set_ylabel("FLOPs (% of DenseBERT)", fontsize=11)
-ax.set_title("(c) FLOPs Breakdown", fontsize=11, fontweight="bold")
-
-# deduplicated legend
+# Simplified legend
 handles = [
-    plt.Rectangle((0,0),1,1, color=C_STAGE_A),
-    plt.Rectangle((0,0),1,1, color=C_STAGE_B),
+    mpatches.Patch(color=C_STA, label="Stage A  (early-exit)"),
+    mpatches.Patch(color=C_STB, label="Stage B  (token routing)"),
+    mpatches.Patch(facecolor="none", edgecolor=BEST_CLR, linewidth=2, label="Chosen split"),
 ]
-ax.legend(handles, ["Stage A (early-exit)", "Stage B (routing)"],
-          fontsize=8.5, loc="upper right")
+ax.legend(handles=handles, fontsize=8.5, loc="upper right",
+          framealpha=0.9, edgecolor="#D1D5DB")
 
+# ── Global title & layout ──────────────────────────────────────────────
+fig.suptitle("HDC-BERT: Split Layer Ablation Study", fontsize=13,
+             fontweight="bold", y=1.03)
 plt.tight_layout()
-out = ROOT / "experiments_split/split_ablation.png"
-plt.savefig(out, dpi=150, bbox_inches="tight")
-print(f"Saved → {out}")
 
-# ── Figure 2: FLOPs vs Accuracy (improved) ───────────────────────────
-fig2, ax2 = plt.subplots(figsize=(8, 5.5))
-
-# manual label offsets to avoid overlapping:  (dx, dy) in points
-OFFSETS_AG   = {2: (-8, -14), 4: (-8, -14), 6: (6, 7), 8: (6, 7), 10: (6, 7)}
-OFFSETS_IMDB = {2: (6, 7), 4: (6, -12), 6: (-10, -14), 8: (6, 7), 10: (6, 7)}
-
-for label, rows, color, base_acc, offsets in [
-        ("AG News", agnews, C_AG,   94.66, OFFSETS_AG),
-        ("IMDB",    imdb,   C_IMDB, 92.34, OFFSETS_IMDB)]:
-    flops_pct = [r["total_pct"] for r in rows]
-    accs      = [r["acc"]       for r in rows]
-
-    # manually chosen best split per dataset
-    best_split = {"AG News": 6, "IMDB": 8}[label]
-    best_idx = next(i for i, r in enumerate(rows) if r["split"] == best_split)
-
-    # plot all points as scatter (no connecting line — avoids zigzag)
-    ax2.scatter(flops_pct, accs, color=color, s=70, zorder=3, alpha=0.7,
-                edgecolors="white", linewidths=0.8, label=label)
-
-    # highlight best split with a star
-    ax2.scatter(flops_pct[best_idx], accs[best_idx], color=color,
-                marker="*", s=350, zorder=5, edgecolors="white", linewidths=0.8)
-
-    for r in rows:
-        dx, dy = offsets[r["split"]]
-        is_best = (r["split"] == rows[best_idx]["split"])
-        txt = f"s={r['split']}"
-        if is_best:
-            txt += " (best)"
-        ax2.annotate(txt, (r["total_pct"], r["acc"]),
-                     textcoords="offset points", xytext=(dx, dy),
-                     fontsize=8.5, color=color,
-                     fontweight="bold" if is_best else "normal")
-
-    # baseline reference: 100% FLOPs
-    ax2.plot(100, base_acc, marker="D", markersize=9, color=color,
-             zorder=4, markeredgecolor="white", markeredgewidth=1.0)
-    ax2.annotate(f"Dense\n{base_acc:.2f}%", (100, base_acc),
-                 textcoords="offset points", xytext=(-45, -8),
-                 fontsize=8, color=color, fontstyle="italic",
-                 ha="center")
-
-    # dashed line connecting best to baseline to show savings
-    ax2.plot([flops_pct[best_idx], 100], [accs[best_idx], base_acc],
-             color=color, linestyle="--", linewidth=1.0, alpha=0.4, zorder=2)
-
-ax2.set_xlabel("FLOPs (% of Dense BERT)", fontsize=12)
-ax2.set_ylabel("Accuracy (%)", fontsize=12)
-ax2.set_title("HDC-BERT: FLOPs vs Accuracy Trade-off",
-              fontsize=13, fontweight="bold")
-ax2.legend(fontsize=10, loc="lower right")
-ax2.spines["top"].set_visible(False)
-ax2.spines["right"].set_visible(False)
-ax2.grid(True, alpha=0.25, linestyle="--")
-
-fig2.tight_layout()
-out2 = ROOT / "experiments_split/split_flops_accuracy.png"
-fig2.savefig(out2, dpi=150, bbox_inches="tight")
-print(f"Saved → {out2}")
+out = SPLIT_DIR / "split_ablation.png"
+plt.savefig(out, dpi=200, bbox_inches="tight",
+            facecolor="white", edgecolor="none")
+print(f"Saved: {out}")
+plt.close()
