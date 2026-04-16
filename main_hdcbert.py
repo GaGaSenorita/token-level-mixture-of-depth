@@ -1,7 +1,8 @@
 """
-主入口：负责调度 HDC-BERT 三阶段训练流程
-职责：参数解析 → 初始化 → Stage1(fine-tune) → Stage2(train off-ramps) → Stage3(train routers) → 保存结果
-不包含任何模型或训练细节
+Main entry point for orchestrating the three-stage HDC-BERT training pipeline.
+Responsibilities: parse arguments -> initialize -> Stage 1 (fine-tune)
+-> Stage 2 (train off-ramps) -> Stage 3 (train routers) -> save results.
+This file does not contain model or training details.
 """
 import argparse
 from pathlib import Path
@@ -49,30 +50,30 @@ def parse_args():
 
     # ---- HDC-specific parameters ----
     parser.add_argument("--split_layer", type=int, default=6,
-                        help="分界层: [0..split_layer-1] = Stage A (early-exit), "
+                        help="Boundary layer: [0..split_layer-1] = Stage A (early exit), "
                              "[split_layer..n-1] = Stage B (token routing)")
-    parser.add_argument("--tau", type=float, default=0.5, help="STE 二值化阈值")
+    parser.add_argument("--tau", type=float, default=0.5, help="STE binarization threshold")
     parser.add_argument("--target_keep_ratio", type=float, default=0.7,
-                        help="Stage B token routing 保留目标")
-    parser.add_argument("--lambda_mod", type=float, default=1e-3, help="Budget loss 系数 (Stage 3)")
+                        help="Stage B token-routing keep target")
+    parser.add_argument("--lambda_mod", type=float, default=1e-3, help="Budget loss coefficient (Stage 3)")
 
-    # ---- Train parameters: Stage 1 (标准 fine-tune BERT) ----
+    # ---- Train parameters: Stage 1 (standard BERT fine-tuning) ----
     parser.add_argument("--stage1_learning_rate", type=float, default=2e-5, help="Stage 1 learning rate")
     parser.add_argument("--stage1_epochs", type=int, default=3, help="Stage 1 epochs")
 
-    # ---- Train parameters: Stage 2 (训练 off-ramp classifiers) ----
+    # ---- Train parameters: Stage 2 (train off-ramp classifiers) ----
     parser.add_argument("--stage2_learning_rate", type=float, default=1e-3, help="Stage 2 learning rate")
     parser.add_argument("--stage2_epochs", type=int, default=5, help="Stage 2 epochs")
 
-    # ---- Train parameters: Stage 3 (训练 token routers) ----
+    # ---- Train parameters: Stage 3 (train token routers) ----
     parser.add_argument("--stage3_learning_rate", type=float, default=1e-3, help="Stage 3 learning rate")
     parser.add_argument("--stage3_epochs", type=int, default=5, help="Stage 3 epochs")
 
     # ---- Early-exit evaluation ----
     parser.add_argument("--entropy_threshold", type=float, default=0.2,
-                        help="Stage A early-exit 熵阈值")
+                        help="Stage A early-exit entropy threshold")
     parser.add_argument("--eval_early_exit", action="store_true",
-                        help="训练中是否评估完整 HDC 推理")
+                        help="Whether to evaluate full HDC inference during training")
 
     # ---- Reproducibility ----
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
@@ -270,7 +271,7 @@ def main():
     }
 
     # -------- FLOPs estimation data --------
-    # 提供给 post-hoc FLOPs 计算所需的所有数值
+    # Provide all values required for post-hoc FLOPs computation
     flops_data = {
         "n_layers": model.n_layers,
         "split_layer": args.split_layer,
@@ -290,7 +291,7 @@ def main():
     }
 
     # -------- Assemble full results --------
-    # 从 step3 history 提取最佳指标
+    # Extract the best metrics from Step 3 history
     best_step3_acc = None
     best_step3_epoch = None
     final_train_keep_rates = None
@@ -356,14 +357,14 @@ def main():
 if __name__ == "__main__":
     main()
 
-## 实验主线流程说明
+## Main Experiment Flow
 '''
-1. main_hdcbert.py → 解析参数、设置随机种子
-2. data.py → 加载 AG News、tokenization、构建 DataLoader (batch_size=32 + batch_size=1)
-3. models/hdc_bert.py → 初始化 HDC-BERT 模型
-4. Stage 1: train.py → train_step1_hdc() → 标准 fine-tune BERT (和 baseline 一样)
-5. Stage 2: train.py → train_step2_hdc() → 冻住 backbone, 只训练 off-ramp classifiers
-6. Stage 3: train.py → train_step3_hdc() → 冻住 backbone + off-ramps, 只训练 token routers
-7. eval.py → evaluate_hdc_inference() 最终 HDC 推理评估
-8. 保存最佳模型 checkpoint 和实验结果 (JSON)
+1. main_hdcbert.py -> parse arguments and set the random seed
+2. data.py -> load AG News, tokenize it, and build DataLoaders (batch_size=32 + batch_size=1)
+3. models/hdc_bert.py -> initialize the HDC-BERT model
+4. Stage 1: train.py -> train_step1_hdc() -> standard BERT fine-tuning (same as the baseline)
+5. Stage 2: train.py -> train_step2_hdc() -> freeze the backbone and train only off-ramp classifiers
+6. Stage 3: train.py -> train_step3_hdc() -> freeze the backbone and off-ramps, then train only token routers
+7. eval.py -> evaluate_hdc_inference() for the final HDC inference evaluation
+8. Save the best checkpoints and experiment results (JSON)
 '''

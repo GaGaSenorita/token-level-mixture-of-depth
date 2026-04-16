@@ -1,8 +1,10 @@
 """
-RouterBERT Pareto Eval: 评估单个 checkpoint，将结果追加写入 pareto.json。
-每次训完一个 keep_ratio 模型后立即调用，评估完可删除 .pt 节省磁盘。
+RouterBERT Pareto evaluation: evaluate a single checkpoint and append the
+result to pareto.json. Call it immediately after training each keep_ratio
+model; once evaluation is complete, the .pt file can be deleted to save disk
+space.
 
-用法:
+Usage:
     python eval_pareto_routerbert.py \
         --ckpt        ./experiments_pareto/routerbert/agnews/keep_0.7/best_model_step2.pt \
         --keep_ratio  0.7 \
@@ -62,9 +64,9 @@ def main():
     # ---- Eval ----
     acc, eval_keep_rates, avg_keep_rate = evaluate_router_full(model, test_loader, device)
 
-    # attn FLOPs ratio: 只有 attention 被 skip，按 main_routerbert.py 的公式估算
-    # baseline_attn = 2L(3H² + 2LH + H²), routed = same with K=k·L
-    # ratio = (k·8LH² + k²·4L²H) / (8LH² + 4L²H)
+    # Attention FLOPs ratio: only attention is skipped, estimated using the formula in main_routerbert.py
+    # baseline_attn = 2L(3H^2 + 2LH + H^2), routed = same with K=k*L
+    # ratio = (k*8LH^2 + k^2*4L^2H) / (8LH^2 + 4L^2H)
     H, L = 768, args.max_length
     if avg_keep_rate is not None:
         k = avg_keep_rate

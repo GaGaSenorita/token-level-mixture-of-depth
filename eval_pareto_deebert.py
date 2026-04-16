@@ -1,8 +1,9 @@
 """
-DeeBERT Pareto Sweep: 对已训练好的模型扫描多个 entropy threshold，
-记录每个 threshold 下的 accuracy 和 avg_exit_layer，用于画 tradeoff 曲线。
+DeeBERT Pareto sweep: scan multiple entropy thresholds on a trained model
+and record the accuracy and avg_exit_layer at each threshold for plotting the
+trade-off curve.
 
-用法:
+Usage:
     python eval_pareto_deebert.py \
         --ckpt experiments/deebert/agnews/run_01/best_model_step2.pt \
         --dataset ag_news \
@@ -23,7 +24,7 @@ from utils import set_seed, ensure_dir, get_device
 
 # max entropy = ln(C): IMDB(2-class)=0.693, AGNews(4-class)=1.386
 THRESHOLDS = {
-    "imdb":    [0.05, 0.2, 0.4, 0.6, 0.69],   # 严格 → 接近最大熵
+    "imdb":    [0.05, 0.2, 0.4, 0.6, 0.69],   # strict -> close to maximum entropy
     "ag_news": [0.05, 0.2, 0.5, 0.9, 1.38],
 }
 

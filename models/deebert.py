@@ -1,14 +1,15 @@
 '''
-1) 复制baseline的骨架
-从bert_baseline.py复制一份
-self.bert = AutoModel.from_pretrained(model_name) 保留
-增加：output_hidden_states=True 拿到每层 hidden
-替换：self.classifier -> self.classifiers = ModuleList([...])
-forward：默认返回 “最后一层 head 的 logits”（这样 train/eval 不动）
+1) Reuse the baseline skeleton.
+Copy the structure from bert_baseline.py.
+Keep self.bert = AutoModel.from_pretrained(model_name).
+Add output_hidden_states=True to obtain hidden states from every layer.
+Replace self.classifier with self.classifiers = ModuleList([...]).
+forward() returns the logits from the last-layer head by default so the
+existing train/eval pipeline does not need to change.
 
 2)
-forward_all_exits(): 返回logits_list stage2训练用
-forward_early_exit(): 给eval或单独脚本用
+forward_all_exits(): returns logits_list for Stage 2 training
+forward_early_exit(): used by evaluation or standalone scripts
 '''
 
 # models/deebert.py
@@ -27,8 +28,8 @@ class DeeBERTClassifier(nn.Module):
     """
     DeeBERT: one classifier head per Transformer layer (called off-ramps in paper).
     - Default forward(): return last-exit logits (drop-in replacement of BERTClassifier)
-    - forward_all_exits(): 返回所有层的logits列表（训练stage2用）
-    - forward_early_exit(): 基于entropy threshold 提前退出 (评估/推理)
+    - forward_all_exits(): return the list of logits for all layers (used in Stage 2 training)
+    - forward_early_exit(): perform early exit based on the entropy threshold (evaluation/inference)
     """
     def __init__(self, model_name: str, num_labels: int, dropout: float = 0.1):
         super().__init__()
@@ -63,14 +64,14 @@ class DeeBERTClassifier(nn.Module):
         hidden_states = outputs.hidden_states # tuple of length n_layers+1, each [B, seq_len, H]
 
         logits_list = []
-        for i in range(1, self.n_layers + 1): # 因为 hidden_states[0] 是 embedding 输出
+        for i in range(1, self.n_layers + 1): # hidden_states[0] is the embedding output
             cls = hidden_states[i][:, 0] # [B, H]
             cls = self.dropout(cls) # [B, H]
             logits = self.classifiers[i - 1](cls) # [B, C]
             logits_list.append(logits)
         return logits_list
 
-    def forward(self, input_ids, attention_mask): # 获得最后一层的logits
+    def forward(self, input_ids, attention_mask): # Return the logits from the last layer
         """
         Drop-in replacement for your current pipeline:
         return last layer logits (same behavior as BERTClassifier).

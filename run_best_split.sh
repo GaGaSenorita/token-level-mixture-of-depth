@@ -7,8 +7,8 @@ echo "  sweep: split_layer in [2, 4, 6, 8, 10]"
 echo "=========================================="
 
 # ==================== AG News ====================
-# entropy_threshold=0.3  (略比0.2激进，exit rate更高)
-# target_keep_ratio=0.5  (实际keep约0.45，Stage B更激进)
+# entropy_threshold=0.3  (slightly more aggressive than 0.2, yielding a higher exit rate)
+# target_keep_ratio=0.5  (actual keep rate is about 0.45, making Stage B more aggressive)
 echo ""
 echo "---------- AG News ----------"
 
@@ -50,8 +50,8 @@ done
 rm -f "${AGNEWS_SHARED_STEP1}"
 
 # ==================== IMDB ====================
-# entropy_threshold=0.4  (IMDB长文本需要更高阈值才能让样本更早退出)
-# target_keep_ratio=0.6  (当前实际是0.62，稍微推一下)
+# entropy_threshold=0.4  (IMDB long texts need a higher threshold to exit earlier)
+# target_keep_ratio=0.6  (the current actual value is 0.62, so this nudges it slightly)
 echo "---------- IMDB ----------"
 
 IMDB_SHARED_STEP1="./experiments_split/imdb/shared_step1.pt"

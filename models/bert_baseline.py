@@ -1,6 +1,7 @@
 """
-BERT Baseline 模型
-后续实验只需要创建新的 model 文件，保持相同接口即可
+BERT baseline model.
+Later experiments only need to create new model files while keeping the same
+interface.
 """
 import torch
 import torch.nn as nn
@@ -24,10 +25,10 @@ class BERTClassifier(nn.Module):
             attention_mask: [batch_size, seq_len]
         
         Returns:
-            若提供 labels: (loss, logits)
-            否则: logits
+            If labels are provided: (loss, logits)
+            Otherwise: logits
         
-        把AG News的文本 → BERT 编码 → 取 CLS → 做分类logits
+        AG News text -> BERT encoding -> take CLS -> compute classification logits
         """
         # BERT encoding
         outputs = self.bert(
@@ -35,8 +36,8 @@ class BERTClassifier(nn.Module):
             attention_mask=attention_mask
         ) # [batch_size, seq_len, hidden_size]
         
-        # 使用 [CLS] token 的输出
-        pooled_output = outputs.last_hidden_state[:, 0]  # [batch_size, hidden_size] 我们有B条句子，每条句子背padding/truncation到seq_len长度，取每条句子的第0个token的输出作为句子表示
+        # Use the output of the [CLS] token
+        pooled_output = outputs.last_hidden_state[:, 0]  # [batch_size, hidden_size] After padding/truncation to seq_len, the first token output is used as the sentence representation
         pooled_output = self.dropout(pooled_output)
         logits = self.classifier(pooled_output)  # [batch_size, num_labels] 
         return logits

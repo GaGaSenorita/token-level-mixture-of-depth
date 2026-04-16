@@ -1,7 +1,8 @@
 """
-主入口：负责调度整个实验流程
-职责：参数解析 → 初始化 → 调用训练/评估 → 保存结果
-不包含任何模型或训练细节
+Main entry point for orchestrating the full experiment pipeline.
+Responsibilities: parse arguments -> initialize -> run training/evaluation
+-> save results.
+This file does not contain model or training details.
 """
 import argparse
 from pathlib import Path
@@ -125,12 +126,12 @@ def main():
 if __name__ == '__main__':
     main()
 
-## 实验主线流程说明
+## Main Experiment Flow
 '''
-1. main.py → 解析参数、设置随机种子
-2. data.py → 加载 AG News、tokenization、构建 DataLoader
-3. models/bert_baseline.py → 初始化 BERT 分类模型
-4. train.py → 标准训练循环（AdamW + warmup）
-5. eval.py → 每个 epoch 后评估准确率
-6. 保存最佳模型 checkpoint 和实验结果（JSON）
+1. main.py -> parse arguments and set the random seed
+2. data.py -> load AG News, tokenize it, and build DataLoaders
+3. models/bert_baseline.py -> initialize the BERT classifier
+4. train.py -> run the standard training loop (AdamW + warmup)
+5. eval.py -> evaluate accuracy after each epoch
+6. Save the best checkpoint and experiment results (JSON)
 '''

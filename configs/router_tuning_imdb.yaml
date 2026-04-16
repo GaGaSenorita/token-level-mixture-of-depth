@@ -11,21 +11,21 @@ max_length: 256
 model_name: bert-base-uncased
 dropout: 0.1
 
-# Training: Step 1 (标准 fine-tune BERT，和 baseline 一样)
+# Training: Step 1 (standard BERT fine-tuning, same as the baseline)
 stage1_epochs: 3
 stage1_learning_rate: 2e-5
 
-# Training: Step 2 (冻住 backbone，只训练 router)
+# Training: Step 2 (freeze the backbone and train only the router)
 stage2_epochs: 5
 stage2_learning_rate: 1e-3
 grad_clip_norm: 1.0
 
 # Router
-routing_mode: token          # 'token' 或 'sample'
-tau: 0.5                     # 二值化阈值（配合全零初始化，初始 sigmoid(0)=0.5=tau）
-lambda_mod: 1e-3             # L_MoD 惩罚系数 λ
-target_keep_ratio: 0.7       # 目标保留比例 s，超过则被惩罚
-routed_layers: null           # null 表示所有层都做 routing
+routing_mode: token          # 'token' or 'sample'
+tau: 0.5                     # binarization threshold (with zero init, sigmoid(0)=0.5=tau at the start)
+lambda_mod: 1e-3             # L_MoD penalty coefficient lambda
+target_keep_ratio: 0.7       # target keep ratio s; values above it are penalized
+routed_layers: null           # null means routing is applied to all layers
 
 # Reproducibility
 seed: 42

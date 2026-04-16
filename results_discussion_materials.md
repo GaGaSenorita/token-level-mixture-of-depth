@@ -1,144 +1,144 @@
-# Results and Discussion 准备材料
+# Results and Discussion Preparation Materials
 
-本文件用于整理本项目后续撰写报告时，`Results` 与 `Discussion` 章节所需的材料、结果字段、图表、待确认问题与后续补充项。
+This file is used to organise the materials, result fields, figures, open questions, and follow-up items needed when writing the `Results` and `Discussion` sections for this project.
 
-使用建议：
+Suggested usage:
 
-- 每次拿到新的实验输出后，先更新“主结果材料”“结果文件与字段收集”“后续更新与缺失项”三部分。
-- 每次和队友同步后，更新“需要向队友确认的问题”。
-- 正文写作前，优先确认主表、主图、关键 caveat 是否都已补齐。
+- After receiving new experiment outputs, update the three sections on "main result materials", "result files and field collection", and "later updates / missing items" first.
+- After syncing with teammates, update the section on "questions to confirm with my teammate".
+- Before writing the main text, prioritise confirming that the main tables, main figures, and key caveats have all been filled in.
 
 ---
 
 ## 1. Main Result Materials Needed
 
-### 1.1 主结果表
+### 1.1 Main Results Tables
 
-- [ ] 表 1：AG News 主结果比较表
-- [ ] 表 2：IMDB 主结果比较表
-- [ ] 表中方法至少包含：
+- [ ] Table 1: AG News main results comparison table
+- [ ] Table 2: IMDB main results comparison table
+- [ ] The methods shown in the tables should include at least:
   - [ ] Dense baseline
   - [ ] DeeBERT
   - [ ] Router-Tuning
   - [ ] HDC-BERT
-- [ ] 表中至少包含以下列：
+- [ ] The table should include at least these columns:
   - [ ] `Method`
   - [ ] `Main accuracy`
-  - [ ] `Seed mean ± std`
+  - [ ] `Seed mean +/- std`
   - [ ] `Method-specific efficiency metric`
   - [ ] `Short note`
 
-### 1.2 建议采用的主结果字段
+### 1.2 Recommended Main Result Fields
 
-| Method | 主准确率字段 | 主效率字段 | 备注 |
+| Method | Main Accuracy Field | Main Efficiency Field | Notes |
 |---|---|---|---|
-| Dense baseline | `best_test_acc` | `inference_ms_per_sample` | latency 仅作补充，非统一效率口径 |
-| DeeBERT | `best_ee_acc` | `best_avg_exit_layer` | 一定不要误用 `best_step1_acc` |
-| Router-Tuning | `final_eval.accuracy` | `final_eval.avg_keep_rate` | 可同时报告 `per_layer_keep_rates` 作补充 |
-| HDC-BERT | `hdc_inference.accuracy` | `hdc_inference.stage_a_exit_rate` + `hdc_inference.avg_exit_layer_a` + `hdc_inference.avg_keep_rate_b` | 主结果应使用完整 HDC inference，而非 routing-only |
+| Dense baseline | `best_test_acc` | `inference_ms_per_sample` | Latency is only a supplementary metric, not a unified efficiency definition |
+| DeeBERT | `best_ee_acc` | `best_avg_exit_layer` | Do not accidentally use `best_step1_acc` |
+| Router-Tuning | `final_eval.accuracy` | `final_eval.avg_keep_rate` | `per_layer_keep_rates` can also be reported as a supplement |
+| HDC-BERT | `hdc_inference.accuracy` | `hdc_inference.stage_a_exit_rate` + `hdc_inference.avg_exit_layer_a` + `hdc_inference.avg_keep_rate_b` | The main result should use full HDC inference rather than routing-only output |
 
-### 1.3 主结果章节中应准备的对比点
+### 1.3 Comparison Points to Prepare in the Main Results Section
 
-- [ ] 各方法在 AG News 上的准确率比较
-- [ ] 各方法在 IMDB 上的准确率比较
-- [ ] 各方法的效率 proxy 对比
-- [ ] HDC-BERT 是否同时体现 early exit 与 token routing 的双重动态行为
-- [ ] 长文本数据集 IMDB 与中等长度数据集 AG News 上，不同动态方法的行为差异
+- [ ] Accuracy comparison of all methods on AG News
+- [ ] Accuracy comparison of all methods on IMDB
+- [ ] Efficiency proxy comparison of all methods
+- [ ] Whether HDC-BERT simultaneously shows both early exit and token routing as dynamic behaviours
+- [ ] Behaviour differences across methods on long-text IMDB versus medium-length AG News
 
-### 1.4 Seed 统计准备
+### 1.4 Seed Statistics Preparation
 
-- [ ] 对每个方法、每个数据集整理 3 个 seed 的结果
-- [ ] 计算 mean
-- [ ] 计算 std
-- [ ] 明确注明哪些多 seed 结果不是 fully independent rerun
+- [ ] Gather results for 3 seeds for each method and each dataset
+- [ ] Compute the mean
+- [ ] Compute the standard deviation
+- [ ] Clearly mark which multi-seed results are not fully independent reruns
 
-占位：
+Placeholders:
 
-- AG News 主表最终版本：
-- IMDB 主表最终版本：
-- Seed 汇总脚本/表格位置：
+- Final AG News main table version:
+- Final IMDB main table version:
+- Seed summary script / spreadsheet location:
 
 ---
 
 ## 2. Plots and Visualisations Needed
 
-### 2.1 核心图
+### 2.1 Core Figures
 
-- [ ] 图 1：主 trade-off / Pareto 图
+- [ ] Figure 1: main trade-off / Pareto figure
   - [ ] AG News
   - [ ] IMDB
-  - [ ] 若无法统一 FLOPs，图注中说明这是 method-specific efficiency proxy
-- [ ] 图 2：DeeBERT `threshold -> accuracy / avg_exit_layer`
-- [ ] 图 3：DeeBERT exit histogram
-- [ ] 图 4：Router-Tuning `target_keep_ratio -> accuracy / avg_keep_rate`
-- [ ] 图 5：Router-Tuning per-layer keep rate 可视化
-- [ ] 图 6：HDC-BERT Stage A exit histogram
-- [ ] 图 7：HDC-BERT Stage B per-layer keep rate 可视化
+  - [ ] If unified FLOPs cannot be provided, state in the caption that this is a method-specific efficiency proxy
+- [ ] Figure 2: DeeBERT `threshold -> accuracy / avg_exit_layer`
+- [ ] Figure 3: DeeBERT exit histogram
+- [ ] Figure 4: Router-Tuning `target_keep_ratio -> accuracy / avg_keep_rate`
+- [ ] Figure 5: Router-Tuning per-layer keep-rate visualisation
+- [ ] Figure 6: HDC-BERT Stage A exit histogram
+- [ ] Figure 7: HDC-BERT Stage B per-layer keep-rate visualisation
 
-### 2.2 可放附录的图
+### 2.2 Figures That Can Go Into the Appendix
 
-- [ ] Dense baseline 训练曲线
-- [ ] DeeBERT Stage 1 / Stage 2 训练曲线
-- [ ] Router-Tuning Stage 2 训练曲线
-- [ ] HDC-BERT Stage 2 / Stage 3 训练曲线
-- [ ] 各 seed 的波动图
-- [ ] HDC split-layer ablation 图
+- [ ] Dense baseline training curves
+- [ ] DeeBERT Stage 1 / Stage 2 training curves
+- [ ] Router-Tuning Stage 2 training curves
+- [ ] HDC-BERT Stage 2 / Stage 3 training curves
+- [ ] Variability plots across seeds
+- [ ] HDC split-layer ablation figure
 
-### 2.3 图中建议展示的字段
+### 2.3 Fields Suggested for the Figures
 
-| 图类型 | 推荐字段 |
+| Figure Type | Recommended Fields |
 |---|---|
-| 主 trade-off 图 | accuracy + 统一 FLOPs 或 method-specific efficiency proxy |
-| DeeBERT 曲线 | `accuracy`, `avg_exit_layer`, `exit_histogram` |
-| Router 曲线 | `accuracy`, `avg_keep_rate`, `attn_flops_ratio`, `per_layer_keep_rates` |
-| HDC 曲线 | `accuracy`, `stage_a_exit_rate`, `avg_exit_layer_a`, `avg_keep_rate_b`, `per_layer_keep_rates_b` |
+| Main trade-off figure | accuracy + unified FLOPs or method-specific efficiency proxy |
+| DeeBERT curve | `accuracy`, `avg_exit_layer`, `exit_histogram` |
+| Router curve | `accuracy`, `avg_keep_rate`, `attn_flops_ratio`, `per_layer_keep_rates` |
+| HDC curve | `accuracy`, `stage_a_exit_rate`, `avg_exit_layer_a`, `avg_keep_rate_b`, `per_layer_keep_rates_b` |
 
-### 2.4 需要后续确认的图
+### 2.4 Figures That Still Need Confirmation
 
-- [ ] HDC Pareto 图是否能补齐
-- [ ] 是否能补统一 FLOPs 图
-- [ ] 是否能补 split-layer ablation 图
-- [ ] 是否能补 wall-clock latency 图
+- [ ] Can the HDC Pareto figure be completed?
+- [ ] Can a unified FLOPs figure be added?
+- [ ] Can a split-layer ablation figure be added?
+- [ ] Can a wall-clock latency figure be added?
 
-占位：
+Placeholders:
 
-- 正文主图清单：
-- 附录图清单：
-- 计划由谁出图：
+- Main-text figure list:
+- Appendix figure list:
+- Planned owner for each figure:
 
 ---
 
 ## 3. Method-Specific Discussion Materials
 
-### 3.1 Dense baseline
+### 3.1 Dense Baseline
 
-用途：
+Purpose:
 
-- 作为 full-compute reference
-- 作为 accuracy 上限/参考点
-- 作为 latency 参考
+- Serve as the full-compute reference
+- Serve as the accuracy upper bound / reference point
+- Serve as the latency reference
 
-需要准备：
+Need to prepare:
 
 - [ ] `best_test_acc`
 - [ ] `inference_ms_per_sample`
-- [ ] 训练曲线
-- [ ] 不同 seed 的稳定性
+- [ ] Training curves
+- [ ] Stability across seeds
 
-讨论重点：
+Discussion focus:
 
-- [ ] 作为所有动态方法的 reference point
-- [ ] 动态方法相对 Dense 的精度损失或保留程度
-- [ ] 动态方法相对 Dense 的效率收益
+- [ ] Use it as the reference point for all dynamic methods
+- [ ] Accuracy loss or preservation relative to Dense
+- [ ] Efficiency gains relative to Dense
 
 ### 3.2 DeeBERT
 
-用途：
+Purpose:
 
-- 样本级 early exit 方法
-- 重点讨论“是否能在保持准确率的同时提早退出”
+- Sample-level early-exit method
+- Focus on whether it can exit earlier while preserving accuracy
 
-需要准备：
+Need to prepare:
 
 - [ ] `best_ee_acc`
 - [ ] `best_avg_exit_layer`
@@ -147,20 +147,20 @@
 - [ ] `exit_histogram`
 - [ ] Pareto threshold sweep
 
-讨论重点：
+Discussion focus:
 
-- [ ] AG News 与 IMDB 上退出层是否明显不同
-- [ ] 准确率与平均退出层数之间是否存在平滑 trade-off
-- [ ] 默认阈值下的 operating point 是否合理
+- [ ] Whether exit layers differ clearly between AG News and IMDB
+- [ ] Whether there is a smooth trade-off between accuracy and average exit layer
+- [ ] Whether the default-threshold operating point is reasonable
 
 ### 3.3 Router-Tuning
 
-用途：
+Purpose:
 
-- token-level routing 方法
-- 重点讨论“保留率、注意力跳过比例、层级裁剪模式”
+- Token-level routing method
+- Focus on keep rate, attention skip ratio, and layer-wise pruning patterns
 
-需要准备：
+Need to prepare:
 
 - [ ] `final_eval.accuracy`
 - [ ] `final_eval.avg_keep_rate`
@@ -169,21 +169,21 @@
 - [ ] `step2_eval_keep_rates`
 - [ ] Pareto keep-ratio sweep
 
-讨论重点：
+Discussion focus:
 
-- [ ] `target_keep_ratio` 与 `actual avg_keep_rate` 的关系
-- [ ] 哪些层更容易被裁剪
-- [ ] AG News 与 IMDB 在 keep-rate 模式上的差异
-- [ ] accuracy 与 keep-rate 的平衡关系
+- [ ] Relationship between `target_keep_ratio` and `actual avg_keep_rate`
+- [ ] Which layers are easier to prune
+- [ ] Differences in keep-rate patterns between AG News and IMDB
+- [ ] Balance between accuracy and keep rate
 
 ### 3.4 HDC-BERT
 
-用途：
+Purpose:
 
-- 本项目核心方法
-- 重点讨论“Stage A 先筛 easy samples，Stage B 再对 hard samples 做 token routing”
+- Core method of this project
+- Focus on the story that Stage A filters easy samples first and Stage B performs token routing on hard samples
 
-需要准备：
+Need to prepare:
 
 - [ ] `hdc_inference.accuracy`
 - [ ] `hdc_inference.stage_a_exit_rate`
@@ -195,38 +195,38 @@
 - [ ] `parameter_counts`
 - [ ] `flops_estimation_data`
 
-讨论重点：
+Discussion focus:
 
-- [ ] Stage A 是否真的筛掉了足够多 easy samples
-- [ ] Stage B 是否还保留了足够强的 token routing 行为
-- [ ] 相比 DeeBERT，HDC 是否保留了 early exit 优势
-- [ ] 相比 Router-Tuning，HDC 是否保留了 routing 优势
-- [ ] 相比 Dense，HDC 的 accuracy-efficiency trade-off 是否更优
+- [ ] Whether Stage A truly filters out enough easy samples
+- [ ] Whether Stage B still shows sufficiently strong token-routing behaviour
+- [ ] Whether HDC preserves the early-exit advantage relative to DeeBERT
+- [ ] Whether HDC preserves the routing advantage relative to Router-Tuning
+- [ ] Whether HDC offers a better accuracy-efficiency trade-off than Dense
 
-### 3.5 方法内部行为分析清单
+### 3.5 Internal Behaviour Analysis Checklist
 
-- [ ] Dense：仅作为 reference
-- [ ] DeeBERT：exit histogram、avg exit layer、threshold sweep
-- [ ] Router：per-layer keep rate、avg keep rate、keep-ratio sweep
-- [ ] HDC：Stage A exit histogram、Stage B keep rate、split-layer sensitivity
+- [ ] Dense: reference only
+- [ ] DeeBERT: exit histogram, avg exit layer, threshold sweep
+- [ ] Router: per-layer keep rate, avg keep rate, keep-ratio sweep
+- [ ] HDC: Stage A exit histogram, Stage B keep rate, split-layer sensitivity
 
-占位：
+Placeholders:
 
-- 每个方法的关键一句话结论：
-- 每个方法最强证据图/表：
+- One-sentence conclusion for each method:
+- Strongest evidence figure/table for each method:
 
 ---
 
 ## 4. Exact Result Files / Fields / Outputs To Collect
 
-### 4.1 Dense baseline
+### 4.1 Dense Baseline
 
-文件位置：
+File locations:
 
 - [ ] [experiments/baseline/agnews](C:/Msc_DSML/NLP/token-level-mixture-of-depth/experiments/baseline/agnews)
 - [ ] [experiments/baseline/imdb](C:/Msc_DSML/NLP/token-level-mixture-of-depth/experiments/baseline/imdb)
 
-应收集字段：
+Fields to collect:
 
 - [ ] `best_test_acc`
 - [ ] `final_test_acc`
@@ -237,13 +237,13 @@
 
 ### 4.2 DeeBERT
 
-文件位置：
+File locations:
 
 - [ ] [experiments/deebert/agnews](C:/Msc_DSML/NLP/token-level-mixture-of-depth/experiments/deebert/agnews)
 - [ ] [experiments/deebert/imdb](C:/Msc_DSML/NLP/token-level-mixture-of-depth/experiments/deebert/imdb)
 - [ ] [experiments_pareto/deebert](C:/Msc_DSML/NLP/token-level-mixture-of-depth/experiments_pareto/deebert)
 
-应收集字段：
+Fields to collect:
 
 - [ ] `best_step1_acc`
 - [ ] `best_ee_acc`
@@ -253,7 +253,7 @@
 - [ ] `history_step2.step2_test_acc_last`
 - [ ] `args.resume_step1_ckpt`
 
-额外要收集：
+Extra items to collect:
 
 - [ ] `training.log`
 - [ ] Pareto `pareto.json`
@@ -261,13 +261,13 @@
 
 ### 4.3 Router-Tuning
 
-文件位置：
+File locations:
 
 - [ ] [experiments/router_tuning/agnews](C:/Msc_DSML/NLP/token-level-mixture-of-depth/experiments/router_tuning/agnews)
 - [ ] [experiments/router_tuning/imdb](C:/Msc_DSML/NLP/token-level-mixture-of-depth/experiments/router_tuning/imdb)
 - [ ] [experiments_pareto/routerbert](C:/Msc_DSML/NLP/token-level-mixture-of-depth/experiments_pareto/routerbert)
 
-应收集字段：
+Fields to collect:
 
 - [ ] `final_eval.accuracy`
 - [ ] `final_eval.avg_keep_rate`
@@ -280,20 +280,20 @@
 - [ ] `model_config.routed_layers`
 - [ ] `args.resume_step1_ckpt`
 
-额外要收集：
+Extra items to collect:
 
 - [ ] `training.log`
 - [ ] Pareto `pareto.json`
 
 ### 4.4 HDC-BERT
 
-文件位置：
+File locations:
 
 - [ ] [experiments/hdc/agnews](C:/Msc_DSML/NLP/token-level-mixture-of-depth/experiments/hdc/agnews)
 - [ ] [experiments/hdc/imdb](C:/Msc_DSML/NLP/token-level-mixture-of-depth/experiments/hdc/imdb)
-- [ ] [experiments_pareto/hdcbert](C:/Msc_DSML/NLP/token-level-mixture-of-depth/experiments_pareto/hdcbert)（若后续跑完）
+- [ ] [experiments_pareto/hdcbert](C:/Msc_DSML/NLP/token-level-mixture-of-depth/experiments_pareto/hdcbert) (if completed later)
 
-应收集字段：
+Fields to collect:
 
 - [ ] `hdc_inference.accuracy`
 - [ ] `hdc_inference.stage_a_exit_rate`
@@ -309,151 +309,150 @@
 - [ ] `args.resume_step1_ckpt`
 - [ ] `args.resume_step2_ckpt`
 
-额外要收集：
+Extra items to collect:
 
 - [ ] `training.log`
-- [ ] Pareto `pareto.json`（如果补跑）
-- [ ] split-layer ablation 输出（如果补跑）
+- [ ] Pareto `pareto.json` (if rerun later)
+- [ ] Split-layer ablation outputs (if rerun later)
 
-### 4.5 通用补充输出
+### 4.5 General Supplementary Outputs
 
-- [ ] 所有使用到的 config 文件
-- [ ] 所有 shell script 版本
-- [ ] 最终实验对应的 commit hash
-- [ ] 若有离线表格汇总，收集 CSV / Excel
-- [ ] 若有后处理脚本，记录路径
+- [ ] All config files that were used
+- [ ] All shell script versions
+- [ ] Commit hash for the final experiments
+- [ ] Collect CSV / Excel files if there is an offline summary table
+- [ ] Record paths for any post-processing scripts
 
-占位：
+Placeholders:
 
-- 统一结果汇总表位置：
-- 日志汇总位置：
-- 队友提供结果打包位置：
+- Unified results summary table location:
+- Log summary location:
+- Location of result packages provided by teammates:
 
 ---
 
 ## 5. Caveats and Limitations
 
-### 5.1 实验设计层面的 caveat
+### 5.1 Experimental-Design Caveats
 
-- [ ] 没有 validation split
-- [ ] checkpoint selection 使用 test set
-- [ ] 不同方法看 test set 的次数不同
-- [ ] 动态方法的多 seed 并非 fully independent
-- [ ] HDC 的主结果与 checkpoint 选择指标并不完全一致
+- [ ] No validation split
+- [ ] Checkpoint selection uses the test set
+- [ ] Different methods inspect the test set a different number of times
+- [ ] Multi-seed runs for dynamic methods are not fully independent
+- [ ] HDC main-result selection is not perfectly aligned with the checkpoint-selection criterion
 
-### 5.2 指标层面的 caveat
+### 5.2 Metric-Level Caveats
 
-- [ ] 不同方法的效率指标口径不统一
-- [ ] `avg_keep_rate` 不是总 FLOPs 比例
-- [ ] HDC 的 `avg_exit_layer_a` 不能直接和 DeeBERT 的 `avg_exit_layer` 等价比较
-- [ ] 现有 latency 结果不完整，且 wall-clock timing 可能较粗糙
+- [ ] Efficiency metrics are not defined consistently across methods
+- [ ] `avg_keep_rate` is not the total FLOPs ratio
+- [ ] HDC's `avg_exit_layer_a` is not directly comparable to DeeBERT's `avg_exit_layer`
+- [ ] Existing latency results are incomplete, and wall-clock timing may be rough
 
-### 5.3 输出完整性层面的 caveat
+### 5.3 Output-Completeness Caveats
 
-- [ ] HDC Pareto 输出目前看起来缺失
-- [ ] split-layer ablation 结果目前看起来缺失
-- [ ] README 与当前实验实现存在新旧不一致
-- [ ] 一些计划中的实验仅出现在实验设计文档中，未必已经跑完
+- [ ] HDC Pareto outputs currently appear to be missing
+- [ ] Split-layer ablation results currently appear to be missing
+- [ ] README and the current experiment implementation are not fully aligned
+- [ ] Some planned experiments appear only in the experiment-design document and may not actually have been run
 
-### 5.4 写作时需要谨慎的表述
+### 5.4 Claims That Need Care in the Final Writing
 
-- [ ] 不要直接写“严格 Pareto 优于”除非 HDC Pareto 补齐且口径统一
-- [ ] 不要把 keep rate 直接写成“总计算量下降比例”
-- [ ] 不要把 HDC routing-only 结果当作最终方法结果
-- [ ] 不要默认多 seed 完全独立
+- [ ] Do not directly claim "strict Pareto superiority" unless HDC Pareto results are complete and the metric definition is unified
+- [ ] Do not describe keep rate directly as "total computation reduction"
+- [ ] Do not treat HDC routing-only results as the final method result
+- [ ] Do not assume all multi-seed runs are fully independent
 
-占位：
+Placeholders:
 
-- 正文需要显式承认的 limitation：
-- 可以在附录解释的 limitation：
+- Limitations that must be stated explicitly in the main text:
+- Limitations that can be explained in the appendix:
 
 ---
 
 ## 6. Questions To Ask My Teammate
 
-### 6.1 关于结果完整性
+### 6.1 About Result Completeness
 
-- [ ] HDC Pareto 实验是否已经跑完？
-- [ ] split-layer ablation 是否已经跑完？
-- [ ] 是否还有未提交的 `experiments_split/` 或 `experiments_pareto/hdcbert/` 输出？
-- [ ] 是否有统一 FLOPs 后处理脚本或结果表？
+- [ ] Has the HDC Pareto experiment already finished?
+- [ ] Has the split-layer ablation already finished?
+- [ ] Are there any uncommitted outputs under `experiments_split/` or `experiments_pareto/hdcbert/`?
+- [ ] Is there a unified FLOPs post-processing script or result table?
 
-### 6.2 关于结果口径
+### 6.2 About Result Conventions
 
-- [ ] 最终报告里是否默认用 `best checkpoint` 还是 `last epoch`？
-- [ ] HDC 的最终主结果是否确认使用 `hdc_inference.accuracy`？
-- [ ] Router 的最终主结果是否确认使用 `final_eval.accuracy`？
-- [ ] DeeBERT 的最终主结果是否确认使用 `best_ee_acc`？
-- [ ] Dense latency 是否需要进入主文还是附录？
+- [ ] Should the final report use the `best checkpoint` or the `last epoch` by default?
+- [ ] Is the HDC main result confirmed to use `hdc_inference.accuracy`?
+- [ ] Is the Router main result confirmed to use `final_eval.accuracy`?
+- [ ] Is the DeeBERT main result confirmed to use `best_ee_acc`?
+- [ ] Should Dense latency appear in the main text or in the appendix?
 
-### 6.3 关于多 seed 设计
+### 6.3 About Multi-Seed Design
 
-- [ ] 动态方法的 seed 设计是否有意复用 Step 1 checkpoint？
-- [ ] 报告中是否需要明确写出这一点？
-- [ ] 是否有任何 fully independent rerun 的补充结果？
+- [ ] Was the seed design for dynamic methods intentionally reusing the Step 1 checkpoint?
+- [ ] Does this need to be stated explicitly in the report?
+- [ ] Are there any supplementary fully independent reruns?
 
-### 6.4 关于图表与写作
+### 6.4 About Figures and Writing
 
-- [ ] 他是否已经有成品图或草图？
-- [ ] 是否有偏好的主图/主表格式？
-- [ ] 是否打算把某些分析放到 appendix？
-- [ ] 论文/报告最想突出的是 HDC 的哪一条核心结论？
+- [ ] Do they already have finished figures or draft figures?
+- [ ] Is there a preferred main-figure / main-table format?
+- [ ] Are some analyses intended to go into the appendix?
+- [ ] Which core HDC conclusion should the paper / report emphasise most strongly?
 
-### 6.5 关于实验环境与可复现性
+### 6.5 About Experimental Environment and Reproducibility
 
-- [ ] 最终采用的 commit hash 是什么？
-- [ ] 最终运行环境、GPU、运行时间有记录吗？
-- [ ] 是否有额外未写进 config 的命令行覆盖参数？
+- [ ] What is the final commit hash being used?
+- [ ] Are the final runtime environment, GPU, and total runtime recorded?
+- [ ] Are there any command-line override arguments not written into the config?
 
-占位：
+Placeholders:
 
-- 已确认的问题：
-- 待确认的问题：
-- 与队友下次同步时间：
+- Confirmed issues:
+- Pending issues:
+- Next sync time with teammate:
 
 ---
 
 ## 7. Later Updates and Missing Items
 
-### 7.1 尚缺结果
+### 7.1 Missing Results
 
 - [ ] HDC Pareto JSON
-- [ ] split-layer ablation 结果
-- [ ] 统一 FLOPs 汇总
-- [ ] 最终主表的 mean ± std
-- [ ] 最终图表初稿
+- [ ] Split-layer ablation results
+- [ ] Unified FLOPs summary
+- [ ] Final main-table mean +/- std
+- [ ] First draft of the final figures
 
-### 7.2 后续更新记录
+### 7.2 Later Update Log
 
 #### Update Log
 
-- [ ] `YYYY-MM-DD`：新增/更新内容
-- [ ] `YYYY-MM-DD`：新增/更新内容
-- [ ] `YYYY-MM-DD`：新增/更新内容
+- [ ] `YYYY-MM-DD`: added / updated item
+- [ ] `YYYY-MM-DD`: added / updated item
+- [ ] `YYYY-MM-DD`: added / updated item
 
-### 7.3 写作前最终检查
+### 7.3 Final Checklist Before Writing
 
-- [ ] 主表字段已最终确认
-- [ ] 主图数据已最终确认
-- [ ] Discussion 中 caveat 已明确列出
-- [ ] 与队友达成一致的结果版本已锁定
-- [ ] 正文与附录材料划分已确定
+- [ ] Main-table fields confirmed
+- [ ] Main-figure data confirmed
+- [ ] Caveats explicitly listed in the Discussion section
+- [ ] Result version aligned with teammate and locked
+- [ ] Main-text versus appendix material split confirmed
 
-### 7.4 最终待填空内容
+### 7.4 Final Fill-in-the-Blank Items
 
-主结果一句话总结：
-
-> TODO
-
-最关键主图一句话结论：
+One-sentence summary of the main result:
 
 > TODO
 
-Discussion 里最重要的 limitation：
+One-sentence conclusion of the key main figure:
 
 > TODO
 
-本项目最核心的 method claim：
+Most important limitation in the Discussion:
 
 > TODO
 
+Core method claim of this project:
+
+> TODO
