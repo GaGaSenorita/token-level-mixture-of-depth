@@ -44,8 +44,8 @@ def evaluate_with_time(model, dataloader, device):
 
 def evaluate_router(model, dataloader, device):
     """
-    Router-Tuning 模型评估：
-    forward() 现在只返回 logits（drop-in replacement）
+    Router-Tuning model evaluation.
+    forward() now returns logits only as a drop-in replacement.
     """
     model.eval()
     correct = 0
@@ -68,17 +68,19 @@ def evaluate_router(model, dataloader, device):
 
 def evaluate_router_full(model, dataloader, device):
     """
-    Router-Tuning 完整评估：返回 accuracy + 每层 keep_rate。
+    Full Router-Tuning evaluation returning accuracy plus per-layer keep rates.
 
-    keep_rate 来自推理路径的 mask_hard（真实跳过比例），可直接用于：
-      - report 中汇报各层实际保留比例
-      - 后续 FLOPs 估算（FLOPs_saved ∝ 1 - keep_rate_i）
+    keep_rate comes from mask_hard on the inference path (the true skip ratio)
+    and can be used directly for:
+      - reporting the actual keep ratio of each layer in the report
+      - later FLOPs estimation (FLOPs_saved ∝ 1 - keep_rate_i)
 
     Returns:
-        acc            : float，测试准确率
-        eval_keep_rates: List[float|None]，长度=n_layers，每层平均 keep_rate
-                         None 表示该层为 NoRouter（不做路由）
-        avg_keep_rate  : float，所有路由层 keep_rate 的平均值
+        acc            : float, test accuracy
+        eval_keep_rates: List[float|None], length=n_layers, average keep_rate
+                         for each layer. None means the layer is NoRouter
+                         (routing is disabled).
+        avg_keep_rate  : float, the mean keep_rate across all routed layers
     """
     model.eval()
     correct = 0
@@ -92,7 +94,7 @@ def evaluate_router_full(model, dataloader, device):
             attention_mask = batch["attention_mask"].to(device)
             labels = batch["label"].to(device)
 
-            # 用 forward_with_routing 拿到 router_stats（含每层 keep_rate）
+            # Use forward_with_routing to obtain router_stats, including each layer's keep_rate
             logits, router_stats, _ = model.forward_with_routing(
                 input_ids=input_ids,
                 attention_mask=attention_mask,
@@ -128,10 +130,11 @@ def evaluate_router_full(model, dataloader, device):
 @torch.no_grad()
 def evaluate_early_exit(model, dataloader, device, entropy_threshold, fn_name="forward_early_exit_batchwise"):
     '''
-    建议：dataloader 用 batch_size=1，这样 batchwise 就等价 samplewise（与论文语义一致）。
+    Recommendation: use batch_size=1 so that batchwise matches samplewise
+    behaviour and stays aligned with the paper's semantics.
     fn_name:
-        - "forward_early_exit_batchwise"  (你现在的实现)
-        - 如果你以后写 samplewise，可传 "forward_early_exit_samplewise"
+        - "forward_early_exit_batchwise"  (the current implementation)
+        - if you later add a samplewise version, pass "forward_early_exit_samplewise"
     '''
     model.eval()
     correct = 0
@@ -158,7 +161,7 @@ def evaluate_early_exit(model, dataloader, device, entropy_threshold, fn_name="f
         preds = logits.argmax(dim=-1)
         correct += (preds == labels).sum().item()
         total += labels.size(0)
-        exit_layers.append(int(exited_layer)) # 如果batch_size=1, len(exit_layers) == total
+        exit_layers.append(int(exited_layer)) # With batch_size=1, len(exit_layers) == total
 
     acc = correct / max(1, total)
     avg_exit_layer = sum(exit_layers) / max(1, len(exit_layers))
@@ -171,13 +174,15 @@ def evaluate_early_exit(model, dataloader, device, entropy_threshold, fn_name="f
 
 def evaluate_hdc_routing_full(model, dataloader, device):
     """
-    HDC Stage 3 完整评估：routing accuracy + Stage B 每层 eval-time keep_rate。
-    使用 forward_with_routing()，model.eval() 模式（推理路径，token skipping）。
+    Full HDC Stage 3 evaluation: routing accuracy plus eval-time keep_rate
+    for each Stage B layer. Uses forward_with_routing() in model.eval() mode
+    on the inference path with token skipping.
 
     Returns:
-        acc             : float，routing 推理准确率
-        eval_keep_rates : List[float]，长度 = n_stage_b_layers（Stage B 每层 keep_rate）
-        avg_keep_rate   : float，Stage B 平均 keep_rate
+        acc             : float, routing inference accuracy
+        eval_keep_rates : List[float], length = n_stage_b_layers
+                           (Stage B keep_rate for each layer)
+        avg_keep_rate   : float, average Stage B keep_rate
     """
     model.eval()
     correct = 0
@@ -224,8 +229,8 @@ def evaluate_hdc_routing_full(model, dataloader, device):
 
 def evaluate_hdc(model, dataloader, device):
     """
-    HDC 模型评估（带 routing 的 accuracy）。
-    调用 forward_with_routing()，用于 Stage 3 训练期间。
+    HDC model evaluation with routing-enabled accuracy.
+    Calls forward_with_routing() and is used during Stage 3 training.
     """
     model.eval()
     correct = 0
@@ -251,16 +256,17 @@ def evaluate_hdc(model, dataloader, device):
 @torch.no_grad()
 def evaluate_hdc_inference(model, dataloader, device, entropy_threshold=0.2):
     """
-    完整 HDC 推理评估: Stage A early-exit + Stage B token routing。
-    建议: 使用 batch_size=1 的 dataloader (与 evaluate_early_exit 一致)。
+    Full HDC inference evaluation: Stage A early exit plus Stage B token routing.
+    Recommendation: use a dataloader with batch_size=1 to match
+    evaluate_early_exit.
 
     Returns:
         dict with:
-            'accuracy':           HDC 推理准确率
-            'stage_a_exit_rate':  Stage A 提前退出比例
-            'avg_exit_layer_a':   Stage A 平均退出层 (1-indexed)
-            'avg_keep_rate_b':    Stage B 平均 token 保留率
-            'exit_histogram':     各层退出分布
+            'accuracy':           HDC inference accuracy
+            'stage_a_exit_rate':  proportion of samples that exit in Stage A
+            'avg_exit_layer_a':   average Stage A exit layer (1-indexed)
+            'avg_keep_rate_b':    average token keep rate in Stage B
+            'exit_histogram':     exit distribution across layers
     """
     model.eval()
     correct = 0
@@ -300,20 +306,20 @@ def evaluate_hdc_inference(model, dataloader, device, entropy_threshold=0.2):
     accuracy = correct / max(1, total)
     stage_a_exit_rate = stage_a_count / max(1, total)
 
-    # Stage A 平均退出层
+    # Average exit layer for Stage A
     stage_a_layers = [el for el in exit_layers if isinstance(el, int)]
     avg_exit_layer_a = (
         sum(stage_a_layers) / max(1, len(stage_a_layers))
         if stage_a_layers else 0.0
     )
 
-    # Stage B 平均 keep_rate
+    # Average keep_rate for Stage B
     avg_keep_rate_b = (
         sum(keep_rate_accum) / max(1, len(keep_rate_accum))
         if keep_rate_accum else 0.0
     )
 
-    # 退出分布
+    # Exit distribution
     exit_histogram = {}
     for el in exit_layers:
         key = str(el)

@@ -13,7 +13,7 @@ AGNEWS_SHARED_STEP1="./experiments_pareto/hdcbert/agnews/shared_step1.pt"
 AGNEWS_SHARED_STEP2="./experiments_pareto/hdcbert/agnews/shared_step2.pt"
 AGNEWS_THRESHOLDS="0.05 0.2 0.5 0.9 1.38"
 
-# Step1 只跑一次
+# Run Step 1 only once
 echo ">>> AG News | Step1 (shared, run once)"
 python main_hdcbert.py \
     --config configs/hdc_agnews.yaml \
@@ -30,7 +30,7 @@ rm -f "./experiments_pareto/hdcbert/agnews/shared_step1/best_model_step1.pt" \
 echo "Shared Step1 saved to ${AGNEWS_SHARED_STEP1}"
 echo ""
 
-# Step2 只跑一次（off-ramp 不依赖 target_keep_ratio）
+# Run Step 2 only once (off-ramps do not depend on target_keep_ratio)
 echo ">>> AG News | Step2 (shared, run once)"
 python main_hdcbert.py \
     --config configs/hdc_agnews.yaml \
@@ -47,7 +47,7 @@ rm -f "./experiments_pareto/hdcbert/agnews/shared_step2/best_model_step1.pt" \
 echo "Shared Step2 saved to ${AGNEWS_SHARED_STEP2}"
 echo ""
 
-# Sweep keep_ratio，每次只训 Step3，eval 时 sweep entropy_threshold
+# Sweep keep_ratio, train only Step 3 each time, and sweep entropy_threshold during evaluation
 for KR in 0.3 0.4 0.5 0.6 0.7 0.8 0.9; do
     echo ">>> AG News | keep_ratio=${KR} | Step3 only"
     python main_hdcbert.py \

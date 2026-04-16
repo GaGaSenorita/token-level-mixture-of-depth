@@ -1,8 +1,9 @@
 """
-HDC-BERT Pareto Eval: 评估单个 Step3 checkpoint，对多个 entropy_threshold 做 sweep，
-将所有 (keep_ratio, threshold) 组合追加写入 pareto.json。
+HDC-BERT Pareto evaluation: evaluate a single Step 3 checkpoint across
+multiple entropy_threshold values and append every (keep_ratio, threshold)
+combination to pareto.json.
 
-用法:
+Usage:
     python eval_pareto_hdcbert.py \
         --ckpt               ./experiments_pareto/hdcbert/agnews/keep_0.7/best_model_step3.pt \
         --keep_ratio         0.7 \
@@ -69,7 +70,7 @@ def main():
     model.load_state_dict(torch.load(args.ckpt, map_location=device))
     model.eval()
 
-    # ---- Stage B routing stats (固定，不受 threshold 影响) ----
+    # ---- Stage B routing stats (fixed and unaffected by the threshold) ----
     _, eval_keep_rates_b, avg_keep_rate_b = evaluate_hdc_routing_full(model, test_loader, device)
     H, L = 768, args.max_length
     k = avg_keep_rate_b

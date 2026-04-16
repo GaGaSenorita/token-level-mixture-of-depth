@@ -2,18 +2,21 @@
 """
 Router Tuning BERT classifier (ACT for base Transformer).
 
-论文公式 (3): y = M ⊙ F(x) + x
-- F(x) = Attention sublayer 的输出 (dense + dropout, 残差之前)
-- M = router 的二值 mask
-- + x = 残差连接 (无条件执行)
-- 之后 LayerNorm + FFN sublayer 也无条件执行
+Equation (3) in the paper: y = M ⊙ F(x) + x
+- F(x) = output of the attention sublayer (dense + dropout, before the residual)
+- M = binary router mask
+- + x = residual connection (always executed)
+- LayerNorm + the FFN sublayer are also always executed afterwards
 
-即: router 只决定 attention 要不要算，residual + LayerNorm + FFN 始终跑。
-M=0 时: y = 0 + x → LayerNorm(x) → FFN (attention 被跳过)
-M=1 时: y = Attn(x) + x → LayerNorm → FFN (正常计算)
+In other words, the router only decides whether attention is computed;
+residual + LayerNorm + FFN always run.
+When M=0: y = 0 + x -> LayerNorm(x) -> FFN (attention is skipped)
+When M=1: y = Attn(x) + x -> LayerNorm -> FFN (normal computation)
 
-Training:  所有 token 都算 attention，用 STE mask gate 输出 → 梯度可回传
-Inference: 只对 kept tokens 算 attention，skipped tokens attention=0 → 省 FLOPs
+Training:  compute attention for all tokens and use an STE mask gate so
+           gradients can flow back
+Inference: compute attention only for kept tokens, with skipped tokens getting
+           attention=0 to save FLOPs
 """
 import torch
 import torch.nn as nn
@@ -25,11 +28,15 @@ from transformers import AutoModel
 
 def ste_binarize(prob: torch.Tensor, tau: float = 0.5):
     """
-    router需要输出0/1的硬决策，但阀值操作梯度为0，无法反向传播训练
-    Backforward的时候，Pytorch autograd只看计算图里哪些变量带requires_grad:
+    The router must output hard 0/1 decisions, but thresholding has zero
+    gradient and therefore cannot be trained by backpropagation directly.
+    During backprop, PyTorch autograd only tracks variables in the graph that
+    have requires_grad:
     mask = mask_hard.detach() - prob.detach() + prob 
-    mask_hard.detach() 和 prob.detach() 都是常数，autograd 忽略它们。所以反向时：
-    ∂mask/∂prob = ∂(常数 + prob)/∂prob = 1，相当于直接无视这个梯度
+    mask_hard.detach() and prob.detach() are constants, so autograd ignores
+    them. Therefore during the backward pass:
+    ∂mask/∂prob = ∂(constant + prob)/∂prob = 1, which effectively bypasses
+    the threshold gradient.
     """
     mask_hard = (prob >= tau).to(prob.dtype)
     mask = mask_hard.detach() - prob.detach() + prob
@@ -39,12 +46,12 @@ def ste_binarize(prob: torch.Tensor, tau: float = 0.5):
 # ====================== Routers ======================
 
 class TokenRouter(nn.Module):
-    """Token-level router: sigmoid(W · x_i) -> [B, L, 1]"""
+    """Token-level router: sigmoid(W * x_i) -> [B, L, 1]"""
 
     def __init__(self, hidden_size: int):
         super().__init__()
         self.proj = nn.Linear(hidden_size, 1)
-        nn.init.zeros_(self.proj.weight)   # sigmoid(0)=0.5, 初始时约一半 token 被保留
+        nn.init.zeros_(self.proj.weight)   # sigmoid(0)=0.5, so roughly half of the tokens are kept at initialization
         nn.init.zeros_(self.proj.bias)
 
     def forward(self, hidden_states: torch.Tensor) -> torch.Tensor:
@@ -52,7 +59,7 @@ class TokenRouter(nn.Module):
 
 
 class SampleRouter(nn.Module):
-    """Sequence-level router: sigmoid(W · mean(x)) -> [B, 1]"""
+    """Sequence-level router: sigmoid(W * mean(x)) -> [B, 1]"""
 
     def __init__(self, hidden_size: int):
         super().__init__()
@@ -70,7 +77,7 @@ class SampleRouter(nn.Module):
 
 
 class NoRouter(nn.Module):
-    """Placeholder: 该层不做路由，正常计算。"""
+    """Placeholder: this layer does not use routing and is computed normally."""
 
     def forward(self, *args, **kwargs):
         return None
@@ -82,8 +89,8 @@ class RouterTuningBERTClassifier(nn.Module):
     """
     Router-Tuning BERT classifier.
 
-    - forward():                drop-in replacement，返回 logits（eval 兼容）
-    - forward_with_routing():   返回 (logits, router_stats, l_mod_total)（训练用）
+    - forward():                drop-in replacement returning logits (evaluation-compatible)
+    - forward_with_routing():   returns (logits, router_stats, l_mod_total) for training
     """
 
     def __init__(
@@ -94,7 +101,7 @@ class RouterTuningBERTClassifier(nn.Module):
         routing_mode: str = "token",    # "token" or "sample"
         tau: float = 0.5,
         target_keep_ratio: float = 0.7,
-        routed_layers=None,             # None = 所有层都路由
+        routed_layers=None,             # None = route all layers
     ):
         super().__init__()
         self.num_labels = num_labels
@@ -136,16 +143,16 @@ class RouterTuningBERTClassifier(nn.Module):
             p.requires_grad = False
 
     # ---- BERT layer decomposition ----
-    # BERT Post-LN 结构:
-    #   attn_out = dense(dropout(SelfAttention(x)))   ← 这部分被 router gate
-    #   h = LayerNorm(attn_out + x)                   ← residual + LN, 无条件执行
-    #   ffn_out = FFN(h)                               ← 无条件执行
-    #   out = LayerNorm(ffn_out + h)                   ← 无条件执行
+    # BERT Post-LN structure:
+    #   attn_out = dense(dropout(SelfAttention(x)))   <- this part is gated by the router
+    #   h = LayerNorm(attn_out + x)                   <- residual + LN, always executed
+    #   ffn_out = FFN(h)                              <- always executed
+    #   out = LayerNorm(ffn_out + h)                  <- always executed
 
     def _run_attention(self, layer_module, hidden_states, extended_mask):
         """
-        Self-Attention + dense + dropout, 残差之前的输出。
-        这是论文公式 (3) 中的 F(x)。
+        Self-Attention + dense + dropout, i.e. the output before the residual.
+        This is F(x) in Equation (3) of the paper.
         """
         self_outputs = layer_module.attention.self(
             hidden_states,
@@ -159,10 +166,10 @@ class RouterTuningBERTClassifier(nn.Module):
 
     def _run_post_attention(self, layer_module, hidden_states, attn_out):
         """
-        hidden_states: 输入到该层的 x
-        attn_out: attention sublayer 的输出 (dense + dropout, 残差之前)
-        Residual + LayerNorm + FFN sublayer (无条件执行)。
-        对应 BERT 的: LN(attn_out + x) → FFN → LN(ffn_out + h)
+        hidden_states: input x to this layer
+        attn_out: output of the attention sublayer (dense + dropout, before the residual)
+        Residual + LayerNorm + FFN sublayer (always executed).
+        Corresponds to BERT's: LN(attn_out + x) -> FFN -> LN(ffn_out + h)
         """
         # Attention residual + LayerNorm
         h = layer_module.attention.output.LayerNorm(attn_out + hidden_states)
@@ -178,15 +185,15 @@ class RouterTuningBERTClassifier(nn.Module):
         Compute keep_rate (for logging) and budget penalty (for loss).
         L_budget = ReLU(actual_kept - target_budget)
 
-        mask:      STE 版本，有梯度 → 用来算 l_mod（参与反向传播）
-        mask_hard: 硬 0/1，无梯度 → 用来算 keep_rate（仅日志记录）
+        mask:      STE version, with gradients -> used to compute l_mod
+        mask_hard: hard 0/1, without gradients -> used to compute keep_rate for logging only
         """
         if self.routing_mode == "token":
             token_mask = attention_mask.to(mask.dtype).unsqueeze(-1)  # [B, L] -> [B, L, 1]
-            # keep_rate: 用 mask_hard 算真实保留比例（日志用）
+            # keep_rate: use mask_hard to compute the true keep ratio for logging
             m_sum_hard = (mask_hard * token_mask).sum()
             denom = token_mask.sum().clamp_min(1.0)
-            # l_mod: 用 mask (STE) 算，梯度可以回传到 router
+            # l_mod: use the STE mask so gradients can flow back to the router
             m_sum = (mask * token_mask).sum()
         else:  # sample
             m_sum_hard = mask_hard.sum()
@@ -201,9 +208,10 @@ class RouterTuningBERTClassifier(nn.Module):
 
     def _token_attn_skip_inference(self, layer_module, hidden_states, attention_mask, mask_hard):
         """
-        推理时 token-level: 只对 kept tokens 算 attention，skipped tokens attention=0
-        Kept tokens 之间互相 attend (MoD 风格)。
-        返回: gated attention output [B, L, H] (残差之前)
+        Token-level inference: compute attention only for kept tokens, while
+        skipped tokens get attention=0. Kept tokens attend to each other in
+        the MoD style.
+        Returns: gated attention output [B, L, H] (before the residual)
         """
         keep_bool = (mask_hard.squeeze(-1) > 0) & (attention_mask > 0)  # [B, L]
         attn_out = torch.zeros_like(hidden_states)
@@ -227,8 +235,9 @@ class RouterTuningBERTClassifier(nn.Module):
 
     def _sample_attn_skip_inference(self, layer_module, hidden_states, extended_mask, mask_hard):
         """
-        推理时 sample-level: 只对 kept samples 算 attention，skipped samples attention=0。
-        返回: gated attention output [B, L, H] (残差之前)
+        Sample-level inference: compute attention only for kept samples, while
+        skipped samples get attention=0.
+        Returns: gated attention output [B, L, H] (before the residual)
         """
         keep_sample = mask_hard.squeeze(-1) > 0  # [B]
         attn_out = torch.zeros_like(hidden_states)
@@ -248,10 +257,10 @@ class RouterTuningBERTClassifier(nn.Module):
         """
         One Transformer layer with router-gated attention.
 
-        论文公式 (3): y = M ⊙ F(x) + x
-        - F(x) = attention sublayer (self-attn + dense + dropout)  ← 被 gate
-        - + x = residual                                           ← 无条件
-        - → LayerNorm → FFN sublayer                               ← 无条件
+        Equation (3) in the paper: y = M ⊙ F(x) + x
+        - F(x) = attention sublayer (self-attn + dense + dropout)  <- gated
+        - + x = residual                                           <- unconditional
+        - -> LayerNorm -> FFN sublayer                             <- unconditional
 
         Returns: (hidden_states, keep_rate, l_mod)
         """
@@ -280,7 +289,7 @@ class RouterTuningBERTClassifier(nn.Module):
                     layer_module, hidden_states, extended_mask, mask_hard
                 )
 
-        # 3. Residual + LayerNorm + FFN (无条件执行)
+        # 3. Residual + LayerNorm + FFN (always executed)
         hidden_states = self._run_post_attention(layer_module, hidden_states, attn_out)
 
         return hidden_states, keep_rate, l_mod
@@ -289,7 +298,7 @@ class RouterTuningBERTClassifier(nn.Module):
 
     def forward_with_routing(self, input_ids, attention_mask):
         """
-        训练用: 返回 logits + routing 统计 + budget loss。
+        Used for training: return logits + routing statistics + budget loss.
 
         Returns:
             logits:       [B, num_labels]
@@ -311,7 +320,7 @@ class RouterTuningBERTClassifier(nn.Module):
             router = self.routers[i]
 
             if isinstance(router, NoRouter):
-                # 非路由层: 正常计算整层
+                # Non-routed layer: compute the full layer normally
                 hidden_states = layer_module(hidden_states, extended_mask)[0]
                 continue
 
@@ -334,8 +343,9 @@ class RouterTuningBERTClassifier(nn.Module):
 
     def forward(self, input_ids, attention_mask):
         """
-        Drop-in replacement: 只返回 logits，兼容 baseline 评估流程。
-        训练时请用 forward_with_routing() 获取 router_stats 和 l_mod。
+        Drop-in replacement: return logits only, compatible with the baseline
+        evaluation pipeline. Use forward_with_routing() during training to
+        obtain router_stats and l_mod.
         """
         logits, _, _ = self.forward_with_routing(input_ids, attention_mask)
         return logits

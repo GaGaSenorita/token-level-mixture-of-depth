@@ -1,7 +1,8 @@
 """
-主入口：负责调度 DeeBERT 两阶段训练流程
-职责：参数解析 → 初始化 → Step1 → load ckpt → Step2(+early-exit eval) → 保存结果
-不包含任何模型或训练细节
+Main entry point for orchestrating the two-stage DeeBERT training pipeline.
+Responsibilities: parse arguments -> initialize -> Step 1 -> load checkpoint
+-> Step 2 (+ early-exit evaluation) -> save results.
+This file does not contain model or training details.
 """
 import argparse
 from pathlib import Path
@@ -136,7 +137,7 @@ def main():
 
     # -------- Step 1 --------
     step1_best_path = Path(args.output_dir) / "best_model_step1.pt"
-    if args.resume_step1_ckpt: # 如果有指定 checkpoint，就直接加载
+    if args.resume_step1_ckpt: # If a checkpoint is specified, load it directly
         logger.info(f"Loading Step1 checkpoint from: {args.resume_step1_ckpt}")
         model.load_state_dict(torch.load(args.resume_step1_ckpt, map_location=device))
         step1_best_path = Path(args.resume_step1_ckpt)
@@ -159,7 +160,7 @@ def main():
         model,
         train_loader,
         test_loader,
-        test_loader_ee, # step2 的 early-exit eval 用 batch=1 的 loader 更对齐论文语义
+        test_loader_ee, # A batch_size=1 loader keeps Step 2 early-exit evaluation aligned with the paper
         args,
         device,
         entropy_threshold=args.entropy_threshold,
@@ -178,7 +179,7 @@ def main():
     if history_step1 is not None and "Deebert_step1_test_acc" in history_step1:
         results["best_step1_acc"] = max(history_step1["Deebert_step1_test_acc"])
 
-    # Step2 early-exit: best ee_acc 及其对应同一 epoch 的 avg_exit_layer 和 FLOPs ratio
+    # Step 2 early exit: best ee_acc and the corresponding avg_exit_layer and FLOPs ratio from the same epoch
     if history_step2 is not None and isinstance(history_step2, dict):
         ee_accs = history_step2.get("step2_test_acc_ee", [])
         exit_layers = history_step2.get("step2_avg_exit_layer", [])

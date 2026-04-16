@@ -1,331 +1,341 @@
-# HDC-BERT 实验设计方案 (Conference Paper)
+# HDC-BERT Experiment Design Plan (Conference Paper)
 
-## 1. 项目概述
+## 1. Project Overview
 
-我们实现了四种 BERT 动态计算方法用于文本分类：
+We implement four dynamic BERT computation methods for text classification:
 
-| 方法 | 描述 | AG News 结果 |
+| Method | Description | AG News Result |
 |------|------|-------------|
-| **DenseBERT** | 标准 BERT 微调 baseline | 94.76% |
-| **DeeBERT** | Sample-level ACT，基于熵的 early-exit | 94.33%, avg exit layer 4.49/12 |
-| **Router-Tuning** | Token-level ACT，每层 router 决定 token 是否跳过 attention | 93.61%, avg keep rate ~0.64 |
-| **HDC-BERT** (ours) | 层次化组合 — Stage A (layers 0-5) early-exit + Stage B (layers 6-11) token routing | TBD |
+| **DenseBERT** | Standard fine-tuned BERT baseline | 94.76% |
+| **DeeBERT** | Sample-level ACT with entropy-based early exit | 94.33%, avg exit layer 4.49/12 |
+| **Router-Tuning** | Token-level ACT where each layer's router decides whether a token skips attention | 93.61%, avg keep rate ~0.64 |
+| **HDC-BERT** (ours) | Hierarchical combination: Stage A (layers 0-5) early exit + Stage B (layers 6-11) token routing | TBD |
 
-**核心主张：** 层次化组合 sample-level 和 token-level 自适应计算在 accuracy-efficiency tradeoff 上优于单独使用任一方法。
+**Core claim:** Hierarchically combining sample-level and token-level adaptive computation provides a better accuracy-efficiency trade-off than using either method alone.
 
-**计算预算：** 1-2 GPUs, ~1 week → 主实验 3 seeds，sweeps 适度精简。
+**Compute budget:** 1-2 GPUs, about 1 week. The main experiments use 3 seeds, while sweeps are kept reasonably compact.
 
 ---
 
-## 2. 数据集
+## 2. Datasets
 
-| Dataset | Classes | Avg Length | Train / Test | 选择理由 |
+| Dataset | Classes | Avg Length | Train / Test | Rationale |
 |---------|---------|-----------|-------------|---------|
-| AG News | 4 | ~38 tokens | 120K / 7.6K | 已实现，中等长度，话题分类 |
-| SST-2 | 2 | ~19 tokens | 67K / 872 (val) | 短文本，GLUE benchmark，情感分类 |
-| IMDB | 2 | ~230 tokens | 25K / 25K | 长文档，充分展示 token routing 优势 |
+| AG News | 4 | ~38 tokens | 120K / 7.6K | Already implemented, medium-length topic classification |
+| SST-2 | 2 | ~19 tokens | 67K / 872 (val) | Short text, GLUE benchmark, sentiment classification |
+| IMDB | 2 | ~230 tokens | 25K / 25K | Long documents, clearly highlights the benefit of token routing |
 
-三个数据集形成有意义的对比：
-- **短 / 中 / 长**文本
-- **情感 / 话题**分类
-- **2 / 4** 类别数
+These three datasets create a meaningful contrast:
+- **Short / medium / long** texts
+- **Sentiment / topic** classification
+- **2 / 4** classes
 
-> **注意：** SST-2 的 test labels 不公开，使用 validation set 作为 test set。IMDB 使用 max_length=256。
+> **Note:** SST-2 test labels are not public, so the validation split is used as the test set. IMDB uses `max_length=256`.
 
 ---
 
-## 3. 实验列表
+## 3. Experiment List
 
-### Experiment 1: Main Results Table（核心实验）
+### Experiment 1: Main Results Table (Core Experiment)
 
-**目标：** 在 3 个数据集上对比所有方法的 accuracy 和 efficiency。
+**Goal:** Compare the accuracy and efficiency of all methods on three datasets.
 
-#### 表格格式（每个数据集一张表）
+#### Table format (one table per dataset)
 
-| Method | Acc (%) ↑ | FLOPs (G) ↓ | FLOPs Ratio (%) ↓ | Avg Exit Layer | Avg Keep Rate |
+| Method | Acc (%) up | FLOPs (G) down | FLOPs Ratio (%) down | Avg Exit Layer | Avg Keep Rate |
 |--------|-----------|-------------|-------------------|----------------|---------------|
-| DenseBERT | x.xx ± x.xx | x.xx | 100% | 12.0 | 1.00 |
-| DeeBERT | x.xx ± x.xx | x.xx | xx% | x.xx | 1.00 |
-| Router-Tuning | x.xx ± x.xx | x.xx | xx% | 12.0 | x.xx |
-| **HDC-BERT** | x.xx ± x.xx | x.xx | xx% | x.xx | x.xx |
+| DenseBERT | x.xx +/- x.xx | x.xx | 100% | 12.0 | 1.00 |
+| DeeBERT | x.xx +/- x.xx | x.xx | xx% | x.xx | 1.00 |
+| Router-Tuning | x.xx +/- x.xx | x.xx | xx% | 12.0 | x.xx |
+| **HDC-BERT** | x.xx +/- x.xx | x.xx | xx% | x.xx | x.xx |
 
-#### 实验配置
-- **Seeds:** 42, 123, 2024（report mean ± std）
-- **固定超参：**
+#### Experimental setup
+
+- **Seeds:** 42, 123, 2024 (report mean +/- std)
+- **Fixed hyperparameters:**
   - Model: `bert-base-uncased`
   - Batch size: 32
   - Stage 1: LR=2e-5, epochs=3
   - Stage 2/3: LR=1e-3, epochs=5
-  - DeeBERT/HDC: entropy_threshold=0.2
-  - Router/HDC: target_keep_ratio=0.7, lambda_mod=1e-3, tau=0.5
-  - HDC: split_layer=6
-- **IMDB 特别设置：** max_length=256
-- **总训练量：** 3 datasets × 4 methods × 3 seeds = **36 runs**
+  - DeeBERT/HDC: `entropy_threshold=0.2`
+  - Router/HDC: `target_keep_ratio=0.7`, `lambda_mod=1e-3`, `tau=0.5`
+  - HDC: `split_layer=6`
+- **Special IMDB setting:** `max_length=256`
+- **Total training volume:** 3 datasets x 4 methods x 3 seeds = **36 runs**
 
-#### 预期结论
-- AG News / SST-2（短文本）：DeeBERT 效率优势明显（大量样本可在前几层退出）
-- IMDB（长文本）：Router-Tuning 效率优势明显（更多 token 可裁剪，attention 复杂度随序列长度二次增长）
-- **HDC-BERT 在所有数据集上取得最佳 accuracy-FLOPs 平衡**
+#### Expected conclusions
+
+- AG News / SST-2 (short text): DeeBERT should show a clear efficiency advantage because many samples can exit in early layers.
+- IMDB (long text): Router-Tuning should show a clear efficiency advantage because more tokens can be pruned and attention complexity grows quadratically with sequence length.
+- **HDC-BERT should deliver the best overall accuracy-FLOPs balance across all datasets.**
 
 ---
 
-### Experiment 2: Accuracy-Efficiency Pareto Curves（最重要的图）
+### Experiment 2: Accuracy-Efficiency Pareto Curves (Most Important Figure)
 
-**目标：** 可视化证明 HDC-BERT 占据 Pareto 前沿。
+**Goal:** Visualise evidence that HDC-BERT lies on the Pareto frontier.
 
-#### 如何生成各方法的多个数据点
+#### How to generate multiple data points for each method
 
-| Method | Sweep 变量 | 取值 | 需要重训? |
+| Method | Sweep Variable | Values | Retraining Needed? |
 |--------|-----------|------|---------|
-| DeeBERT | entropy_threshold | {0.05, 0.1, 0.2, 0.3, 0.5} | 否（推理时调） |
-| Router-Tuning | target_keep_ratio | {0.4, 0.6, 0.7, 0.8} | 是（仅重训 Stage 2） |
-| HDC-BERT | entropy_threshold | {0.05, 0.1, 0.2, 0.3, 0.5} | 否（推理时调） |
-| HDC-BERT | target_keep_ratio | {0.5, 0.7, 0.9} | 是（仅重训 Stage 3） |
+| DeeBERT | `entropy_threshold` | {0.05, 0.1, 0.2, 0.3, 0.5} | No (adjusted at inference time) |
+| Router-Tuning | `target_keep_ratio` | {0.4, 0.6, 0.7, 0.8} | Yes (retrain Stage 2 only) |
+| HDC-BERT | `entropy_threshold` | {0.05, 0.1, 0.2, 0.3, 0.5} | No (adjusted at inference time) |
+| HDC-BERT | `target_keep_ratio` | {0.5, 0.7, 0.9} | Yes (retrain Stage 3 only) |
 
-#### 计算量估算
-- DeeBERT entropy sweep：用同一个训好的模型，换阈值推理 → **几乎免费**
-- HDC entropy sweep：同上 → **几乎免费**
-- Router-Tuning keep_ratio sweep：需 4 次 Stage 2 训练 → ~4h
-- HDC keep_ratio sweep：需 3 次 Stage 3 训练 → ~3h
+#### Estimated compute cost
 
-#### 图表规格
-- X 轴：FLOPs (% of DenseBERT)
-- Y 轴：Test Accuracy (%)
-- 3 个子图（每个数据集一个），或横排 1×3 subplot
-- DenseBERT 作为参考点 (100%, max_acc)
-- 每个方法一条线 + marker，不同颜色
-- **关键：HDC 的曲线应在左上方（高 accuracy + 低 FLOPs）**
+- DeeBERT entropy sweep: reuse one trained model and change the threshold at inference time -> **almost free**
+- HDC entropy sweep: same idea -> **almost free**
+- Router-Tuning keep-ratio sweep: 4 Stage 2 retraining runs -> about 4 hours
+- HDC keep-ratio sweep: 3 Stage 3 retraining runs -> about 3 hours
+
+#### Figure specification
+
+- X-axis: FLOPs (% of DenseBERT)
+- Y-axis: Test Accuracy (%)
+- 3 subplots (one per dataset), or a horizontal 1x3 layout
+- DenseBERT serves as the reference point `(100%, max_acc)`
+- One curve plus markers per method, using different colours
+- **Key expectation:** the HDC curve should sit in the upper-left region (higher accuracy + lower FLOPs)
 
 ---
 
-### Experiment 3: FLOPs 计算（必须先实现）
+### Experiment 3: FLOPs Computation (Must Be Implemented First)
 
-**目标：** 提供硬件无关的效率度量。
+**Goal:** Provide a hardware-independent efficiency metric.
 
-#### 解析 FLOPs 公式
+#### FLOPs formula breakdown
 
-每个 BERT layer（seq_len=L, H=768, I=3072）：
+For each BERT layer (`seq_len=L, H=768, I=3072`):
 
 **Attention FLOPs:**
-```
-QKV projection:  3 × L × H × H
-Attention scores: L × L × H
-Context vectors:  L × L × H
-Output projection: L × H × H
-合计: 4·L·H² + 2·L²·H
+```text
+QKV projection:   3 x L x H x H
+Attention scores: L x L x H
+Context vectors:  L x L x H
+Output projection: L x H x H
+Total: 4 x L x H^2 + 2 x L^2 x H
 ```
 
 **FFN FLOPs:**
-```
-FFN layer 1: L × H × I
-FFN layer 2: L × I × H
-合计: 2·L·H·I
+```text
+FFN layer 1: L x H x I
+FFN layer 2: L x I x H
+Total: 2 x L x H x I
 ```
 
-#### 各方法 FLOPs 计算方式
+#### FLOPs computation for each method
 
-| Method | 计算规则 |
+| Method | Computation Rule |
 |--------|---------|
-| DenseBERT | 12 × full_layer_flops(L) |
-| DeeBERT | exit_layer × full_layer_flops(L)，对所有样本取平均 |
-| Router-Tuning | Σᵢ₌₁¹² [attn_flops(L_kept_i) + ffn_flops(L)]，L_kept_i = keep_rate_i × L |
-| HDC-BERT | Stage A 退出：k × full_layer_flops(L)；进入 Stage B：split_layer × full + Σⱼ routed_layer_flops |
+| DenseBERT | `12 x full_layer_flops(L)` |
+| DeeBERT | `exit_layer x full_layer_flops(L)`, averaged over all samples |
+| Router-Tuning | `sum_i [attn_flops(L_kept_i) + ffn_flops(L)]`, where `L_kept_i = keep_rate_i x L` |
+| HDC-BERT | Stage A exits: `k x full_layer_flops(L)`; Stage B entries: `split_layer x full + sum_j routed_layer_flops` |
 
-> **重要：** Router-Tuning / HDC Stage B 中，FFN 对**所有** token 执行（代码 `_run_post_attention` 无条件执行），仅 attention 部分按 keep_rate 缩减。
+> **Important:** In Router-Tuning / HDC Stage B, the FFN is applied to **all** tokens (`_run_post_attention` always executes). Only the attention part is reduced according to `keep_rate`.
 
-#### 额外度量
-- **Wall-clock 推理时间：** 使用 `torch.cuda.synchronize()` + `time.time()` 计时，取 3 次平均
-- **报告 speedup ratio** = DenseBERT_time / method_time
+#### Additional metrics
 
-#### 实现位置
-- 新文件 `experiments/flops.py`
+- **Wall-clock inference time:** use `torch.cuda.synchronize()` + `time.time()` and average over 3 runs
+- **Report speedup ratio** = `DenseBERT_time / method_time`
+
+#### Implementation location
+
+- New file: `experiments/flops.py`
 
 ---
 
 ### Experiment 4: Ablation Studies
 
-#### 4a: Component Ablation（必做）
+#### 4a: Component Ablation (Required)
 
-**目标：** 证明 Stage A (early exit) 和 Stage B (token routing) 缺一不可。
+**Goal:** Show that both Stage A (early exit) and Stage B (token routing) are necessary.
 
-| Config | Early Exit | Token Routing | 说明 |
+| Config | Early Exit | Token Routing | Description |
 |--------|-----------|--------------|------|
-| DenseBERT | ✗ | ✗ | Full computation baseline |
-| DeeBERT | ✓ (all 12 layers) | ✗ | 纯 sample-level ACT |
-| Router-only | ✗ | ✓ (all 12 layers) | 纯 token-level ACT |
-| **HDC (ours)** | ✓ (layers 0-5) | ✓ (layers 6-11) | 层次化组合 |
+| DenseBERT | x | x | Full computation baseline |
+| DeeBERT | check (all 12 layers) | x | Pure sample-level ACT |
+| Router-only | x | check (all 12 layers) | Pure token-level ACT |
+| **HDC (ours)** | check (layers 0-5) | check (layers 6-11) | Hierarchical combination |
 
-- 在 AG News 上运行，seed=42
+- Run on AG News, `seed=42`
 - Report: accuracy + FLOPs + avg exit layer + avg keep rate
 
-**预期结论：**
-- HDC 的 FLOPs 低于 DeeBERT（因为 Stage B 进一步减少计算）
-- HDC 的 FLOPs 低于 Router-only（因为 Stage A 让简单样本直接退出）
-- HDC 的 accuracy 接近或超过两者
+**Expected conclusions:**
 
-#### 4b: Split Layer 消融
+- HDC should have lower FLOPs than DeeBERT because Stage B further reduces computation.
+- HDC should have lower FLOPs than Router-only because Stage A lets easy samples exit immediately.
+- HDC accuracy should be close to, or better than, both baselines.
 
-**目标：** 验证 split_layer=6 是合理的选择。
+#### 4b: Split Layer Ablation
 
-| split_layer | Stage A 层数 | Stage B 层数 | 含义 |
+**Goal:** Verify that `split_layer=6` is a sensible choice.
+
+| split_layer | Stage A Layers | Stage B Layers | Interpretation |
 |-------------|-------------|-------------|------|
-| 2 | 2 layers | 10 layers | 极少 early exit 机会 |
-| 4 | 4 layers | 8 layers | 偏向 token routing |
-| **6** | 6 layers | 6 layers | 均衡分割（默认） |
-| 8 | 8 layers | 4 layers | 偏向 early exit |
-| 10 | 10 layers | 2 layers | 极少 routing 机会 |
+| 2 | 2 layers | 10 layers | Very few early-exit opportunities |
+| 4 | 4 layers | 8 layers | More biased toward token routing |
+| **6** | 6 layers | 6 layers | Balanced split (default) |
+| 8 | 8 layers | 4 layers | More biased toward early exit |
+| 10 | 10 layers | 2 layers | Very few routing opportunities |
 
-- 固定：entropy_threshold=0.2, target_keep_ratio=0.7
-- 每个 split_layer 需要完整 3-stage 训练
-- 画双 Y 轴折线图：Accuracy (左) + FLOPs (右) vs split_layer
+- Fix `entropy_threshold=0.2` and `target_keep_ratio=0.7`
+- Each `split_layer` requires a full 3-stage training run
+- Plot a dual-axis curve: Accuracy (left) + FLOPs (right) vs `split_layer`
 
-**预期：** 倒 U 型曲线。split_layer 太小 → early exit rate 低，Stage A 没发挥作用；太大 → Stage B 只有几层，token routing 效果差。
+**Expected result:** an inverted U-shape. If `split_layer` is too small, Stage A cannot contribute much because exit rates stay low. If it is too large, Stage B has too few layers to make routing effective.
 
-#### 4c: 训练策略消融（可选，放 appendix）
+#### 4c: Training Strategy Ablation (Optional, Appendix)
 
-**目标：** 验证 3-stage 顺序训练的必要性。
+**Goal:** Verify the necessity of the 3-stage training order.
 
-| Config | 训练方式 | 说明 |
+| Config | Training Strategy | Description |
 |--------|---------|------|
-| Joint | 同时训 off-ramps + routers | 梯度冲突 |
-| **3-stage (proposed)** | fine-tune → off-ramps → routers | 逐步冻结 |
-| 3-stage (reversed) | fine-tune → routers → off-ramps | 颠倒 Stage 2/3 顺序 |
+| Joint | Train off-ramps + routers simultaneously | Gradient conflict |
+| **3-stage (proposed)** | `fine-tune -> off-ramps -> routers` | Progressive freezing |
+| 3-stage (reversed) | `fine-tune -> routers -> off-ramps` | Reverse the Stage 2/3 order |
 
-- AG News, seed=42
-- 比较：最终 accuracy + 收敛曲线
-- **优先级低**：时间紧张可省略
+- AG News, `seed=42`
+- Compare final accuracy + convergence curves
+- **Low priority:** can be skipped if time is limited
 
 ---
 
 ### Experiment 5: Hyperparameter Sensitivity
 
-**目标：** 展示 HDC-BERT 对关键超参的敏感度。
+**Goal:** Show how sensitive HDC-BERT is to the key hyperparameters.
 
-在 HDC-BERT 上做单变量 sweep，固定其他超参为默认值。
+Run single-variable sweeps on HDC-BERT while holding the other hyperparameters at their default values.
 
-| 超参 | Sweep 值 | 观察指标 | 需要重训? |
+| Hyperparameter | Sweep Values | Metrics to Observe | Retraining Needed? |
 |------|---------|---------|---------|
-| entropy_threshold | {0.05, 0.1, 0.2, 0.3, 0.5} | Acc, Stage A exit rate, FLOPs | 否 |
-| target_keep_ratio | {0.4, 0.6, 0.7, 0.8} | Acc, actual keep rate, FLOPs | 是 (Stage 3) |
-| lambda_mod | {0, 1e-4, 1e-3, 1e-2} | Acc, keep rate | 是 (Stage 3) |
+| `entropy_threshold` | {0.05, 0.1, 0.2, 0.3, 0.5} | Acc, Stage A exit rate, FLOPs | No |
+| `target_keep_ratio` | {0.4, 0.6, 0.7, 0.8} | Acc, actual keep rate, FLOPs | Yes (Stage 3) |
+| `lambda_mod` | {0, 1e-4, 1e-3, 1e-2} | Acc, keep rate | Yes (Stage 3) |
 
-#### 呈现方式
-- 每个超参一个子图
-- 双 Y 轴折线图：左轴 Accuracy，右轴效率指标
+#### Presentation
 
-**注意：** entropy_threshold 的 sweep 与 Experiment 2 的 Pareto curve 共享数据，不需额外实验。
+- One subplot per hyperparameter
+- Dual-axis line chart: Accuracy on the left axis, efficiency metric on the right axis
+
+**Note:** the `entropy_threshold` sweep shares data with the Pareto curves in Experiment 2, so it does not require additional experiments.
 
 ---
 
 ### Experiment 6: Analysis & Visualization
 
-#### 6a: Exit Layer Distribution（柱状图）
+#### 6a: Exit Layer Distribution (Bar Chart)
 
-- **内容：** DeeBERT vs HDC Stage A 的退出层分布对比
-- **形式：** 并排柱状图（grouped bar），X=layer, Y=exit fraction
-- **数据来源：** `evaluate_hdc_inference` 返回的 exit_histogram
-- **意义：** 展示 HDC 的 Stage A 如何筛选"简单"样本
+- **Content:** compare the exit-layer distribution of DeeBERT and HDC Stage A
+- **Format:** grouped bar chart, with `X=layer` and `Y=exit fraction`
+- **Data source:** `exit_histogram` returned by `evaluate_hdc_inference`
+- **Purpose:** show how HDC Stage A filters out "easy" samples
 
-#### 6b: Per-Layer Keep Rate 可视化
+#### 6b: Per-Layer Keep Rate Visualisation
 
-- **内容：** HDC Stage B 各层（6-11）的平均 keep rate
-- **拓展：** 按类别分组（AG News 4 类），看不同类别的 routing pattern 差异
-- **形式：** 热力图（X=layer, Y=class, color=keep_rate）或分组柱状图
-- **意义：** 展示 router 是否学到了有意义的 pattern（如某些类别更容易裁剪）
+- **Content:** average keep rate for each HDC Stage B layer (6-11)
+- **Extension:** group by class (AG News has 4 classes) to inspect differences in routing patterns
+- **Format:** heatmap (`X=layer, Y=class, colour=keep_rate`) or grouped bar chart
+- **Purpose:** show whether the router has learned meaningful patterns, for example whether some classes are easier to prune
 
-#### 6c: Token Routing Case Study（2-3 个例子，可选）
+#### 6c: Token Routing Case Study (2-3 Examples, Optional)
 
-- **内容：** 选取典型样本，可视化 Stage B 各层哪些 token 被保留 / 裁剪
-- **形式：** 网格图（行=layers 6-11，列=tokens，颜色=kept(绿) / pruned(红)）
-- **实现：** 需要 `forward_hdc_inference_detailed()` 返回 per-layer masks
-- **意义：** 提供可解释性，展示 router 学到了什么（预期：padding → 停用词 → 内容相关裁剪）
+- **Content:** choose representative samples and visualise which tokens are kept / pruned at each Stage B layer
+- **Format:** grid plot (`rows=layers 6-11`, `columns=tokens`, `colours=kept(green) / pruned(red)`)
+- **Implementation:** requires `forward_hdc_inference_detailed()` to return per-layer masks
+- **Purpose:** provide interpretability and show what the router has learned, for example pruning padding first, then stopwords, then content-related tokens
 
-#### 6d: Easy vs Hard 样本分析（可选）
+#### 6d: Easy vs Hard Sample Analysis (Optional)
 
-- **内容：** Stage A 各层退出的样本 accuracy vs 进入 Stage B 的样本 accuracy
-- **形式：** 分组柱状图或表格
-- **意义：** 验证 entropy threshold 正确分离了"简单" vs "困难"样本
+- **Content:** compare the accuracy of samples that exit at each Stage A layer versus samples that continue into Stage B
+- **Format:** grouped bar chart or table
+- **Purpose:** verify that the entropy threshold properly separates "easy" and "hard" samples
 
 ---
 
-## 4. 执行优先级
+## 4. Execution Priority
 
-| Priority | 实验 | 预估时间 | 必要性 |
+| Priority | Experiment | Estimated Time | Necessity |
 |----------|------|---------|--------|
-| **P0** | 实现 `experiments/flops.py` | 0.5 day | 必须 |
-| **P0** | `data.py` 多数据集支持 | 0.5 day | 必须 |
-| **P0** | Exp 1: Main Results (36 runs) | 2-3 days | 必须 |
-| **P1** | Exp 2: Pareto Curves | 1 day | 强烈建议 |
-| **P1** | Exp 4a: Component Ablation | 已有数据 + 少量补充 | 强烈建议 |
-| **P1** | Exp 4b: Split Layer Ablation | 0.5 day | 强烈建议 |
-| **P2** | Exp 5: Hyperparameter Sensitivity | 0.5 day | 建议 |
-| **P2** | Exp 6a-b: Distributions & Heatmaps | 0.5 day | 建议 |
-| **P3** | Exp 4c: Training Pipeline Ablation | 0.5 day | 可选 (appendix) |
-| **P3** | Exp 6c-d: Case Study & Easy/Hard | 0.5 day | 可选 |
+| **P0** | Implement `experiments/flops.py` | 0.5 day | Required |
+| **P0** | Multi-dataset support in `data.py` | 0.5 day | Required |
+| **P0** | Exp 1: Main Results (36 runs) | 2-3 days | Required |
+| **P1** | Exp 2: Pareto Curves | 1 day | Strongly recommended |
+| **P1** | Exp 4a: Component Ablation | Existing data + minor additions | Strongly recommended |
+| **P1** | Exp 4b: Split Layer Ablation | 0.5 day | Strongly recommended |
+| **P2** | Exp 5: Hyperparameter Sensitivity | 0.5 day | Recommended |
+| **P2** | Exp 6a-b: Distributions & Heatmaps | 0.5 day | Recommended |
+| **P3** | Exp 4c: Training Pipeline Ablation | 0.5 day | Optional (appendix) |
+| **P3** | Exp 6c-d: Case Study & Easy/Hard | 0.5 day | Optional |
 
 ---
 
-## 5. 需要实现的代码变更
+## 5. Code Changes Required
 
-### experiments/ 模块新文件
-| 文件 | 用途 |
-|------|------|
-| `experiments/__init__.py` | 模块初始化 |
-| `experiments/flops.py` | 解析 FLOPs 计算（各方法） |
-| `experiments/visualize.py` | 所有画图函数 |
+### New files in the `experiments/` module
 
-### 需修改的已有文件
-| 文件 | 变更 |
+| File | Purpose |
 |------|------|
-| `data.py` | 添加 `load_dataset_by_name()` 支持 ag_news / sst2 / imdb |
-| `eval.py` | 集成 FLOPs 跟踪 + wall-clock timing |
-| `models/hdc_bert.py` | 添加 `forward_hdc_inference_detailed()` 返回 per-layer masks |
-| `main_*.py` | 添加 `--dataset` 参数 |
-| `configs/` | 每个数据集的配置文件 |
+| `experiments/__init__.py` | Module initialisation |
+| `experiments/flops.py` | FLOPs analysis for all methods |
+| `experiments/visualize.py` | All plotting functions |
+
+### Existing files that need to be modified
+
+| File | Change |
+|------|------|
+| `data.py` | Add `load_dataset_by_name()` to support `ag_news / sst2 / imdb` |
+| `eval.py` | Integrate FLOPs tracking + wall-clock timing |
+| `models/hdc_bert.py` | Add `forward_hdc_inference_detailed()` to return per-layer masks |
+| `main_*.py` | Add the `--dataset` argument |
+| `configs/` | Provide configuration files for each dataset |
 
 ---
 
-## 6. 论文实验章节结构建议
+## 6. Suggested Structure for the Paper's Experiments Section
 
-```
+```text
 5. Experiments
    5.1 Experimental Setup
-       - Datasets: AG News, SST-2, IMDB（表格描述）
-       - Implementation Details: BERT-base, AdamW, 3-stage training, hyperparams
+       - Datasets: AG News, SST-2, IMDB (described in a table)
+       - Implementation details: BERT-base, AdamW, 3-stage training, hyperparameters
        - Baselines: DenseBERT, DeeBERT, Router-Tuning BERT
        - Metrics: Accuracy, FLOPs, Speedup
 
    5.2 Main Results (Table 1-3)
-       - HDC-BERT achieves best accuracy-efficiency tradeoff across all datasets
-       - Token routing 在长文本 (IMDB) 上效果更显著
-       - Early exit 在短文本 (SST-2) 上效率更高
-       - HDC 兼顾两者优势
+       - HDC-BERT achieves the best accuracy-efficiency trade-off across all datasets
+       - Token routing is more effective on long text (IMDB)
+       - Early exit is more efficient on short text (SST-2)
+       - HDC combines the strengths of both
 
-   5.3 Accuracy-Efficiency Tradeoff (Figure 1)
-       - Pareto curves 证明 HDC 占据前沿
+   5.3 Accuracy-Efficiency Trade-off (Figure 1)
+       - Pareto curves show that HDC occupies the frontier
 
    5.4 Ablation Studies (Table 4 + Figure 2)
-       - Component ablation: Stage A + Stage B 缺一不可
-       - Split layer 分析: 中间分割点最优
+       - Component ablation: Stage A + Stage B are both necessary
+       - Split-layer analysis: the middle split point is optimal
 
    5.5 Analysis (Figure 3-5)
-       - Exit layer distribution
+       - Exit-layer distribution
        - Per-layer routing patterns
-       - Token-level case study (可选)
+       - Token-level case study (optional)
 ```
 
 ---
 
-## 7. Reviewer 可能的质疑与对应实验
+## 7. Likely Reviewer Questions and Matching Experiments
 
-| Reviewer 质疑 | 对应实验 |
+| Reviewer Concern | Matching Experiment |
 |--------------|---------|
-| 只在一个数据集上实验 | Exp 1: 三个数据集 |
-| 没有 FLOPs，只有 proxy 指标 | Exp 3: 解析 FLOPs 计算 |
-| 组合真的比单独的好吗？ | Exp 4a: Component Ablation |
-| 为什么在第 6 层分割？ | Exp 4b: Split Layer 消融 |
-| 训练策略的选择有依据吗？ | Exp 4c: Training Pipeline 消融 |
-| 模型学到了什么？ | Exp 6c: Token Routing Case Study |
-| 结果是否稳定可复现？ | Exp 1: 3 seeds + mean ± std |
-| 长文档上效果如何？ | Exp 1: IMDB 实验 |
-| 超参怎么选的？ | Exp 5: Sensitivity Analysis |
+| Only evaluated on one dataset | Exp 1: Three datasets |
+| No FLOPs, only proxy metrics | Exp 3: FLOPs analysis |
+| Is the combination really better than each part alone? | Exp 4a: Component Ablation |
+| Why split at layer 6? | Exp 4b: Split Layer Ablation |
+| Is the training strategy justified? | Exp 4c: Training Pipeline Ablation |
+| What has the model actually learned? | Exp 6c: Token Routing Case Study |
+| Are the results stable and reproducible? | Exp 1: 3 seeds + mean +/- std |
+| How does it behave on long documents? | Exp 1: IMDB experiments |
+| How were the hyperparameters selected? | Exp 5: Sensitivity Analysis |

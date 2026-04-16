@@ -1,7 +1,8 @@
 """
-主入口：负责调度 Router-Tuning 两阶段训练流程
-职责：参数解析 → 初始化 → Step1(fine-tune) → load ckpt → Step2(train router) → 保存结果
-不包含任何模型或训练细节
+Main entry point for orchestrating the two-stage Router-Tuning training pipeline.
+Responsibilities: parse arguments -> initialize -> Step 1 (fine-tune)
+-> load checkpoint -> Step 2 (train router) -> save results.
+This file does not contain model or training details.
 """
 import argparse
 from pathlib import Path
@@ -48,23 +49,23 @@ def parse_args():
     parser.add_argument("--model_name", type=str, default="bert-base-uncased", help="Pretrained model name")
     parser.add_argument("--dropout", type=float, default=0.1, help="Dropout rate")
 
-    # ---- Train parameters: Step 1 (标准 fine-tune BERT) ----
+    # ---- Train parameters: Step 1 (standard BERT fine-tuning) ----
     parser.add_argument("--stage1_learning_rate", type=float, default=2e-5, help="Step1 learning rate")
     parser.add_argument("--stage1_epochs", type=int, default=3, help="Step1 epochs")
 
-    # ---- Train parameters: Step 2 (冻住 backbone，只训练 router) ----
+    # ---- Train parameters: Step 2 (freeze the backbone and train only the router) ----
     parser.add_argument("--stage2_learning_rate", type=float, default=1e-3, help="Step2 learning rate (router only)")
     parser.add_argument("--stage2_epochs", type=int, default=5, help="Step2 epochs")
     parser.add_argument("--grad_clip_norm", type=float, default=1.0, help="Gradient clip norm (step2)")
 
     # ---- Router parameters ----
     parser.add_argument("--routing_mode", type=str, default="token", choices=["token", "sample"],
-                        help="'token': 逐 token 决策; 'sample': 逐序列决策")
-    parser.add_argument("--tau", type=float, default=0.5, help="二值化阈值（配合全零初始化）")
-    parser.add_argument("--lambda_mod", type=float, default=1e-3, help="L_MoD 惩罚系数 λ")
-    parser.add_argument("--target_keep_ratio", type=float, default=0.7, help="目标保留比例 s")
+                        help="'token': make decisions per token; 'sample': make decisions per sequence")
+    parser.add_argument("--tau", type=float, default=0.5, help="Binarization threshold (paired with zero initialization)")
+    parser.add_argument("--lambda_mod", type=float, default=1e-3, help="L_MoD penalty coefficient lambda")
+    parser.add_argument("--target_keep_ratio", type=float, default=0.7, help="Target keep ratio s")
     parser.add_argument("--routed_layers", type=str, default=None,
-                        help="哪些层做 routing，None 表示所有层，也可传 '0,1,2' 或 'last4'，我们默认所有层")
+                        help="Which layers use routing; None means all layers. You can also pass '0,1,2' or 'last4'")
 
     # ---- Reproducibility ----
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
@@ -86,7 +87,7 @@ def parse_args():
 
 def parse_routed_layers(spec, n_layers):
     if spec is None or str(spec).strip().lower() in ("none", "null"):
-        return None  # None 表示所有层，交给模型 __init__ 处理
+        return None  # None means all layers; let the model __init__ handle it
 
     spec = str(spec).strip().lower()
     if spec == "all":
@@ -96,7 +97,7 @@ def parse_routed_layers(spec, n_layers):
         k = max(1, min(k, n_layers))
         return list(range(n_layers - k, n_layers))
 
-    # 逗号分隔的层号
+    # Comma-separated layer indices
     indices = []
     for part in spec.split(","):
         part = part.strip()
@@ -130,7 +131,7 @@ def main():
     logger.info(f"Train batches: {len(train_loader)}, Test batches: {len(test_loader)}")
     logger.info(f"Data loaded. num_labels={num_labels}")
 
-    # -------- 解析 routed_layers --------
+    # -------- Parse routed_layers --------
     from transformers import AutoConfig
     config = AutoConfig.from_pretrained(args.model_name)
     routed_layers = parse_routed_layers(args.routed_layers, config.num_hidden_layers)
@@ -159,7 +160,7 @@ def main():
 
     # -------- Step 1 --------
     step1_best_path = Path(args.output_dir) / "best_model_step1.pt"
-    if args.resume_step1_ckpt:  # 如果有指定 checkpoint，就直接加载
+    if args.resume_step1_ckpt:  # If a checkpoint is specified, load it directly
         logger.info(f"Loading Step1 checkpoint from: {args.resume_step1_ckpt}")
         model.load_state_dict(torch.load(args.resume_step1_ckpt, map_location=device))
         step1_best_path = Path(args.resume_step1_ckpt)
@@ -174,7 +175,7 @@ def main():
         model.load_state_dict(torch.load(step1_best_path, map_location=device))
 
     # -------- Step 2 --------
-    logger.info("Starting Step2 training (freeze backbone，only training router)...")
+    logger.info("Starting Step2 training (freeze backbone, train router only)...")
     from train import train_step2_router_tuning
 
     history_step2 = train_step2_router_tuning(
@@ -185,7 +186,7 @@ def main():
         device,
     )
 
-    # -------- Load best Step2 checkpoint（确保 final eval 用的是最优模型）--------
+    # -------- Load the best Step 2 checkpoint (so final evaluation uses the best model) --------
     best_step2_path = Path(args.output_dir) / "best_model_step2.pt"
     if best_step2_path.exists():
         logger.info(f"Loading best Step2 checkpoint: {best_step2_path}")
@@ -193,7 +194,7 @@ def main():
     else:
         logger.warning("best_model_step2.pt not found, final eval uses last-epoch model state.")
 
-    # -------- Final eval（推理路径，拿 eval-time keep_rates 用于 FLOPs 估算）--------
+    # -------- Final evaluation (inference path, using eval-time keep_rates for FLOPs estimation) --------
     logger.info("Running final evaluation for report metrics...")
     from eval import evaluate_router_full
     final_acc, final_eval_keep_rates, final_avg_keep_rate = evaluate_router_full(
@@ -208,10 +209,10 @@ def main():
 
     # -------- Save results --------
     results = {
-        # ---- 实验参数 ----
+        # ---- Experiment arguments ----
         "args": vars(args),
 
-        # ---- 模型结构（report 用）----
+        # ---- Model structure (for the report) ----
         "model_config": {
             "model_name":  args.model_name,
             "n_layers":    config.num_hidden_layers,
@@ -223,7 +224,7 @@ def main():
             "routed_layers":     sorted(list(model.routed_layers)),
         },
 
-        # ---- 参数量统计（report 用）----
+        # ---- Parameter counts (for the report) ----
         "parameter_counts": {
             "total":          total_params,
             "router":         router_params,
@@ -231,20 +232,20 @@ def main():
             "router_ratio_pct": round(router_params / total_params * 100, 6),
         },
 
-        # ---- 训练历史 ----
+        # ---- Training history ----
         "step1_best_ckpt": str(step1_best_path),
         "history_step1":   history_step1,
         "history_step2":   history_step2,
 
-        # ---- 最终评估指标（report 核心数据）----
+        # ---- Final evaluation metrics (core report data) ----
         "final_eval": {
             "accuracy":             final_acc,
             "per_layer_keep_rates": final_eval_keep_rates,   # List[float|None], len=n_layers
-            "avg_keep_rate":        final_avg_keep_rate,      # 所有路由层平均
+            "avg_keep_rate":        final_avg_keep_rate,      # Average across all routed layers
         },
 
-        # ---- FLOPs 估算所需原始数据 ----
-        # 计算公式（单层 attention）:
+        # ---- Raw data required for FLOPs estimation ----
+        # Formula (single attention layer):
         #   baseline_attn_FLOPs = 2 * L * 3H^2 + 4 * L^2 * H + 2 * L * H^2
         #   routed_attn_FLOPs_i = 2 * K_i * 3H^2 + 4 * K_i^2 * H + 2 * K_i * H^2
         #   where K_i = keep_rate_i * L
@@ -256,13 +257,13 @@ def main():
             "seq_len":     args.max_length,
             "routing_mode":          args.routing_mode,
             "routed_layers":         sorted(list(model.routed_layers)),
-            "eval_keep_rates_per_layer": final_eval_keep_rates,  # 核心：每层实际保留率
+            "eval_keep_rates_per_layer": final_eval_keep_rates,  # Core metric: actual keep rate for each layer
             "avg_keep_rate":             final_avg_keep_rate,
             "target_keep_ratio":         args.target_keep_ratio,
         },
     }
 
-    # 从 step2 history 里提取最佳指标（兼容旧逻辑）
+    # Extract the best metrics from Step 2 history (keeps backward compatibility)
     if history_step2 is not None and isinstance(history_step2, dict):
         if "step2_test_acc" in history_step2 and history_step2["step2_test_acc"]:
             results["best_test_acc"] = max(history_step2["step2_test_acc"])
@@ -278,19 +279,19 @@ def main():
 if __name__ == "__main__":
     main()
 
-## 实验主线流程说明
+## Main Experiment Flow
 '''
-1. main_routerbert.py → 解析参数、设置随机种子
-2. data.py → 加载 AG News、tokenization、构建 DataLoader
-3. models/router_tuning_bert.py → 初始化 Router-Tuning BERT 模型
-4. Step1: train.py → train_step1_router_tuning() → 标准 fine-tune BERT（和 baseline 一样）
-5. Step2: train.py → train_step2_router_tuning() → 冻住 backbone，只训练 router
-6. eval.py → evaluate_router_full() 每个 epoch 后评估准确率 + 推理路径 keep_rates
-7. Final eval → evaluate_router_full() → 获取最终 per-layer keep_rates（用于 FLOPs 估算）
-8. 保存最佳模型 checkpoint 和实验结果（JSON），results 包含：
-   - model_config: 模型结构参数（n_layers, hidden_size, n_heads, seq_len）
-   - parameter_counts: 总参数 / router 参数 / backbone 参数
-   - history_step1/2: 每个 epoch 的 loss、acc、keep_rates
-   - final_eval: 最终 accuracy + 每层 eval-time keep_rate + 平均 keep_rate
-   - flops_estimation_data: 计算 FLOPs 节省所需的全部原始数据
+1. main_routerbert.py -> parse arguments and set the random seed
+2. data.py -> load AG News, tokenize it, and build DataLoaders
+3. models/router_tuning_bert.py -> initialize the Router-Tuning BERT model
+4. Step 1: train.py -> train_step1_router_tuning() -> standard BERT fine-tuning (same as the baseline)
+5. Step 2: train.py -> train_step2_router_tuning() -> freeze the backbone and train only the router
+6. eval.py -> evaluate_router_full() to evaluate accuracy and inference-path keep_rates after each epoch
+7. Final eval -> evaluate_router_full() -> obtain the final per-layer keep_rates for FLOPs estimation
+8. Save the best checkpoint and experiment results (JSON). The results include:
+   - model_config: model structure parameters (n_layers, hidden_size, n_heads, seq_len)
+   - parameter_counts: total / router / backbone parameter counts
+   - history_step1/2: per-epoch loss, accuracy, and keep_rates
+   - final_eval: final accuracy + per-layer eval-time keep_rate + average keep_rate
+   - flops_estimation_data: all raw data required to estimate FLOPs savings
 '''

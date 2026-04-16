@@ -1,6 +1,6 @@
 """
-训练模块：标准 supervised fine-tuning
-与模型/数据解耦，可直接复用
+Training module for standard supervised fine-tuning.
+It is decoupled from the model and data code so it can be reused directly.
 """
 import torch
 from torch.optim import AdamW
@@ -10,7 +10,7 @@ import os
 
 
 def train_epoch(model, dataloader, optimizer, scheduler, device):
-    """训练一个 epoch，返回平均 loss"""
+    """Train one epoch and return the average loss."""
     model.train()
     total_loss = 0.0
     loss_fn = torch.nn.CrossEntropyLoss()
@@ -90,8 +90,8 @@ def _build_scheduler(optimizer, steps_per_epoch, epochs, warmup_ratio=0.1):
 def train_step1_deebert(model, train_loader, test_loader, args, device):
     """
     Step1: Dense BERT fine-tuning
-    - 训练 backbone + last head
-    - 用你原来的 train_epoch / evaluate（评估 last head）
+    - train the backbone + last head
+    - reuse the original train_epoch / evaluate to assess the last head
     """
     from eval import evaluate
     os.makedirs(args.output_dir, exist_ok=True)
@@ -126,11 +126,12 @@ def train_step2_deebert(model, train_loader, test_loader, test_loader_ee, args, 
     """
     Step2: DeeBERT off-ramps training
     - freeze backbone + last head
-    - 只训练中间 heads (1..n-1)
-    - 注意：evaluate(model, ...) 评的是 last head（冻结了），所以它涨不涨不代表 step2 没效果
-      真正要看的是 early-exit 的指标（你后面可以再加一个 evaluate_early_exit）
+    - train only the intermediate heads (1..n-1)
+    - note: evaluate(model, ...) measures the frozen last head, so whether
+      that score changes does not indicate whether Step 2 is effective.
+      The real metrics to watch are the early-exit metrics.
     """
-    # 冻结 backbone 和最后一个 head（你在 deebert.py 里已经写了这个函数）
+    # Freeze the backbone and the last head (this helper already exists in deebert.py)
     from eval import evaluate, evaluate_early_exit
     model.freeze_backbone_and_last_head()
 
@@ -170,12 +171,12 @@ def train_step2_deebert(model, train_loader, test_loader, test_loader_ee, args, 
                 attention_mask=attention_mask
             )  # list length = n_layers, each [B,C]
 
-            # 只训前 n-1 个 head
+            # Train only the first n-1 heads
             loss = 0.0
             for logits in logits_list[:-1]:
                 loss = loss + loss_fn(logits, labels)
 
-            # 稳一点：做平均（不然 head 数多了 loss 尺度会变）
+            # Average the losses for stability; otherwise the scale grows with the number of heads
             loss = loss / max(1, (len(logits_list) - 1))
 
             loss.backward()
@@ -224,16 +225,17 @@ def train_step2_deebert(model, train_loader, test_loader, test_loader_ee, args, 
 
 def train_step1_router_tuning(model, train_loader, test_loader, args, device):
     """
-    Router-Tuning Step1: 标准 fine-tune BERT
-    - 训练 backbone + classifier（和 baseline 一样）
-    - 这一步 router 还没参与，只是把 BERT 调好
-    - 用 train_epoch / evaluate（和 baseline 完全复用）
+    Router-Tuning Step 1: standard BERT fine-tuning
+    - train the backbone + classifier (same as the baseline)
+    - the router is not involved yet; this step simply tunes the BERT model
+    - reuse train_epoch / evaluate exactly as in the baseline
     """
     from eval import evaluate
     os.makedirs(args.output_dir, exist_ok=True)
     best_path = os.path.join(args.output_dir, "best_model_step1.pt")
 
-    # Step1 不训练 router，冻住 router 参数使其保持全零（sigmoid(0)=0.5=tau，全部保留）
+    # Step 1 does not train the router; freeze router parameters so they stay at zero
+    # (sigmoid(0)=0.5=tau, meaning everything is kept)
     for p in model.routers.parameters():
         p.requires_grad = False
 
@@ -268,29 +270,29 @@ def train_step1_router_tuning(model, train_loader, test_loader, args, device):
 
 def train_step2_router_tuning(model, train_loader, test_loader, args, device):
     """
-    Router-Tuning Step2: 冻住 backbone，只训练 router
-    - 调用 model.freeze_backbone() 冻住 BERT + classifier
-    - 只有 router 的参数（每层一个 nn.Linear(768, 1)）有梯度
+    Router-Tuning Step 2: freeze the backbone and train only the router
+    - call model.freeze_backbone() to freeze BERT + classifier
+    - only router parameters (one nn.Linear(768, 1) per layer) receive gradients
     - Loss = L_task + lambda_mod * L_MoD
-      L_task: 交叉熵，保证分类性能
-      L_MoD:  ReLU(实际保留量 - 目标保留量)，鼓励跳过更多层
+      L_task: cross-entropy to preserve classification performance
+      L_MoD:  ReLU(actual_kept - target_kept), encouraging more skipping
     """
     from eval import evaluate_router_full
 
-    # ---- 冻结 backbone + classifier，解冻 router ----
+    # ---- Freeze backbone + classifier, unfreeze router ----
     model.freeze_backbone()
-    # Step1 可能冻住了 router，这里确保 router 可训练
+    # Step 1 may have frozen the router; ensure it is trainable here
     for p in model.routers.parameters():
         p.requires_grad = True
 
-    # 只把有梯度的参数（router）交给 optimizer
+    # Pass only trainable parameters (the routers) to the optimizer
     optimizer = AdamW(
-        filter(lambda p: p.requires_grad, model.parameters()), # 从model的所有参数里，筛选出required_grad=True的参数
+        filter(lambda p: p.requires_grad, model.parameters()), # Select only parameters with requires_grad=True
         lr=args.stage2_learning_rate
     )
     print(f'number of trainable parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad):,}')
 
-    # 打印可训练参数，确认只有 router
+    # Print trainable parameters to confirm that only the router is updated
     print("===== Trainable parameters =====")
     for name, param in model.named_parameters():
         if param.requires_grad:
@@ -304,9 +306,9 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
         "step2_train_loss_task": [],
         "step2_train_loss_mod": [],
         "step2_test_acc": [],
-        "step2_keep_rates": [],         # 训练时每层 keep_rate（mask_hard，每 epoch 末尾平均）
-        "step2_eval_keep_rates": [],    # 推理路径下每层 keep_rate（eval 时统计，用于报告和 FLOPs）
-        "step2_avg_keep_rate": [],      # 推理路径下所有路由层 keep_rate 的平均（一个标量）
+        "step2_keep_rates": [],         # Per-layer keep_rate during training (mask_hard, averaged at the end of each epoch)
+        "step2_eval_keep_rates": [],    # Per-layer keep_rate on the inference path (measured during eval for reporting and FLOPs)
+        "step2_avg_keep_rate": [],      # Average keep_rate across all routed layers on the inference path
     }
     best_acc = 0.0
     best_path = os.path.join(args.output_dir, "best_model_step2.pt")
@@ -315,9 +317,9 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
         print(f"\n===== Router-Tuning Step2: Epoch {epoch+1}/{args.stage2_epochs} =====")
         model.train()
 
-        total_loss = 0.0 # 记录总 loss（task + MoD）用来梯度更新
-        total_task = 0.0 # 记录纯分类损失
-        total_mod = 0.0 # 记录纯 MoD 惩罚
+        total_loss = 0.0 # Track total loss (task + MoD) for gradient updates
+        total_task = 0.0 # Track the pure classification loss
+        total_mod = 0.0 # Track the pure MoD penalty
         keep_rate_sums = None
         keep_rate_counts = None
 
@@ -328,13 +330,14 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
 
             optimizer.zero_grad(set_to_none=True)
 
-            # forward_with_routing 返回三样东西：logits 算交叉熵，l_mod 做稀疏惩罚，router_stats 记日志
+            # forward_with_routing returns three items: logits for cross-entropy,
+            # l_mod for the sparsity penalty, and router_stats for logging
             logits, router_stats, l_mod = model.forward_with_routing(
                 input_ids=input_ids,
                 attention_mask=attention_mask
             )
 
-            # Loss = 分类损失 + lambda * MoD 惩罚
+            # Loss = classification loss + lambda * MoD penalty
             loss_task = loss_fn(logits, labels)
             loss = loss_task + args.lambda_mod * l_mod
 
@@ -351,8 +354,9 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
             total_task += loss_task.item()
             total_mod += l_mod.item()
 
-            # 累加每层的 keep_rate，epoch 结束后算平均
-            # keep_rate 代表每层被保留（不跳过）的比例，越小表示模型越激进地跳过层
+            # Accumulate keep_rate for each layer and average it at the end of the epoch.
+            # keep_rate is the fraction kept (not skipped) in each layer; a
+            # smaller value means the model skips more aggressively.
             keep_rates = router_stats.get("keep_rates", [])
             if keep_rate_sums is None:
                 keep_rate_sums = [0.0 for _ in keep_rates]
@@ -362,7 +366,7 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
                     keep_rate_sums[i] += float(kr)
                     keep_rate_counts[i] += 1
 
-        # ---- epoch 结束，算平均 ----
+        # ---- End of the epoch: compute averages ----
         n_batches = max(1, len(train_loader))
         avg_loss = total_loss / n_batches
         avg_task = total_task / n_batches
@@ -374,7 +378,7 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
             for s, c in zip(keep_rate_sums, keep_rate_counts):
                 keep_rate_avgs.append(s / c if c > 0 else None)
 
-        # ---- Eval（推理路径，统计真实 keep_rate）----
+        # ---- Evaluation (inference path, measuring the true keep_rate) ----
         test_acc, eval_keep_rates, avg_keep_rate = evaluate_router_full(model, test_loader, device)
 
         history["step2_train_loss"].append(avg_loss)
@@ -412,10 +416,10 @@ def train_step2_router_tuning(model, train_loader, test_loader, args, device):
 
 def train_step1_hdc(model, train_loader, test_loader, args, device):
     """
-    HDC Stage 1: 标准 fine-tune BERT。
-    - 训练 backbone + final classifier
-    - 冻结 off-ramps + routers
-    - 复用 train_epoch() + evaluate()
+    HDC Stage 1: standard BERT fine-tuning.
+    - train the backbone + final classifier
+    - freeze off-ramps + routers
+    - reuse train_epoch() + evaluate()
     """
     from eval import evaluate
     os.makedirs(args.output_dir, exist_ok=True)
@@ -454,9 +458,9 @@ def train_step1_hdc(model, train_loader, test_loader, args, device):
 def train_step2_hdc(model, train_loader, test_loader, test_loader_ee,
                     args, device, entropy_threshold=0.2, eval_early_exit=True):
     """
-    HDC Stage 2: 训练 off-ramp classifiers。
-    - 冻结 backbone + routers + final classifier
-    - 只有 off-ramp classifiers 有梯度
+    HDC Stage 2: train the off-ramp classifiers.
+    - freeze the backbone + routers + final classifier
+    - only the off-ramp classifiers receive gradients
     - Loss = (1/K) * sum CE(offramp_i, labels), K = split_layer
     """
     from eval import evaluate, evaluate_hdc_inference
@@ -519,14 +523,14 @@ def train_step2_hdc(model, train_loader, test_loader, test_loader_ee,
         avg_loss = total_loss / max(1, len(train_loader))
         history["hdc_step2_train_loss"].append(avg_loss)
 
-        # Eval: last-head accuracy (frozen, 参考用)
+        # Eval: last-head accuracy (frozen, for reference)
         test_acc_last = evaluate(model, test_loader, device)
         history["hdc_step2_test_acc_last"].append(test_acc_last)
 
         print(f"Stage2 train loss: {avg_loss:.4f}")
         print(f"Stage2 test acc (last head, frozen): {test_acc_last:.4f}")
 
-        # Optional: HDC 推理评估
+        # Optional: HDC inference evaluation
         if eval_early_exit:
             hdc_results = evaluate_hdc_inference(
                 model, test_loader_ee, device,
@@ -537,7 +541,7 @@ def train_step2_hdc(model, train_loader, test_loader, test_loader_ee,
             print(f"Stage2 HDC acc: {hdc_results['accuracy']:.4f}, "
                   f"Stage A exit rate: {hdc_results['stage_a_exit_rate']:.4f}")
 
-            # 以 HDC 推理 accuracy 为保存依据
+            # Use HDC inference accuracy as the save criterion
             if hdc_results["accuracy"] > best_acc:
                 best_acc = hdc_results["accuracy"]
                 torch.save(model.state_dict(), best_path)
@@ -554,9 +558,9 @@ def train_step2_hdc(model, train_loader, test_loader, test_loader_ee,
 
 def train_step3_hdc(model, train_loader, test_loader, args, device):
     """
-    HDC Stage 3: 训练 token routers。
-    - 冻结 backbone + off-ramps + final classifier
-    - 只有 routers 有梯度
+    HDC Stage 3: train the token routers.
+    - freeze the backbone + off-ramps + final classifier
+    - only the routers receive gradients
     - Loss = CE(final_logits, labels) + lambda_mod * sum(l_mod_i)
     """
     from eval import evaluate_hdc_routing_full
@@ -626,7 +630,7 @@ def train_step3_hdc(model, train_loader, test_loader, args, device):
             total_task += loss_task.item()
             total_mod += l_mod.item()
 
-            # 累加 keep_rates
+            # Accumulate keep_rates
             keep_rates = router_stats.get("keep_rates", [])
             if keep_rate_sums is None:
                 keep_rate_sums = [0.0] * len(keep_rates)
@@ -646,7 +650,7 @@ def train_step3_hdc(model, train_loader, test_loader, args, device):
             for s, c in zip(keep_rate_sums, keep_rate_counts):
                 keep_rate_avgs.append(s / c if c > 0 else None)
 
-        # Eval（推理路径，eval-time keep_rate 反映真实 token 跳过比例）
+        # Evaluation (inference path, where eval-time keep_rate reflects the true token skip ratio)
         test_acc, eval_keep_rates, avg_keep_rate = evaluate_hdc_routing_full(model, test_loader, device)
 
         history["hdc_step3_train_loss"].append(avg_loss)

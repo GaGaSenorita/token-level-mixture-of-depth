@@ -1,5 +1,5 @@
-# HDC-BERT (Hierarchical Dynamic Computation) 配置 — IMDB
-# Stage A (layers 0..split_layer-1): DeeBERT 风格 early-exit
+# HDC-BERT (Hierarchical Dynamic Computation) configuration - IMDB
+# Stage A (layers 0..split_layer-1): DeeBERT-style early exit
 # Stage B (layers split_layer..11):  Token-level routing
 
 # Experiment
@@ -17,9 +17,9 @@ dropout: 0.1
 
 # HDC-specific
 split_layer: 8                # [0..7] = Stage A (early-exit), [8..11] = Stage B (token routing)
-tau: 0.5                      # STE 二值化阈值
-target_keep_ratio: 0.7        # token routing 保留目标
-lambda_mod: 1e-3              # budget loss 系数 (Stage 3)
+tau: 0.5                      # STE binarization threshold
+target_keep_ratio: 0.7        # token-routing keep target
+lambda_mod: 1e-3              # budget loss coefficient (Stage 3)
 
 # Training: Stage 1 (dense fine-tune backbone + final classifier)
 stage1_epochs: 3
