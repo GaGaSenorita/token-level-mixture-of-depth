@@ -47,3 +47,6 @@ outputs/**/*.log
 
 # ── Draft / scratch files ────────────────────
 draft.txt
+
+# Ignore legacy runtime output folders
+outputs/
