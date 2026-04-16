@@ -1,49 +1,97 @@
-# DenseBERT & DeeBERT on AG News
+# Token-Level Mixture of Depth
 
-This project implements two BERT-based text classification baselines on the AG News dataset:
+This repository implements four BERT-based text classification pipelines for dynamic-computation experiments:
 
-- **DenseBERT**: standard dense fine-tuning of `bert-base-uncased` for 4-way news classification.
-- **DeeBERT**: a two-stage training pipeline that adds multiple early-exit “off-ramps” to reduce average inference cost while keeping accuracy competitive.
+- `DenseBERT`: standard dense fine-tuning of `bert-base-uncased`.
+- `DeeBERT`: sample-level early exit with multiple off-ramp classifiers.
+- `Router-Tuning`: token-level routing that learns which tokens can skip computation.
+- `HDC-BERT`: a hierarchical design that combines early exit in shallow layers with token routing in deeper layers.
 
-The code is organized around lightweight entrypoints (`main_densebert.py`, `main_deebert.py`) that load YAML configs, build data loaders, initialize models, run training, and save results to `./outputs`.
+The current codebase supports two datasets through checked-in YAML configs:
 
-## Quickstart
+- `AG News`
+- `IMDB`
 
-Install dependencies (from the project root):
+## Repository Layout
+
+- `main_densebert.py`: dense BERT training entrypoint
+- `main_deebert.py`: two-stage DeeBERT training entrypoint
+- `main_routerbert.py`: two-stage Router-Tuning training entrypoint
+- `main_hdcbert.py`: three-stage HDC-BERT training entrypoint
+- `configs/`: runnable experiment configs for AG News and IMDB
+- `models/`: model implementations
+- `train.py`: training loops for all methods
+- `eval.py`: evaluation utilities
+- `experiments/`: experiment outputs and planning notes
+
+## Setup
+
+Install dependencies from the project root:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Run DenseBERT
+## Available Configurations
 
-Uses the existing config at `configs/bert_baseline.yaml`:
+| Method | AG News config | IMDB config |
+| --- | --- | --- |
+| DenseBERT | `configs/bert_baseline_agnews.yaml` | `configs/bert_baseline_imdb.yaml` |
+| DeeBERT | `configs/deebert_agnews.yaml` | `configs/deebert_imdb.yaml` |
+| Router-Tuning | `configs/router_tuning_agnews.yaml` | `configs/router_tuning_imdb.yaml` |
+| HDC-BERT | `configs/hdc_agnews.yaml` | `configs/hdc_imdb.yaml` |
 
-```bash
-python main_densebert.py --config configs/bert_baseline.yaml
-```
+## Run Experiments
 
-Outputs will be written under `./outputs/dense_bert_finetune_agnews/` by default.
-
-## Run DeeBERT
-
-Uses the existing config at `configs/deebert.yaml`:
-
-```bash
-python main_deebert.py --config configs/deebert.yaml
-```
-
-Outputs will be written under `./outputs/deebert_training_agnews/` by default.
-
-### Optional: evaluate early-exit metrics
-
-Enable early-exit evaluation during/after stage 2:
+DenseBERT:
 
 ```bash
-python main_deebert.py --config configs/deebert.yaml --eval_early_exit
+python main_densebert.py --config configs/bert_baseline_agnews.yaml
+python main_densebert.py --config configs/bert_baseline_imdb.yaml
 ```
+
+DeeBERT:
+
+```bash
+python main_deebert.py --config configs/deebert_agnews.yaml
+python main_deebert.py --config configs/deebert_imdb.yaml
+```
+
+Router-Tuning:
+
+```bash
+python main_routerbert.py --config configs/router_tuning_agnews.yaml
+python main_routerbert.py --config configs/router_tuning_imdb.yaml
+```
+
+HDC-BERT:
+
+```bash
+python main_hdcbert.py --config configs/hdc_agnews.yaml
+python main_hdcbert.py --config configs/hdc_imdb.yaml
+```
+
+## Outputs
+
+Each run writes results to `Path(output_root) / run_name`, where these values come from the selected YAML config or CLI overrides.
+
+Typical run artifacts include:
+
+- training logs
+- best-model checkpoints such as `best_model.pt`, `best_model_step1.pt`, `best_model_step2.pt`, or `best_model_step3.pt`
+- JSON result summaries written through `save_results(...)`
+
+Examples of default output locations in the checked-in configs:
+
+- DenseBERT AG News: `experiments/baseline/agnews`
+- DenseBERT IMDB: `experiments/baseline/imdb`
+- DeeBERT AG News: `experiments/deebert/agnews/run_01`
+- Router-Tuning AG News: `outputs/router_tuning_agnews`
+- HDC-BERT AG News: `outputs/hdc_bert_agnews`
 
 ## Notes
 
-- Both entrypoints download AG News via Hugging Face `datasets` and cache it automatically.
-- You can override any YAML field via CLI flags (e.g., `--batch_size 16`).
+- Datasets are loaded with Hugging Face `datasets`.
+- The default backbone is `bert-base-uncased`.
+- You can override YAML fields from the command line, for example `--batch_size 16` or `--seed 123`.
+- Some evaluation scripts in the repository are intended for Pareto-style analysis after training finishes.
