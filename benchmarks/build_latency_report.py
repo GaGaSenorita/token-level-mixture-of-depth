@@ -11,6 +11,7 @@ import html
 import json
 import math
 from pathlib import Path
+import sys
 import tempfile
 
 
@@ -201,6 +202,33 @@ def training_section(run_dir, selection, config):
             "<p class='links'><a href='../selection.json'>阈值选择与全部候选</a>" + "".join(links) + "</p></section>")
 
 
+def diagnosis_section(run_dir, protocol):
+    paths = sorted((run_dir / "diagnostics").glob("profile_b32_cuda_*/profile_summary.json"))
+    if not paths:
+        return ""
+    path = paths[-1]
+    record = read_json(path)
+    if record.get("primary_protocol_sha256") != protocol:
+        raise ValueError("Diagnostic belongs to a different benchmark protocol")
+    rows = []
+    for variant in record["variants"]:
+        counts = {x["operator"]: x["count"] / variant["profiled_calls"] for x in variant["key_operators"]}
+        label = "普通 BERT" if variant["variant"] == "dense" else "HDC-BERT"
+        rows.append(f"<tr><td>{label}</td><td>{counts.get('aten::linear', 0):.0f}</td>"
+                    f"<td>{counts.get('aten::bmm', 0):.0f}</td><td>{counts.get('aten::nonzero', 0):.0f}</td></tr>")
+    timing_note = ("本机 CUPTI 没有成功采集 CUDA 内核时间；这里仅使用有效的 CPU 侧算子调用次数，不作 GPU 内核耗时占比判断。"
+                   if not all(x.get("device_timing_captured") for x in record["variants"]) else
+                   "诊断也记录了 CPU / GPU 事件，但不使用带 profiler 开销的时间替换正式时延。")
+    relative = "../" + path.relative_to(run_dir).as_posix()
+    return ("<section><h2>批量模式为什么少算却更慢</h2>"
+            "<p>正式测速全部结束后，选取 batch=32 中最常见的执行路径的一批输入作独立诊断。下表是该批输入每次调用模型时的算子调用次数。</p>"
+            "<div class='table-wrap'><table><thead><tr><th>路径</th><th>线性层调用</th><th>批矩阵乘法调用</th><th>保留位置查找</th></tr></thead><tbody>"
+            + "".join(rows) + "</tbody></table></div>"
+            "<p>HDC 的后半部分逐样本执行注意力计算，产生更多小矩阵调用和位置查找；前馈网络仍然处理完整长度。整批早退限制又让 batch=32 中的大多数样本走完整模型。这些实现开销有助于解释 FLOPs 下降而实际耗时增加的现象。</p>"
+            f"<p class='muted'>{timing_note} 这是一个代表 batch 的诊断，不是全体输入的耗时分解。</p>"
+            f"<p><a href='{esc(relative)}'>查看诊断记录与算子 CSV 索引</a></p></section>")
+
+
 def build_report(run_dir, allow_smoke=False):
     run_dir = Path(run_dir).resolve()
     directory = run_dir / "benchmark"
@@ -218,9 +246,9 @@ def build_report(run_dir, allow_smoke=False):
     example = bool(summary.get("smoke") or manifest.get("smoke"))
     reduction, saving = h["latency_p50_reduction_percent"], h["timed_inputs_matmul_flops_saving_percent"]
     if reduction > 0:
-        title = f"单条预测延迟降低 {reduction:.1f}%"
+        title = f"单条预测的中位延迟降低 {reduction:.1f}%"
     elif saving > 0:
-        title = f"矩阵计算减少 {saving:.1f}%，单条预测延迟未降低"
+        title = f"矩阵计算减少 {saving:.1f}%，单条预测的中位延迟未降低"
     else:
         title = "本次单条预测没有获得计算量与延迟的双重改善"
     if example:
@@ -287,6 +315,7 @@ ul{{padding-left:23px}}li{{margin:10px 0}}figure{{margin:24px 0}}figure img{{dis
 <section><h2>准确率、实际等待时间和计算量放在一起看</h2>
 {main_table(primary)}
 <p><strong>P50</strong> 表示一半调用可在该时间内完成；<strong>P95</strong> 表示 95% 的调用可在该时间内完成。表中为 {repeats} 轮各自分位数的平均值。<strong>ms/batch 是整批等待时间</strong>，batch=32 时不能把除以 32 后的数字当作单个用户的等待时间。</p>
+<p><strong>较慢请求需要单独看：</strong>单条输入的 P95 分别为普通 BERT {d['latency_p95_ms_mean_of_repeats']:.3f} ms、HDC-BERT {h['latency_p95_ms_mean_of_repeats']:.3f} ms。中位延迟的收益不能直接推广到 P95。</p>
 <p class="muted">准确率来自完整测试集。GFLOPs 来自与测速完全相同的随机输入及组批，统计在另一次不计时的遍历中完成；它和全测试集按原顺序组批的平均 FLOPs 分开保存。</p>
 <p class="muted">FLOPs 节省为负数时表示计算量增加；准确率差使用百分点，不是相对百分比。</p>
 <figure><img src="comparison.png" alt="普通 BERT 与 HDC-BERT 在各 batch 下的实际 P50 延迟和相同测速组批的矩阵 GFLOPs 对照"><figcaption>左图为实际时间，误差线表示各轮 P50 的最小值到最大值；右图为执行路径的矩阵计算量。两图都从零起算，单位分别为 ms/batch 和 GFLOPs/text。</figcaption></figure>
@@ -310,6 +339,8 @@ ul{{padding-left:23px}}li{{margin:10px 0}}figure{{margin:24px 0}}figure img{{dis
 </ul>
 <p>矩阵 FLOPs 按实际访问层数和每条输入的保留 token 数计算，约定一次乘加为 2 FLOPs，包含路由器、分类头以及实际执行的 padding 投影和前馈计算。softmax、归一化、激活、索引与搬运没有计入该矩阵指标，但仍会影响实测延迟。因此这里的 FLOPs 不是全部硬件指令数，历史的 65.4% 也不会自动延用到这次结果。</p>
 </section>
+
+{diagnosis_section(run_dir, manifest['protocol_sha256'])}
 
 {training_section(run_dir, selection, config)}
 
@@ -386,6 +417,8 @@ def self_test():
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-dir", type=Path, default=Path("outputs/latency_20261108"))
     parser.add_argument("--self-test", action="store_true")

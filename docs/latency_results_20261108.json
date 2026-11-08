@@ -1,0 +1,295 @@
+{
+  "experiment": "AG News supplementary paired HDC benchmark",
+  "completed_at": "2026-11-09 02:06:14",
+  "timezone": "Asia/Shanghai",
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 5050 Laptop GPU",
+    "gpu_vram_mib": 8151,
+    "driver": "610.60",
+    "cpu": "Intel Core 7 240H",
+    "cpu_cores": 10,
+    "cpu_logical_processors": 16,
+    "system_visible_ram_bytes": 16866033664,
+    "torch_cpu_threads": 4,
+    "cpu_identity_recorded_after_measurement": true
+  },
+  "precision": "FP32 eager attention, TF32 disabled",
+  "max_length": 128,
+  "training_seed": 42,
+  "train_validation_test_counts": [
+    114000,
+    6000,
+    7600
+  ],
+  "selected_epochs": {
+    "dense": 2,
+    "offramps": 5,
+    "routers": 4
+  },
+  "entropy_threshold": 0.3,
+  "unique_timing_inputs": 1024,
+  "calls_per_configuration_per_repeat": 1024,
+  "repeats": 3,
+  "protocol_sha256": "c2f1e3b9167a8cda1cd70f7a978de77f850a1ba118482a83b82dcdba7a21997d",
+  "checkpoint_sha256": {
+    "dense": "7296eb9a7f76696c2ae2324423bd9d3a4757582ab424db810be3fe0ba6256c86",
+    "hdc": "e39568294a884c8466aee7fc6c36d33bea6856217df186c2c6048006ebcf7436"
+  },
+  "shared_backbone_identity": {
+    "sha256": "052aa801387ff73fff5280ce7f85c9fc0370fd224c78dd545bc087b4ac1df5c2",
+    "tensor_count": 201,
+    "verified_identical": [
+      "stage1",
+      "stage3"
+    ],
+    "scope": "bert.* and classifier.* tensors, including unused pooler"
+  },
+  "results": [
+    {
+      "variant": "dense",
+      "batch_size": 1,
+      "samples": 7600,
+      "accuracy": 0.9463157894736842,
+      "accuracy_delta_percentage_points": 0.0,
+      "matmul_flops_per_sample": 22347257856.0,
+      "timed_inputs_matmul_flops_per_sample": 22347257856.0,
+      "timed_inputs_matmul_flops_saving_percent": 0.0,
+      "latency_p50_ms_mean_of_repeats": 9.88715,
+      "latency_p95_ms_mean_of_repeats": 18.06225166666666,
+      "latency_p50_ms_by_repeat": [
+        10.483,
+        9.33495,
+        9.843499999999999
+      ],
+      "latency_p50_reduction_percent": 0.0,
+      "latency_p50_speedup": 1.0,
+      "throughput_samples_per_second_mean": 98.24156138152627,
+      "throughput_by_repeat": [
+        93.95310822388805,
+        103.32772696326238,
+        97.44384895742837
+      ],
+      "memory_peak_allocated_bytes": 457793536,
+      "exit_histogram": {
+        "12": 7600
+      }
+    },
+    {
+      "variant": "dense",
+      "batch_size": 8,
+      "samples": 7600,
+      "accuracy": 0.9463157894736842,
+      "accuracy_delta_percentage_points": 0.0,
+      "matmul_flops_per_sample": 22347257856.0,
+      "timed_inputs_matmul_flops_per_sample": 22347257856.0,
+      "timed_inputs_matmul_flops_saving_percent": 0.0,
+      "latency_p50_ms_mean_of_repeats": 43.462716666666665,
+      "latency_p95_ms_mean_of_repeats": 46.48208833333333,
+      "latency_p50_ms_by_repeat": [
+        42.57585,
+        41.69135,
+        46.12095
+      ],
+      "latency_p50_reduction_percent": 0.0,
+      "latency_p50_speedup": 1.0,
+      "throughput_samples_per_second_mean": 205.4724295295293,
+      "throughput_by_repeat": [
+        205.52171055258069,
+        206.10803423835867,
+        204.78754379764854
+      ],
+      "memory_peak_allocated_bytes": 498036224,
+      "exit_histogram": {
+        "12": 7600
+      }
+    },
+    {
+      "variant": "dense",
+      "batch_size": 32,
+      "samples": 7600,
+      "accuracy": 0.9463157894736842,
+      "accuracy_delta_percentage_points": 0.0,
+      "matmul_flops_per_sample": 22347257856.0,
+      "timed_inputs_matmul_flops_per_sample": 22347257856.0,
+      "timed_inputs_matmul_flops_saving_percent": 0.0,
+      "latency_p50_ms_mean_of_repeats": 157.43108333333333,
+      "latency_p95_ms_mean_of_repeats": 158.87142333333333,
+      "latency_p50_ms_by_repeat": [
+        157.3727,
+        157.35735,
+        157.5632
+      ],
+      "latency_p50_reduction_percent": 0.0,
+      "latency_p50_speedup": 1.0,
+      "throughput_samples_per_second_mean": 203.7440018797997,
+      "throughput_by_repeat": [
+        204.00620751144106,
+        203.6289338196457,
+        203.59686430831232
+      ],
+      "memory_peak_allocated_bytes": 639606272,
+      "exit_histogram": {
+        "12": 7600
+      }
+    },
+    {
+      "variant": "query",
+      "batch_size": 1,
+      "samples": 7600,
+      "accuracy": 0.9394736842105263,
+      "accuracy_delta_percentage_points": -0.6842105263157872,
+      "matmul_flops_per_sample": 6695594643.941052,
+      "timed_inputs_matmul_flops_per_sample": 6843515496.0,
+      "timed_inputs_matmul_flops_saving_percent": 69.37648663608815,
+      "latency_p50_ms_mean_of_repeats": 3.5337166666666664,
+      "latency_p95_ms_mean_of_repeats": 17.670696666666664,
+      "latency_p50_ms_by_repeat": [
+        3.415,
+        3.6765,
+        3.5096499999999997
+      ],
+      "latency_p50_reduction_percent": 64.25950181127355,
+      "latency_p50_speedup": 2.7979464492059827,
+      "throughput_samples_per_second_mean": 184.4388146117294,
+      "throughput_by_repeat": [
+        184.58251472910783,
+        183.74047189469675,
+        184.99345721138369
+      ],
+      "memory_peak_allocated_bytes": 456614912,
+      "exit_histogram": {
+        "12": 1101,
+        "2": 2260,
+        "4": 771,
+        "5": 391,
+        "1": 2147,
+        "3": 722,
+        "6": 208
+      }
+    },
+    {
+      "variant": "query",
+      "batch_size": 8,
+      "samples": 7600,
+      "accuracy": 0.9457894736842105,
+      "accuracy_delta_percentage_points": -0.052631578947370805,
+      "matmul_flops_per_sample": 17871701612.867367,
+      "timed_inputs_matmul_flops_per_sample": 17637622032.0,
+      "timed_inputs_matmul_flops_saving_percent": 21.0747817667281,
+      "latency_p50_ms_mean_of_repeats": 62.44083333333334,
+      "latency_p95_ms_mean_of_repeats": 77.28642166666666,
+      "latency_p50_ms_by_repeat": [
+        66.94855,
+        59.4958,
+        60.878150000000005
+      ],
+      "latency_p50_reduction_percent": -43.665279398472954,
+      "latency_p50_speedup": 0.6960624057441044,
+      "throughput_samples_per_second_mean": 151.93078239346335,
+      "throughput_by_repeat": [
+        144.0024702611256,
+        157.5773031315504,
+        154.212573787714
+      ],
+      "memory_peak_allocated_bytes": 489255424,
+      "exit_histogram": {
+        "12": 5896,
+        "5": 552,
+        "3": 136,
+        "4": 592,
+        "6": 344,
+        "2": 80
+      }
+    },
+    {
+      "variant": "query",
+      "batch_size": 32,
+      "samples": 7600,
+      "accuracy": 0.9468421052631579,
+      "accuracy_delta_percentage_points": 0.052631578947370805,
+      "matmul_flops_per_sample": 20541317141.557896,
+      "timed_inputs_matmul_flops_per_sample": 20582985216.0,
+      "timed_inputs_matmul_flops_saving_percent": 7.8948059371244605,
+      "latency_p50_ms_mean_of_repeats": 281.8196,
+      "latency_p95_ms_mean_of_repeats": 326.00672499999996,
+      "latency_p50_ms_by_repeat": [
+        274.64009999999996,
+        275.7483,
+        295.0704
+      ],
+      "latency_p50_reduction_percent": -79.01140869576263,
+      "latency_p50_speedup": 0.5586236135929983,
+      "throughput_samples_per_second_mean": 113.18130601162076,
+      "throughput_by_repeat": [
+        113.80168707757356,
+        113.1563540422137,
+        112.585876915075
+      ],
+      "memory_peak_allocated_bytes": 601858560,
+      "exit_histogram": {
+        "12": 7568,
+        "6": 32
+      }
+    },
+    {
+      "variant": "legacy",
+      "batch_size": 1,
+      "samples": 7600,
+      "accuracy": 0.9334210526315789,
+      "accuracy_delta_percentage_points": -1.2894736842105292,
+      "matmul_flops_per_sample": 6474868080.909473,
+      "timed_inputs_matmul_flops_per_sample": 6616552698.0,
+      "timed_inputs_matmul_flops_saving_percent": 70.39210474665228,
+      "latency_p50_ms_mean_of_repeats": 3.4004166666666666,
+      "latency_p95_ms_mean_of_repeats": 19.22591333333333,
+      "latency_p50_ms_by_repeat": [
+        3.4616499999999997,
+        3.30585,
+        3.43375
+      ],
+      "latency_p50_reduction_percent": 65.60771641305465,
+      "latency_p50_speedup": 2.9076289670383533,
+      "throughput_samples_per_second_mean": 168.97985529568538,
+      "throughput_by_repeat": [
+        171.44660585111774,
+        169.17340963406554,
+        166.31955040187287
+      ],
+      "memory_peak_allocated_bytes": 456614912,
+      "exit_histogram": {
+        "12": 1101,
+        "2": 2260,
+        "4": 771,
+        "5": 391,
+        "1": 2147,
+        "3": 722,
+        "6": 208
+      }
+    }
+  ],
+  "diagnostic": {
+    "scope": "One modal full-depth batch of 32, five profiled calls; profiling times not used as latency",
+    "cuda_kernel_timing_available": false,
+    "reason": "CUPTI_ERROR_INVALID_DEVICE; CPU operator counters retained",
+    "operators_per_call": {
+      "dense": {
+        "aten::linear": 73.0,
+        "aten::bmm": 24.0
+      },
+      "query": {
+        "aten::linear": 829.0,
+        "aten::bmm": 396.0,
+        "aten::item": 6.0,
+        "aten::nonzero": 192.0,
+        "aten::index": 192.0
+      }
+    }
+  },
+  "interpretation": [
+    "Batch 1 median latency improves, but its P95 improvement is not consistent across repeats.",
+    "Batch 8 and 32 have lower matmul FLOPs but higher measured latency in this implementation at the fixed selected threshold.",
+    "Small accuracy differences at batch 8/32 do not establish a quality improvement.",
+    "One trained seed and one laptop; no hosted-service, SDPA, alternative precision or per-batch threshold optimisation claim.",
+    "FLOPs count executed matrix multiplications, including padding and heads; they are not all GPU instructions."
+  ]
+}

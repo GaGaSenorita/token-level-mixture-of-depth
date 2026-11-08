@@ -26,6 +26,12 @@ The repository is organised around three experiment families:
 | `Router-Tuning` | Learns token-level routing so some tokens skip work in later layers. | `main_routerbert.py` |
 | `HDC-BERT` | Uses early exit in shallow layers and token routing in deeper layers. | `main_hdcbert.py` |
 
+## Supplementary measured latency (November 2026)
+
+A new paired AG News experiment measures Dense and HDC on the same frozen fine-tuned backbone, RTX 5050 Laptop GPU, FP32 eager attention, and fixed length 128. At batch 1, corrected HDC query routing lowers median latency from 9.887 to 3.534 ms, with accuracy 94.63% to 93.95% and 69.38% fewer executed matmul FLOPs on the timing inputs. At batch 8/32, the current whole-batch-exit implementation is slower despite lower FLOPs. Tail latency does not share the same reliable improvement as the batch-1 median.
+
+See the [protocol, full results and limitations](docs/latency_experiment_20261108.md), [safe aggregate metrics](docs/latency_results_20261108.json), and [reproduction commands](benchmarks/README.md). These are new checkpoint measurements, not a timing recovery of the unavailable historical weights. Historical outputs remain unchanged.
+
 ## Script-First Workflow
 
 The intended workflow in this repository is to launch experiments through the checked-in Bash scripts rather than invoking the Python entry points by hand every time.
