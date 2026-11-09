@@ -28,9 +28,25 @@ The repository is organised around three experiment families:
 
 ## Supplementary measured latency (November 2026)
 
-A new paired AG News experiment measures Dense and HDC on the same frozen fine-tuned backbone, RTX 5050 Laptop GPU, FP32 eager attention, and fixed length 128. At batch 1, corrected HDC query routing lowers median latency from 9.887 to 3.534 ms, with accuracy 94.63% to 93.95% and 69.38% fewer executed matmul FLOPs on the timing inputs. At batch 8/32, the current whole-batch-exit implementation is slower despite lower FLOPs. Tail latency does not share the same reliable improvement as the batch-1 median.
+**November 9: standalone baselines and RouterBERT audit.** A fresh matched comparison now includes Dense, DeeBERT, RouterBERT and HDC on the same frozen task-finetuned backbone, RTX 5050 Laptop GPU, FP32 eager attention, fixed length 128, and identical timing input groups. Both routing models have same-weight loop and batched implementations; a separate HDC early-exit-only ablation isolates the router contribution.
 
-See the [protocol, full results and limitations](docs/latency_experiment_20261108.md), [safe aggregate metrics](docs/latency_results_20261108.json), and [reproduction commands](benchmarks/README.md). These are new checkpoint measurements, not a timing recovery of the unavailable historical weights. Historical outputs remain unchanged.
+| Model/path | Batch-1 accuracy | Batch-1 P50 ms | Batch-32 P50 ms |
+| --- | ---: | ---: | ---: |
+| Dense | 94.6316% | 8.058 | 149.120 |
+| DeeBERT | 93.8947% | 2.467 | 151.714 |
+| RouterBERT, query loop | 94.6579% | 12.591 | 291.162 |
+| RouterBERT, batched queries | 94.6579% | 15.851 | 149.274 |
+| HDC, query loop | 93.9474% | 2.368 | 222.798 |
+| HDC, batched queries | 93.9474% | 2.380 | 152.933 |
+| HDC, early exit only | 93.8158% | 2.376 | 150.351 |
+
+Latency is per batch; batch-32 accuracy is evaluated separately in the full results. Packing queries substantially reduces large-batch routing overhead, but RouterBERT batch 32 is approximately tied with Dense, with overlapping repeat ranges. Early-exit models improve batch-1 median latency but have worse P95 in this run. HDC's extra learned gating contributes only 0.299% of full Dense matrix FLOPs at batch 1; most of its 69.376% total reduction comes from early exits. Padding-query omission is separately accounted for, and analytical FLOPs are never presented as measured speed.
+
+The audit confirms a historical train/inference mismatch: training gates query outputs while retaining full K/V; sparse inference also removes unselected K/V. On the same new RouterBERT weights, full-K/V inference scores 94.6579% versus 91.5395% for compact K-by-K inference, with 416 different predictions across 7,600 examples. This does not retroactively measure the missing historical checkpoints.
+
+See the [November 9 protocol, results and commands](docs/comparator_audit_20261109.md), [implementation audit](docs/router_code_audit_20261109.md), and [reviewed aggregate JSON](docs/comparator_results_20261109.json). Original team source/results are preserved; local weights and raw traces are excluded from Git.
+
+The earlier [November 8 Dense/HDC-only experiment](docs/latency_experiment_20261108.md) and its [aggregate metrics](docs/latency_results_20261108.json) remain available as a separate protocol. Its measurements are not spliced into the new comparison. Both are new supplementary checkpoint experiments, not recovered historical timings.
 
 ## Script-First Workflow
 

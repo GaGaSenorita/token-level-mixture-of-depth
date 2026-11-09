@@ -1,0 +1,1170 @@
+{
+  "experiment_id": "agnews_comparator_audit_20261109",
+  "status": "complete; independent artifact audit passed",
+  "completed_at_asia_shanghai": "2026-11-09 10:45:04",
+  "protocol_sha256": "50246081ff4fcf8e8364e79f5b3627b67850a9917cba9fc941ba789036220ea2",
+  "environment": {
+    "python": "3.13.11 | packaged by Anaconda, Inc. | (main, Dec 10 2025, 21:21:58) [MSC v.1929 64 bit (AMD64)]",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "torch": "2.10.0+cu128",
+    "transformers": "4.57.6",
+    "cuda": "12.8",
+    "gpu": "NVIDIA GeForce RTX 5050 Laptop GPU",
+    "precision": "float32",
+    "attention": "eager",
+    "tf32": false,
+    "threads": 4
+  },
+  "config": {
+    "experiment_id": "agnews_comparator_audit_20261109",
+    "seed": 42,
+    "num_labels": 4,
+    "max_length": 128,
+    "cpu_threads": 4,
+    "training_precision": "bfloat16",
+    "benchmark_precision": "float32",
+    "attention_implementation": "eager",
+    "train_batch_size": 32,
+    "epochs": 5,
+    "learning_rate": 0.001,
+    "weight_decay": 0.01,
+    "warmup_ratio": 0.1,
+    "gradient_clip": 1.0,
+    "dropout": 0.1,
+    "tau": 0.5,
+    "router_target_keep_ratio": 0.7,
+    "lambda_mod": 0.001,
+    "threshold_candidates": [
+      0.0,
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5,
+      0.6
+    ],
+    "maximum_validation_accuracy_drop": 0.01,
+    "benchmark_batches": [
+      1,
+      8,
+      32
+    ],
+    "benchmark_samples": 1024,
+    "benchmark_sampling_seed": 20261108,
+    "benchmark_min_calls": 256,
+    "benchmark_repeats": 3,
+    "warmup_batches": 30
+  },
+  "shared_backbone_identity": {
+    "sha256": "052aa801387ff73fff5280ce7f85c9fc0370fd224c78dd545bc087b4ac1df5c2",
+    "tensor_count": 201,
+    "verified_identical": [
+      "dense",
+      "deebert",
+      "router_loop",
+      "router_batched",
+      "hdc_loop",
+      "hdc_batched",
+      "hdc_exitonly"
+    ],
+    "scope": "bert.* and classifier.* tensors, including unused pooler"
+  },
+  "checkpoint_sha256": {
+    "dense": "7296eb9a7f76696c2ae2324423bd9d3a4757582ab424db810be3fe0ba6256c86",
+    "deebert": "ad938bf1a1f82729b6870e47da06a2bbf25bbff4a353c26d7d7cf59445d831c6",
+    "router_loop": "3250ba4057d3bfa7b0b9ee78016e2d04051eb685196fb354eeb8c2f57d5e9704",
+    "router_batched": "3250ba4057d3bfa7b0b9ee78016e2d04051eb685196fb354eeb8c2f57d5e9704",
+    "hdc_loop": "e39568294a884c8466aee7fc6c36d33bea6856217df186c2c6048006ebcf7436",
+    "hdc_batched": "e39568294a884c8466aee7fc6c36d33bea6856217df186c2c6048006ebcf7436",
+    "hdc_exitonly": "e39568294a884c8466aee7fc6c36d33bea6856217df186c2c6048006ebcf7436"
+  },
+  "source_sha256": {
+    "benchmarks/compare_baselines.py": "575f4da8f6f11535b15fdbc5ed224598131a2aa5d485cf92424ae95d2a1372f6",
+    "benchmarks/comparator_runtime.py": "c58ae002ff0c872a688fe988bb9122b1fea0503606ff1aff8ed817a4d4cc4e65",
+    "benchmarks/batched_query.py": "7fe38a8de17cf1c2595959dd1e39336b848e6af6bd70cfd44f94c6a72a91aba0",
+    "benchmarks/hdc_runtime.py": "06c6ac632bfbc581828490accd4916c09211cabb366619b00ba3d0eba2f8f581",
+    "benchmarks/measure_latency.py": "81e76302ddfcd61687dd03d0730ae887e9c0d380677e5971037742b5b3e38a10",
+    "models/hdc_bert.py": "d0d32cc8f5c523559e57c486bb72872691c577e5df3e3189ed299939bb20d5e6",
+    "models/deebert.py": "092be43ed8c59124f275040ba211713bcbdbb00837637e9e1aa5258715d5351b",
+    "models/router_tuning_bert.py": "227c1cbffab645d3573280fc063de1aa5ebf80efe69325a8e050c4605760b7ff"
+  },
+  "dataset_sha256": "31637f626bbe00cd42666cf75af27cc82b14d6f36cb419cff5332d85e4589ac8",
+  "quality_scope": "7600 official AG News test examples per actual path/batch configuration",
+  "timing_scope": "1024 fixed unique test inputs; at least 256 batch calls per repeat (1024 at batch 1); three fresh repetitions; FP32 eager model-only synchronized wall-clock; inputs already on GPU",
+  "flops_scope": "Actual matrix shapes of the exact timing groups; MAC=2; includes padding, full FFN, router and classifier matrices; excludes non-matmul work",
+  "training_selection": {
+    "router": {
+      "best_validation_accuracy": 0.9495,
+      "selected_epoch": 2,
+      "epochs": 5,
+      "split_layer": 0,
+      "target_keep_ratio": 0.7,
+      "selection": "validation accuracy; earliest epoch on ties"
+    },
+    "deebert": {
+      "best_validation_loss": 0.2484830908486338,
+      "selected_epoch": 5,
+      "epochs": 5,
+      "split_layer": 12,
+      "trainable_exits": 11,
+      "final_exit": "frozen dense classifier copy",
+      "selection": "mean validation CE over first 11 exits"
+    },
+    "deebert_threshold": {
+      "entropy_threshold": 0.3,
+      "accuracy": 0.9405,
+      "correct": 5643,
+      "n": 6000,
+      "constraint_met": true,
+      "selection_split": "validation",
+      "dense_validation_accuracy": 0.95,
+      "actual_runtime_verified": true
+    },
+    "hdc_threshold": 0.3
+  },
+  "rows": [
+    {
+      "variant": "dense",
+      "batch_size": 1,
+      "samples": 7600,
+      "correct": 7192,
+      "accuracy": 0.9463157894736842,
+      "accuracy_delta_percentage_points": 0.0,
+      "latency_p50_ms_mean_of_repeats": 8.05795,
+      "latency_p95_ms_mean_of_repeats": 9.388741666666665,
+      "latency_p50_ms_by_repeat": [
+        8.024249999999999,
+        8.0781,
+        8.0715
+      ],
+      "throughput_samples_per_second_mean": 128.01818035542442,
+      "throughput_by_repeat": [
+        128.3385297695946,
+        127.82953292636604,
+        127.88647837031263
+      ],
+      "timed_inputs_matmul_flops_per_sample": 22347257856.0,
+      "timed_inputs_matmul_flops_saving_percent": 0.0,
+      "latency_p50_speedup": 1.0,
+      "latency_p50_reduction_percent": 0.0,
+      "timed_calls_per_repeat": [
+        1024,
+        1024,
+        1024
+      ],
+      "memory_peak_allocated_bytes": 458711040,
+      "latency_p95_ms_by_repeat": [
+        9.63383,
+        9.315089999999998,
+        9.217304999999998
+      ]
+    },
+    {
+      "variant": "dense",
+      "batch_size": 8,
+      "samples": 7600,
+      "correct": 7192,
+      "accuracy": 0.9463157894736842,
+      "accuracy_delta_percentage_points": 0.0,
+      "latency_p50_ms_mean_of_repeats": 37.94513333333333,
+      "latency_p95_ms_mean_of_repeats": 45.17163333333333,
+      "latency_p50_ms_by_repeat": [
+        38.24315,
+        37.7694,
+        37.82285
+      ],
+      "throughput_samples_per_second_mean": 215.79786657637948,
+      "throughput_by_repeat": [
+        215.66501814208254,
+        215.9037097285948,
+        215.8248718584611
+      ],
+      "timed_inputs_matmul_flops_per_sample": 22347257856.0,
+      "timed_inputs_matmul_flops_saving_percent": 0.0,
+      "latency_p50_speedup": 1.0,
+      "latency_p50_reduction_percent": 0.0,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 498953728,
+      "latency_p95_ms_by_repeat": [
+        45.621424999999995,
+        44.334999999999994,
+        45.558475
+      ]
+    },
+    {
+      "variant": "dense",
+      "batch_size": 32,
+      "samples": 7600,
+      "correct": 7192,
+      "accuracy": 0.9463157894736842,
+      "accuracy_delta_percentage_points": 0.0,
+      "latency_p50_ms_mean_of_repeats": 149.12044999999998,
+      "latency_p95_ms_mean_of_repeats": 151.17255,
+      "latency_p50_ms_by_repeat": [
+        149.2736,
+        149.17485,
+        148.91289999999998
+      ],
+      "throughput_samples_per_second_mean": 215.19782214431848,
+      "throughput_by_repeat": [
+        214.9216513509279,
+        215.23363502045873,
+        215.43818006156883
+      ],
+      "timed_inputs_matmul_flops_per_sample": 22347257856.0,
+      "timed_inputs_matmul_flops_saving_percent": 0.0,
+      "latency_p50_speedup": 1.0,
+      "latency_p50_reduction_percent": 0.0,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 640523776,
+      "latency_p95_ms_by_repeat": [
+        151.03967500000002,
+        151.4401,
+        151.037875
+      ]
+    },
+    {
+      "variant": "deebert",
+      "batch_size": 1,
+      "samples": 7600,
+      "correct": 7136,
+      "accuracy": 0.9389473684210526,
+      "accuracy_delta_percentage_points": -0.736842105263158,
+      "latency_p50_ms_mean_of_repeats": 2.4671,
+      "latency_p95_ms_mean_of_repeats": 11.410758333333332,
+      "latency_p50_ms_by_repeat": [
+        2.7043999999999997,
+        2.35045,
+        2.34645
+      ],
+      "throughput_samples_per_second_mean": 265.9027089885547,
+      "throughput_by_repeat": [
+        257.69870476453445,
+        266.23138528483497,
+        273.7780369162947
+      ],
+      "timed_inputs_matmul_flops_per_sample": 6570710190.0,
+      "timed_inputs_matmul_flops_saving_percent": 70.59724180774228,
+      "latency_p50_speedup": 3.266162701147096,
+      "latency_p50_reduction_percent": 69.38303166438114,
+      "timed_calls_per_repeat": [
+        1024,
+        1024,
+        1024
+      ],
+      "memory_peak_allocated_bytes": 457587712,
+      "latency_p95_ms_by_repeat": [
+        11.418235,
+        11.554374999999999,
+        11.259664999999998
+      ]
+    },
+    {
+      "variant": "deebert",
+      "batch_size": 8,
+      "samples": 7600,
+      "correct": 7190,
+      "accuracy": 0.9460526315789474,
+      "accuracy_delta_percentage_points": -0.026315789473685403,
+      "latency_p50_ms_mean_of_repeats": 40.183600000000006,
+      "latency_p95_ms_mean_of_repeats": 46.701633333333334,
+      "latency_p50_ms_by_repeat": [
+        40.5519,
+        40.048,
+        39.950900000000004
+      ],
+      "throughput_samples_per_second_mean": 233.52268176748066,
+      "throughput_by_repeat": [
+        234.8470044582287,
+        232.7212642873584,
+        232.99977655685487
+      ],
+      "timed_inputs_matmul_flops_per_sample": 17691632640.0,
+      "timed_inputs_matmul_flops_saving_percent": 20.833093912459667,
+      "latency_p50_speedup": 0.9442940237642552,
+      "latency_p50_reduction_percent": -5.899219399237876,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 489572864,
+      "latency_p95_ms_by_repeat": [
+        47.223775,
+        46.25535,
+        46.625775000000004
+      ]
+    },
+    {
+      "variant": "deebert",
+      "batch_size": 32,
+      "samples": 7600,
+      "correct": 7191,
+      "accuracy": 0.9461842105263157,
+      "accuracy_delta_percentage_points": -0.013157894736848252,
+      "latency_p50_ms_mean_of_repeats": 151.71385,
+      "latency_p95_ms_mean_of_repeats": 153.77935,
+      "latency_p50_ms_by_repeat": [
+        152.07105,
+        151.5478,
+        151.5227
+      ],
+      "throughput_samples_per_second_mean": 211.04006249822424,
+      "throughput_by_repeat": [
+        210.65062033509128,
+        211.27388883364756,
+        211.19567832593393
+      ],
+      "timed_inputs_matmul_flops_per_sample": 22347325440.0,
+      "timed_inputs_matmul_flops_saving_percent": -0.0003024263667494864,
+      "latency_p50_speedup": 0.9829059772723451,
+      "latency_p50_reduction_percent": -1.7391310179120545,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 602831360,
+      "latency_p95_ms_by_repeat": [
+        154.18335000000002,
+        153.455075,
+        153.699625
+      ]
+    },
+    {
+      "variant": "router_loop",
+      "batch_size": 1,
+      "samples": 7600,
+      "correct": 7194,
+      "accuracy": 0.9465789473684211,
+      "accuracy_delta_percentage_points": 0.026315789473685403,
+      "latency_p50_ms_mean_of_repeats": 12.591083333333334,
+      "latency_p95_ms_mean_of_repeats": 15.835313333333332,
+      "latency_p50_ms_by_repeat": [
+        12.8819,
+        12.429400000000001,
+        12.461950000000002
+      ],
+      "throughput_samples_per_second_mean": 78.57884618771743,
+      "throughput_by_repeat": [
+        76.11134304589389,
+        79.60454081092368,
+        80.02065470633472
+      ],
+      "timed_inputs_matmul_flops_per_sample": 19149588096.0,
+      "timed_inputs_matmul_flops_saving_percent": 14.309002834284923,
+      "latency_p50_speedup": 0.6399727320259707,
+      "latency_p50_reduction_percent": -56.25665750387299,
+      "timed_calls_per_repeat": [
+        1024,
+        1024,
+        1024
+      ],
+      "memory_peak_allocated_bytes": 457083904,
+      "latency_p95_ms_by_repeat": [
+        17.435345,
+        15.933979999999996,
+        14.136614999999999
+      ]
+    },
+    {
+      "variant": "router_loop",
+      "batch_size": 8,
+      "samples": 7600,
+      "correct": 7194,
+      "accuracy": 0.9465789473684211,
+      "accuracy_delta_percentage_points": 0.026315789473685403,
+      "latency_p50_ms_mean_of_repeats": 73.7702,
+      "latency_p95_ms_mean_of_repeats": 80.023225,
+      "latency_p50_ms_by_repeat": [
+        74.41755,
+        73.37639999999999,
+        73.51665
+      ],
+      "throughput_samples_per_second_mean": 109.10911060476543,
+      "throughput_by_repeat": [
+        108.42745282725483,
+        108.51007826294693,
+        110.38980072409456
+      ],
+      "timed_inputs_matmul_flops_per_sample": 19149588096.0,
+      "timed_inputs_matmul_flops_saving_percent": 14.309002834284923,
+      "latency_p50_speedup": 0.5143693975796911,
+      "latency_p50_reduction_percent": -94.41281007489764,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 486320640,
+      "latency_p95_ms_by_repeat": [
+        79.80642499999999,
+        80.03815,
+        80.2251
+      ]
+    },
+    {
+      "variant": "router_loop",
+      "batch_size": 32,
+      "samples": 7600,
+      "correct": 7194,
+      "accuracy": 0.9465789473684211,
+      "accuracy_delta_percentage_points": 0.026315789473685403,
+      "latency_p50_ms_mean_of_repeats": 291.16243333333335,
+      "latency_p95_ms_mean_of_repeats": 313.77021666666667,
+      "latency_p50_ms_by_repeat": [
+        283.5412,
+        292.53025,
+        297.41585
+      ],
+      "throughput_samples_per_second_mean": 108.42936094442,
+      "throughput_by_repeat": [
+        112.01263522215028,
+        107.13820058080675,
+        106.13724703030296
+      ],
+      "timed_inputs_matmul_flops_per_sample": 19149588096.0,
+      "timed_inputs_matmul_flops_saving_percent": 14.309002834284923,
+      "latency_p50_speedup": 0.5121555287638411,
+      "latency_p50_reduction_percent": -95.25318850186773,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 590157312,
+      "latency_p95_ms_by_repeat": [
+        298.16525,
+        313.422,
+        329.72339999999997
+      ]
+    },
+    {
+      "variant": "router_batched",
+      "batch_size": 1,
+      "samples": 7600,
+      "correct": 7194,
+      "accuracy": 0.9465789473684211,
+      "accuracy_delta_percentage_points": 0.026315789473685403,
+      "latency_p50_ms_mean_of_repeats": 15.851266666666668,
+      "latency_p95_ms_mean_of_repeats": 18.93656166666666,
+      "latency_p50_ms_by_repeat": [
+        15.993,
+        15.91115,
+        15.649650000000001
+      ],
+      "throughput_samples_per_second_mean": 63.16039287942998,
+      "throughput_by_repeat": [
+        63.05856246232651,
+        61.77369495211968,
+        64.64892122384373
+      ],
+      "timed_inputs_matmul_flops_per_sample": 19149588096.0,
+      "timed_inputs_matmul_flops_saving_percent": 14.309002834284923,
+      "latency_p50_speedup": 0.5083473875904765,
+      "latency_p50_reduction_percent": -96.71587273024365,
+      "timed_calls_per_repeat": [
+        1024,
+        1024,
+        1024
+      ],
+      "memory_peak_allocated_bytes": 457083904,
+      "latency_p95_ms_by_repeat": [
+        19.904069999999997,
+        18.890069999999984,
+        18.015545
+      ]
+    },
+    {
+      "variant": "router_batched",
+      "batch_size": 8,
+      "samples": 7600,
+      "correct": 7194,
+      "accuracy": 0.9465789473684211,
+      "accuracy_delta_percentage_points": 0.026315789473685403,
+      "latency_p50_ms_mean_of_repeats": 41.94155,
+      "latency_p95_ms_mean_of_repeats": 45.267066666666665,
+      "latency_p50_ms_by_repeat": [
+        41.4063,
+        42.338750000000005,
+        42.0796
+      ],
+      "throughput_samples_per_second_mean": 191.60750535431907,
+      "throughput_by_repeat": [
+        191.01310571883351,
+        191.744394535663,
+        192.06501580846069
+      ],
+      "timed_inputs_matmul_flops_per_sample": 19735440384.0,
+      "timed_inputs_matmul_flops_saving_percent": 11.687418155864504,
+      "latency_p50_speedup": 0.9047146167305055,
+      "latency_p50_reduction_percent": -10.532092828768569,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 488788480,
+      "latency_p95_ms_by_repeat": [
+        44.9221,
+        45.407375,
+        45.471725
+      ]
+    },
+    {
+      "variant": "router_batched",
+      "batch_size": 32,
+      "samples": 7600,
+      "correct": 7194,
+      "accuracy": 0.9465789473684211,
+      "accuracy_delta_percentage_points": 0.026315789473685403,
+      "latency_p50_ms_mean_of_repeats": 149.27393333333333,
+      "latency_p95_ms_mean_of_repeats": 155.97235,
+      "latency_p50_ms_by_repeat": [
+        153.0537,
+        148.45319999999998,
+        146.31490000000002
+      ],
+      "throughput_samples_per_second_mean": 215.16775825456503,
+      "throughput_by_repeat": [
+        211.17919881591988,
+        218.54842579318122,
+        215.77565015459396
+      ],
+      "timed_inputs_matmul_flops_per_sample": 20223129600.0,
+      "timed_inputs_matmul_flops_saving_percent": 9.50509574681304,
+      "latency_p50_speedup": 0.9989718008368506,
+      "latency_p50_reduction_percent": -0.10292574447927638,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 596093440,
+      "latency_p95_ms_by_repeat": [
+        160.241875,
+        155.534325,
+        152.14085
+      ]
+    },
+    {
+      "variant": "hdc_loop",
+      "batch_size": 1,
+      "samples": 7600,
+      "correct": 7140,
+      "accuracy": 0.9394736842105263,
+      "accuracy_delta_percentage_points": -0.6842105263157872,
+      "latency_p50_ms_mean_of_repeats": 2.368316666666667,
+      "latency_p95_ms_mean_of_repeats": 12.374688333333333,
+      "latency_p50_ms_by_repeat": [
+        2.3665000000000003,
+        2.4046,
+        2.33385
+      ],
+      "throughput_samples_per_second_mean": 246.66433072807544,
+      "throughput_by_repeat": [
+        244.88336066827907,
+        248.26294129374233,
+        246.84669022220493
+      ],
+      "timed_inputs_matmul_flops_per_sample": 6843515496.0,
+      "timed_inputs_matmul_flops_saving_percent": 69.37648663608815,
+      "latency_p50_speedup": 3.402395512987424,
+      "latency_p50_reduction_percent": 70.60894313483371,
+      "timed_calls_per_repeat": [
+        1024,
+        1024,
+        1024
+      ],
+      "memory_peak_allocated_bytes": 457532416,
+      "latency_p95_ms_by_repeat": [
+        12.284655,
+        12.497499999999999,
+        12.341909999999999
+      ]
+    },
+    {
+      "variant": "hdc_loop",
+      "batch_size": 8,
+      "samples": 7600,
+      "correct": 7188,
+      "accuracy": 0.9457894736842105,
+      "accuracy_delta_percentage_points": -0.052631578947370805,
+      "latency_p50_ms_mean_of_repeats": 55.01408333333333,
+      "latency_p95_ms_mean_of_repeats": 61.2871,
+      "latency_p50_ms_by_repeat": [
+        54.4695,
+        54.987849999999995,
+        55.5849
+      ],
+      "throughput_samples_per_second_mean": 174.7438067347398,
+      "throughput_by_repeat": [
+        176.09584993414333,
+        175.6613783843013,
+        172.4741918857748
+      ],
+      "timed_inputs_matmul_flops_per_sample": 17637622032.0,
+      "timed_inputs_matmul_flops_saving_percent": 21.0747817667281,
+      "latency_p50_speedup": 0.689734901214689,
+      "latency_p50_reduction_percent": -44.983238957301516,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 489517568,
+      "latency_p95_ms_by_repeat": [
+        59.458675,
+        60.3206,
+        64.082025
+      ]
+    },
+    {
+      "variant": "hdc_loop",
+      "batch_size": 32,
+      "samples": 7600,
+      "correct": 7196,
+      "accuracy": 0.9468421052631579,
+      "accuracy_delta_percentage_points": 0.052631578947370805,
+      "latency_p50_ms_mean_of_repeats": 222.79791666666668,
+      "latency_p95_ms_mean_of_repeats": 241.64505833333334,
+      "latency_p50_ms_by_repeat": [
+        218.9573,
+        224.09045,
+        225.346
+      ],
+      "throughput_samples_per_second_mean": 141.87891569405033,
+      "throughput_by_repeat": [
+        145.2194714351598,
+        139.62203857386737,
+        140.79523707312387
+      ],
+      "timed_inputs_matmul_flops_per_sample": 20582985216.0,
+      "timed_inputs_matmul_flops_saving_percent": 7.8948059371244605,
+      "latency_p50_speedup": 0.6693080987067875,
+      "latency_p50_reduction_percent": -49.40802329034464,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 602776064,
+      "latency_p95_ms_by_repeat": [
+        229.383525,
+        246.84162500000002,
+        248.710025
+      ]
+    },
+    {
+      "variant": "hdc_batched",
+      "batch_size": 1,
+      "samples": 7600,
+      "correct": 7140,
+      "accuracy": 0.9394736842105263,
+      "accuracy_delta_percentage_points": -0.6842105263157872,
+      "latency_p50_ms_mean_of_repeats": 2.3804833333333333,
+      "latency_p95_ms_mean_of_repeats": 14.513569999999998,
+      "latency_p50_ms_by_repeat": [
+        2.33545,
+        2.4322999999999997,
+        2.3737
+      ],
+      "throughput_samples_per_second_mean": 230.35234283022055,
+      "throughput_by_repeat": [
+        230.96457731914768,
+        227.47554987715765,
+        232.6169012943563
+      ],
+      "timed_inputs_matmul_flops_per_sample": 6843515496.0,
+      "timed_inputs_matmul_flops_saving_percent": 69.37648663608815,
+      "latency_p50_speedup": 3.385005846151692,
+      "latency_p50_reduction_percent": 70.45795353243278,
+      "timed_calls_per_repeat": [
+        1024,
+        1024,
+        1024
+      ],
+      "memory_peak_allocated_bytes": 457532416,
+      "latency_p95_ms_by_repeat": [
+        14.355934999999999,
+        14.647219999999999,
+        14.537554999999998
+      ]
+    },
+    {
+      "variant": "hdc_batched",
+      "batch_size": 8,
+      "samples": 7600,
+      "correct": 7188,
+      "accuracy": 0.9457894736842105,
+      "accuracy_delta_percentage_points": -0.052631578947370805,
+      "latency_p50_ms_mean_of_repeats": 41.61043333333333,
+      "latency_p95_ms_mean_of_repeats": 45.911725,
+      "latency_p50_ms_by_repeat": [
+        41.59555,
+        41.81815,
+        41.4176
+      ],
+      "throughput_samples_per_second_mean": 223.27320352005844,
+      "throughput_by_repeat": [
+        223.64955093834746,
+        220.8386403439372,
+        225.3314192778907
+      ],
+      "timed_inputs_matmul_flops_per_sample": 17846697360.0,
+      "timed_inputs_matmul_flops_saving_percent": 20.139206899568872,
+      "latency_p50_speedup": 0.9119139190251162,
+      "latency_p50_reduction_percent": -9.659473239431682,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 489517568,
+      "latency_p95_ms_by_repeat": [
+        45.4788,
+        46.650774999999996,
+        45.6056
+      ]
+    },
+    {
+      "variant": "hdc_batched",
+      "batch_size": 32,
+      "samples": 7600,
+      "correct": 7196,
+      "accuracy": 0.9468421052631579,
+      "accuracy_delta_percentage_points": 0.052631578947370805,
+      "latency_p50_ms_mean_of_repeats": 152.93291666666667,
+      "latency_p95_ms_mean_of_repeats": 158.73114999999999,
+      "latency_p50_ms_by_repeat": [
+        155.30695,
+        152.13915,
+        151.35264999999998
+      ],
+      "throughput_samples_per_second_mean": 212.51754602199566,
+      "throughput_by_repeat": [
+        206.67021874377585,
+        217.0296426064095,
+        213.85277671580158
+      ],
+      "timed_inputs_matmul_flops_per_sample": 21035956224.0,
+      "timed_inputs_matmul_flops_saving_percent": 5.867841327332823,
+      "latency_p50_speedup": 0.9750709870068301,
+      "latency_p50_reduction_percent": -2.5566357040008203,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 602776064,
+      "latency_p95_ms_by_repeat": [
+        161.75892499999998,
+        156.488875,
+        157.94565
+      ]
+    },
+    {
+      "variant": "hdc_exitonly",
+      "batch_size": 1,
+      "samples": 7600,
+      "correct": 7130,
+      "accuracy": 0.9381578947368421,
+      "accuracy_delta_percentage_points": -0.8157894736842142,
+      "latency_p50_ms_mean_of_repeats": 2.3756999999999997,
+      "latency_p95_ms_mean_of_repeats": 10.061079999999999,
+      "latency_p50_ms_by_repeat": [
+        2.3926499999999997,
+        2.3621999999999996,
+        2.37225
+      ],
+      "throughput_samples_per_second_mean": 270.4117450920638,
+      "throughput_by_repeat": [
+        269.7038835726262,
+        265.19804959265684,
+        276.3333021109085
+      ],
+      "timed_inputs_matmul_flops_per_sample": 7096289640.0,
+      "timed_inputs_matmul_flops_saving_percent": 68.24536734785686,
+      "latency_p50_speedup": 3.3918213579155623,
+      "latency_p50_reduction_percent": 70.51731519803424,
+      "timed_calls_per_repeat": [
+        1024,
+        1024,
+        1024
+      ],
+      "memory_peak_allocated_bytes": 457532416,
+      "latency_p95_ms_by_repeat": [
+        10.204775,
+        10.078689999999998,
+        9.899775
+      ]
+    },
+    {
+      "variant": "hdc_exitonly",
+      "batch_size": 8,
+      "samples": 7600,
+      "correct": 7184,
+      "accuracy": 0.9452631578947368,
+      "accuracy_delta_percentage_points": -0.10526315789474161,
+      "latency_p50_ms_mean_of_repeats": 41.855,
+      "latency_p95_ms_mean_of_repeats": 46.38644166666666,
+      "latency_p50_ms_by_repeat": [
+        42.0199,
+        41.359899999999996,
+        42.185199999999995
+      ],
+      "throughput_samples_per_second_mean": 222.59909533334692,
+      "throughput_by_repeat": [
+        221.89239083644668,
+        222.98266181328066,
+        222.9222333503134
+      ],
+      "timed_inputs_matmul_flops_per_sample": 18971924880.0,
+      "timed_inputs_matmul_flops_saving_percent": 15.104014093137419,
+      "latency_p50_speedup": 0.9065854338390475,
+      "latency_p50_reduction_percent": -10.304000337329168,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 489517568,
+      "latency_p95_ms_by_repeat": [
+        46.465025,
+        45.93915,
+        46.75515
+      ]
+    },
+    {
+      "variant": "hdc_exitonly",
+      "batch_size": 32,
+      "samples": 7600,
+      "correct": 7192,
+      "accuracy": 0.9463157894736842,
+      "accuracy_delta_percentage_points": 0.0,
+      "latency_p50_ms_mean_of_repeats": 150.35103333333333,
+      "latency_p95_ms_mean_of_repeats": 152.01,
+      "latency_p50_ms_by_repeat": [
+        150.5557,
+        150.2595,
+        150.23790000000002
+      ],
+      "throughput_samples_per_second_mean": 213.01845940481795,
+      "throughput_by_repeat": [
+        212.86705857401165,
+        213.2633973787023,
+        212.92492226173988
+      ],
+      "timed_inputs_matmul_flops_per_sample": 22347294720.0,
+      "timed_inputs_matmul_flops_saving_percent": -0.00016495983641284795,
+      "latency_p50_speedup": 0.991815265209351,
+      "latency_p50_reduction_percent": -0.825227749335089,
+      "timed_calls_per_repeat": [
+        256,
+        256,
+        256
+      ],
+      "memory_peak_allocated_bytes": 602776064,
+      "latency_p95_ms_by_repeat": [
+        152.0717,
+        152.058575,
+        151.899725
+      ]
+    }
+  ],
+  "padding_compute_attribution": {
+    "analysis": "matrix FLOPs attribution at recorded paths; analytical counterfactual only",
+    "source_protocol_sha256": "50246081ff4fcf8e8364e79f5b3627b67850a9917cba9fc941ba789036220ea2",
+    "rows": [
+      {
+        "variant": "router_loop",
+        "batch_size": 1,
+        "dense_matmul_gflops_per_text": 22.347257856,
+        "actual_matmul_gflops_per_text": 19.149588096,
+        "all_valid_queries_counterfactual_gflops_per_text": 19.85745408,
+        "all_padded_queries_same_exit_counterfactual_gflops_per_text": 22.349617152,
+        "total_saved_percent_of_dense": 14.309002834284922,
+        "learned_gates_extra_saved_percent_of_dense": 3.167574243611037,
+        "pad_query_omission_saved_percent_of_dense": 11.151986020203731,
+        "early_exit_net_head_router_overhead_saved_percent_of_dense": -0.010557429529845222,
+        "learned_gates_fraction_of_total_saved_percent": 22.13693211396539,
+        "repeat_costs_identical": true
+      },
+      {
+        "variant": "router_loop",
+        "batch_size": 8,
+        "dense_matmul_gflops_per_text": 22.347257856,
+        "actual_matmul_gflops_per_text": 19.149588096,
+        "all_valid_queries_counterfactual_gflops_per_text": 19.85745408,
+        "all_padded_queries_same_exit_counterfactual_gflops_per_text": 22.349617152,
+        "total_saved_percent_of_dense": 14.309002834284922,
+        "learned_gates_extra_saved_percent_of_dense": 3.167574243611037,
+        "pad_query_omission_saved_percent_of_dense": 11.151986020203731,
+        "early_exit_net_head_router_overhead_saved_percent_of_dense": -0.010557429529845222,
+        "learned_gates_fraction_of_total_saved_percent": 22.13693211396539,
+        "repeat_costs_identical": true
+      },
+      {
+        "variant": "router_loop",
+        "batch_size": 32,
+        "dense_matmul_gflops_per_text": 22.347257856,
+        "actual_matmul_gflops_per_text": 19.149588096,
+        "all_valid_queries_counterfactual_gflops_per_text": 19.85745408,
+        "all_padded_queries_same_exit_counterfactual_gflops_per_text": 22.349617152,
+        "total_saved_percent_of_dense": 14.309002834284922,
+        "learned_gates_extra_saved_percent_of_dense": 3.167574243611037,
+        "pad_query_omission_saved_percent_of_dense": 11.151986020203731,
+        "early_exit_net_head_router_overhead_saved_percent_of_dense": -0.010557429529845222,
+        "learned_gates_fraction_of_total_saved_percent": 22.13693211396539,
+        "repeat_costs_identical": true
+      },
+      {
+        "variant": "router_batched",
+        "batch_size": 1,
+        "dense_matmul_gflops_per_text": 22.347257856,
+        "actual_matmul_gflops_per_text": 19.149588096,
+        "all_valid_queries_counterfactual_gflops_per_text": 19.85745408,
+        "all_padded_queries_same_exit_counterfactual_gflops_per_text": 22.349617152,
+        "total_saved_percent_of_dense": 14.309002834284922,
+        "learned_gates_extra_saved_percent_of_dense": 3.167574243611037,
+        "pad_query_omission_saved_percent_of_dense": 11.151986020203731,
+        "early_exit_net_head_router_overhead_saved_percent_of_dense": -0.010557429529845222,
+        "learned_gates_fraction_of_total_saved_percent": 22.13693211396539,
+        "repeat_costs_identical": true
+      },
+      {
+        "variant": "router_batched",
+        "batch_size": 8,
+        "dense_matmul_gflops_per_text": 22.347257856,
+        "actual_matmul_gflops_per_text": 19.735440384,
+        "all_valid_queries_counterfactual_gflops_per_text": 20.756944896,
+        "all_padded_queries_same_exit_counterfactual_gflops_per_text": 22.349617152,
+        "total_saved_percent_of_dense": 11.687418155864501,
+        "learned_gates_extra_saved_percent_of_dense": 4.571050813403207,
+        "pad_query_omission_saved_percent_of_dense": 7.126924771991139,
+        "early_exit_net_head_router_overhead_saved_percent_of_dense": -0.010557429529845222,
+        "learned_gates_fraction_of_total_saved_percent": 39.11086907684183,
+        "repeat_costs_identical": true
+      },
+      {
+        "variant": "router_batched",
+        "batch_size": 32,
+        "dense_matmul_gflops_per_text": 22.347257856,
+        "actual_matmul_gflops_per_text": 20.2231296,
+        "all_valid_queries_counterfactual_gflops_per_text": 21.5950848,
+        "all_padded_queries_same_exit_counterfactual_gflops_per_text": 22.349617152,
+        "total_saved_percent_of_dense": 9.505095746813044,
+        "learned_gates_extra_saved_percent_of_dense": 6.139255244829265,
+        "pad_query_omission_saved_percent_of_dense": 3.3763979315136248,
+        "early_exit_net_head_router_overhead_saved_percent_of_dense": -0.010557429529845222,
+        "learned_gates_fraction_of_total_saved_percent": 64.58909419074175,
+        "repeat_costs_identical": true
+      },
+      {
+        "variant": "hdc_loop",
+        "batch_size": 1,
+        "dense_matmul_gflops_per_text": 22.347257856,
+        "actual_matmul_gflops_per_text": 6.843515496,
+        "all_valid_queries_counterfactual_gflops_per_text": 6.910398312,
+        "all_padded_queries_same_exit_counterfactual_gflops_per_text": 7.096467048,
+        "total_saved_percent_of_dense": 69.37648663608816,
+        "learned_gates_extra_saved_percent_of_dense": 0.29928869318542667,
+        "pad_query_omission_saved_percent_of_dense": 0.8326244642585646,
+        "early_exit_net_head_router_overhead_saved_percent_of_dense": 68.24457347864416,
+        "learned_gates_fraction_of_total_saved_percent": 0.43139788089203,
+        "repeat_costs_identical": true
+      },
+      {
+        "variant": "hdc_loop",
+        "batch_size": 8,
+        "dense_matmul_gflops_per_text": 22.347257856,
+        "actual_matmul_gflops_per_text": 17.637622032,
+        "all_valid_queries_counterfactual_gflops_per_text": 18.031427472,
+        "all_padded_queries_same_exit_counterfactual_gflops_per_text": 18.972818832,
+        "total_saved_percent_of_dense": 21.074781766728094,
+        "learned_gates_extra_saved_percent_of_dense": 1.762209227358369,
+        "pad_query_omission_saved_percent_of_dense": 4.212558722265096,
+        "early_exit_net_head_router_overhead_saved_percent_of_dense": 15.10001381710463,
+        "learned_gates_fraction_of_total_saved_percent": 8.361696205748922,
+        "repeat_costs_identical": true
+      },
+      {
+        "variant": "hdc_loop",
+        "batch_size": 32,
+        "dense_matmul_gflops_per_text": 22.347257856,
+        "actual_matmul_gflops_per_text": 20.582985216,
+        "all_valid_queries_counterfactual_gflops_per_text": 21.102392832,
+        "all_padded_queries_same_exit_counterfactual_gflops_per_text": 22.348474368,
+        "total_saved_percent_of_dense": 7.894805937124459,
+        "learned_gates_extra_saved_percent_of_dense": 2.3242566016239197,
+        "pad_query_omission_saved_percent_of_dense": 5.5759930101018655,
+        "early_exit_net_head_router_overhead_saved_percent_of_dense": -0.005443674601326442,
+        "learned_gates_fraction_of_total_saved_percent": 29.44032595778394,
+        "repeat_costs_identical": true
+      },
+      {
+        "variant": "hdc_batched",
+        "batch_size": 1,
+        "dense_matmul_gflops_per_text": 22.347257856,
+        "actual_matmul_gflops_per_text": 6.843515496,
+        "all_valid_queries_counterfactual_gflops_per_text": 6.910398312,
+        "all_padded_queries_same_exit_counterfactual_gflops_per_text": 7.096467048,
+        "total_saved_percent_of_dense": 69.37648663608816,
+        "learned_gates_extra_saved_percent_of_dense": 0.29928869318542667,
+        "pad_query_omission_saved_percent_of_dense": 0.8326244642585646,
+        "early_exit_net_head_router_overhead_saved_percent_of_dense": 68.24457347864416,
+        "learned_gates_fraction_of_total_saved_percent": 0.43139788089203,
+        "repeat_costs_identical": true
+      },
+      {
+        "variant": "hdc_batched",
+        "batch_size": 8,
+        "dense_matmul_gflops_per_text": 22.347257856,
+        "actual_matmul_gflops_per_text": 17.84669736,
+        "all_valid_queries_counterfactual_gflops_per_text": 18.392339856,
+        "all_padded_queries_same_exit_counterfactual_gflops_per_text": 18.972818832,
+        "total_saved_percent_of_dense": 20.139206899568876,
+        "learned_gates_extra_saved_percent_of_dense": 2.441653018531313,
+        "pad_query_omission_saved_percent_of_dense": 2.597540063932934,
+        "early_exit_net_head_router_overhead_saved_percent_of_dense": 15.10001381710463,
+        "learned_gates_fraction_of_total_saved_percent": 12.123878714328029,
+        "repeat_costs_identical": true
+      },
+      {
+        "variant": "hdc_batched",
+        "batch_size": 32,
+        "dense_matmul_gflops_per_text": 22.347257856,
+        "actual_matmul_gflops_per_text": 21.035956224,
+        "all_valid_queries_counterfactual_gflops_per_text": 21.971208192,
+        "all_padded_queries_same_exit_counterfactual_gflops_per_text": 22.348474368,
+        "total_saved_percent_of_dense": 5.867841327332828,
+        "learned_gates_extra_saved_percent_of_dense": 4.185086036177342,
+        "pad_query_omission_saved_percent_of_dense": 1.6881989657568124,
+        "early_exit_net_head_router_overhead_saved_percent_of_dense": -0.005443674601326442,
+        "learned_gates_fraction_of_total_saved_percent": 71.32241317915175,
+        "repeat_costs_identical": true
+      }
+    ],
+    "definitions": {
+      "all_valid_queries": "Force every non-PAD query to be kept in each actually visited routed layer; full padded K/V, FFN, heads and router projections retained.",
+      "all_padded_queries": "Same visited layers/heads/routers but attention also computes PAD query rows, matching dense per-layer attention shapes.",
+      "learned_gates_extra_saved": "All-valid-query counterfactual minus actual routed FLOPs; isolates arithmetic saved beyond simply omitting PAD query rows.",
+      "pad_query_omission_saved": "All-padded-query counterfactual minus all-valid-query counterfactual; only PAD query/output work, not PAD K/V or FFN.",
+      "early_exit_net_head_router_overhead_saved": "Dense full-model FLOPs minus same-exit all-padded-query counterfactual. Includes early-exit savings net of added off-ramp/router work; can be negative for standalone routing.",
+      "denominator": "All three component percentages use full Dense FLOPs as denominator and sum to total savings. Gate fraction of total uses total saved FLOPs instead.",
+      "batch_padding": "Batched costs use B times maximum kept/valid query count and include dummy rows, including empty-query samples when other samples retain queries."
+    },
+    "limitations": [
+      "No counterfactual model inference was run; these values describe matrix shapes only.",
+      "Observed early-exit paths are held fixed. No counterfactual prediction, accuracy or latency is asserted.",
+      "This decomposition measures this implementation's operations, not the best achievable padding-aware dense baseline.",
+      "Softmax, LayerNorm, gather/scatter, control flow and memory movement remain excluded, as in the primary FLOPs protocol."
+    ]
+  },
+  "semantic_diagnostic": {
+    "protocol_sha256": "cb01ec76f42c563523bc7c61653bdea7ef3f044b7f949d8c0db2c544b5c397e9",
+    "samples": 7600,
+    "prediction_disagreements": 416,
+    "query_correct_legacy_wrong": 316,
+    "legacy_correct_query_wrong": 79,
+    "scope": "New validation-selected Router weights, full test; K-by-K versus full-K/V query semantics. Not historical checkpoints and not a timing comparison.",
+    "rows": [
+      {
+        "variant": "router_loop",
+        "batch_size": 32,
+        "samples": 7600,
+        "correct": 7194,
+        "accuracy": 0.9465789473684211
+      },
+      {
+        "variant": "router_legacy",
+        "batch_size": 32,
+        "samples": 7600,
+        "correct": 6957,
+        "accuracy": 0.9153947368421053
+      }
+    ]
+  },
+  "independent_audit": {
+    "passed": true,
+    "protocol_sha256": "50246081ff4fcf8e8364e79f5b3627b67850a9917cba9fc941ba789036220ea2",
+    "primary_quality_evaluations": 21,
+    "test_samples_per_evaluation": 7600,
+    "timing_json_csv_pairs": 63,
+    "raw_timed_calls_verified": 32256,
+    "source_data_checkpoint_files_hashed": 13,
+    "shared_backbone_tensors_verified": 201,
+    "independently_recomputed": [
+      "full-test labels, predictions and accuracy",
+      "quality and timing executed-shape matrix FLOPs",
+      "timing groups, repetitions and weighted FLOPs",
+      "raw latency mean/P50/P95/min/max",
+      "summary means and reductions",
+      "throughput arithmetic and memory arithmetic",
+      "checkpoint/backbone identity",
+      "semantic paired disagreements"
+    ],
+    "loop_batched_prediction_differences": [
+      {
+        "family": "router",
+        "batch_size": 1,
+        "full_test_prediction_disagreements": 0
+      },
+      {
+        "family": "router",
+        "batch_size": 8,
+        "full_test_prediction_disagreements": 0
+      },
+      {
+        "family": "router",
+        "batch_size": 32,
+        "full_test_prediction_disagreements": 0
+      },
+      {
+        "family": "hdc",
+        "batch_size": 1,
+        "full_test_prediction_disagreements": 0
+      },
+      {
+        "family": "hdc",
+        "batch_size": 8,
+        "full_test_prediction_disagreements": 0
+      },
+      {
+        "family": "hdc",
+        "batch_size": 32,
+        "full_test_prediction_disagreements": 0
+      }
+    ],
+    "semantic_counts": {
+      "samples": 7600,
+      "prediction_disagreements": 416,
+      "query_correct_legacy_wrong": 316,
+      "legacy_correct_query_wrong": 79
+    },
+    "limitations": [
+      "Timed routes omit predictions/correct counts; timed_inputs_accuracy is checked only as an aggregate of timing JSONs.",
+      "Throughput arithmetic is verified from its saved elapsed window; the physical elapsed window cannot be independently replayed from artifacts.",
+      "This is an artifact audit, not a new latency measurement or uncertainty estimate."
+    ],
+    "completed_at": "2026-11-09 10:48:36"
+  },
+  "limitations": [
+    "New single-seed supplemental experiment, not recovered historical task weights.",
+    "Same frozen backbone but different learned modules and declared routing/exit configurations; not an exhaustive Pareto comparison.",
+    "Whole-batch early exit retained; thresholds selected at validation batch 1 and held fixed across batch sizes.",
+    "Same-weight batching preserves all full-test predictions here, but can change floating-point order and pads queries to per-batch Kmax.",
+    "Analytical padding/gate/early-exit attribution is not a counterfactual inference, latency or quality measurement.",
+    "Laptop clock/power and host activity may vary; repeat ranges are not confidence intervals or a significance test.",
+    "RouterBERT batched B32 median is approximately equal to Dense, not reliably faster or universally slower.",
+    "No production service, network/queue, concurrent load, SDPA/compiled/quantized deployment or multi-seed validation measured."
+  ]
+}

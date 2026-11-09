@@ -102,8 +102,10 @@ def table(rows, *, ranges=False):
         if ranges:
             cells = f"<td>{row['batch_size']}</td><td>{value_range(row['latency_p50_ms_by_repeat'])}</td><td>{value_range(row['report_p95_by_repeat'])}</td><td>{row['throughput_samples_per_second_mean']:.1f}</td>"
         else:
+            saved = row['timed_inputs_matmul_flops_saving_percent']
+            saving = "—" if row['variant'] == 'dense' else "≈0%" if abs(saved) < .005 else f"{saved:.1f}%"
             cells = (f"<td>{row['accuracy']:.2%}</td><td>{row[P50]:.3f}</td><td>{row[P95]:.3f}</td>"
-                     f"<td>{row[FLOPS]/1e9:.3f}</td><td>{row['timed_inputs_matmul_flops_saving_percent']:.1f}%</td>")
+                     f"<td>{row[FLOPS]/1e9:.3f}</td><td>{saving}</td>")
         body.append(f"<tr><th scope='row'>{esc(label)}</th>{cells}</tr>")
     return "<div class='table-wrap'><table><thead><tr>" + header + "</tr></thead><tbody>" + "".join(body) + "</tbody></table></div>"
 
@@ -249,6 +251,62 @@ def semantic_section(run, primary_manifest):
             "<p><a href='../semantic_diagnostic/summary.json'>查看逐条对照汇总</a> · <a href='../semantic_diagnostic/manifest.json'>查看语义诊断身份记录</a></p></section>")
 
 
+def padding_section(run, primary_manifest, primary_rows):
+    path = run/"padding_compute_analysis.json"
+    if not path.exists():
+        return ""
+    result = read(path)
+    if result["source_protocol_sha256"] != primary_manifest["protocol_sha256"]:
+        raise ValueError("Padding attribution belongs to a different main protocol")
+    rows = result["rows"]
+    variants = ("router_loop", "router_batched", "hdc_loop", "hdc_batched")
+    expected = {(name,batch) for name in variants for batch in primary_manifest["batch_sizes"]}
+    keys = [(row["variant"],row["batch_size"]) for row in rows]
+    if len(keys) != len(set(keys)) or set(keys) != expected:
+        raise ValueError("Incomplete or duplicate padding attribution rows")
+    primary = {(row["variant"],row["batch_size"]):row for row in primary_rows}
+    contributions, costs = [], []
+    for row in sorted(rows,key=lambda x:(x["batch_size"],variants.index(x["variant"]))):
+        dense = row["dense_matmul_gflops_per_text"]
+        actual = row["actual_matmul_gflops_per_text"]
+        valid = row["all_valid_queries_counterfactual_gflops_per_text"]
+        padded = row["all_padded_queries_same_exit_counterfactual_gflops_per_text"]
+        if dense <= 0 or any(not math.isfinite(value) or value < 0 for value in (dense,actual,valid,padded)):
+            raise ValueError("Invalid padding attribution FLOPs")
+        if not math.isclose(actual*1e9,primary[row["variant"],row["batch_size"]][FLOPS],rel_tol=1e-8):
+            raise ValueError("Padding attribution actual FLOPs disagree with main table")
+        expected_values = {
+            "total_saved_percent_of_dense":100*(dense-actual)/dense,
+            "learned_gates_extra_saved_percent_of_dense":100*(valid-actual)/dense,
+            "pad_query_omission_saved_percent_of_dense":100*(padded-valid)/dense,
+            "early_exit_net_head_router_overhead_saved_percent_of_dense":100*(dense-padded)/dense,
+        }
+        for field,value in expected_values.items():
+            if not math.isclose(row[field],value,rel_tol=1e-7,abs_tol=1e-7):
+                raise ValueError(f"Inconsistent padding attribution component: {field}")
+        label = esc(LABELS[row["variant"]])
+        contributions.append(f"<tr><th scope='row'>{label}</th><td>{row['batch_size']}</td>"
+            f"<td>{row['total_saved_percent_of_dense']:+.2f}%</td>"
+            f"<td>{row['learned_gates_extra_saved_percent_of_dense']:+.2f}%</td>"
+            f"<td>{row['pad_query_omission_saved_percent_of_dense']:+.2f}%</td>"
+            f"<td>{row['early_exit_net_head_router_overhead_saved_percent_of_dense']:+.2f}%</td></tr>")
+        costs.append(f"<tr><th scope='row'>{label}</th><td>{row['batch_size']}</td>"
+            f"<td>{actual:.3f}</td><td>{valid:.3f}</td><td>{padded:.3f}</td><td>{dense:.3f}</td></tr>")
+    return ("<section><h2>把 FLOPs 节省拆开看</h2>"
+        "<p>输入统一补齐到 128 个位置，PAD 是凑齐长度的位置，不是真实词。普通 BERT 仍计算这些位置的 query；路由执行器会自动省掉一部分 PAD query。因此，总 FLOPs 节省不能全部归功于路由器学会判断哪些词重要。</p>"
+        "<p>以下是<strong>解析反事实计算</strong>：固定相同的早退路径与已执行层数，依次把查询数量替换成“全部有效词”和“全部 128 个位置”，再按各自执行形状计数。批量版仍按 Kmax 补齐。没有重新调阈值，也没有为这些反事实运行质量评估或测速。</p>"
+        "<div class='table-wrap'><table><thead><tr><th>路径</th><th>Batch</th><th>总节省率</th>"
+        "<th>有效词门控<br>额外贡献</th><th>省略 PAD query<br>贡献</th><th>早退扣除新增<br>出口/路由开销</th></tr></thead><tbody>"
+        + "".join(contributions) + "</tbody></table></div>"
+        "<p class='note'>后三列均以完整 Dense 的矩阵 FLOPs 为分母，三项相加等于总节省率；正数代表节省，负数代表额外开销。独立 RouterBERT 没有早退，最后一列可能为负。HDC 的最后一列包含早退及新增模块的净影响，不能把该项称为单纯的 padding 节省。</p>"
+        "<details><summary>展开实际计数与反事实计算量（GFLOPs / 文本）</summary>"
+        "<div class='table-wrap'><table><thead><tr><th>路径</th><th>Batch</th><th>实际执行</th>"
+        "<th>假设保留全部<br>有效词 query</th><th>同一早退路径<br>保留全部 padded query</th><th>完整 Dense</th></tr></thead><tbody>"
+        + "".join(costs) + "</tbody></table></div></details>"
+        "<p>这里分解的是矩阵计算量。它不能告诉我们“去掉 PAD query 会快多少”，也不代表强制保留全部 query 后预测一定相同；这些结论需要另外执行相应模型再测。</p>"
+        "<p><a href='../padding_compute_analysis.json'>查看计算量归因记录、定义与限制</a></p></section>")
+
+
 def build(run_dir, allow_example=False):
     run = Path(run_dir).resolve()
     directory = run/"benchmark"
@@ -269,7 +327,7 @@ def build(run_dir, allow_example=False):
         # implementation. Still disclose accuracy directly alongside speed.
         choices = [lookup[name,batch] for name in ("dense","deebert","router_batched","hdc_batched")]
         fastest = min(choices, key=lambda x:x[P50])
-        cards.append(f"<article><span>Batch {batch} · 本配置中位延迟最低</span><strong>{esc(LABELS[fastest['variant']])}</strong><b>{fastest[P50]:.3f} ms / 批</b><small>准确率 {fastest['accuracy']:.2%}；P95 {fastest[P95]:.3f} ms</small></article>")
+        cards.append(f"<article><span>Batch {batch} · 主比较四种路径中 P50 最低</span><strong>{esc(LABELS[fastest['variant']])}</strong><b>{fastest[P50]:.3f} ms / 批</b><small>准确率 {fastest['accuracy']:.2%}；P95 {fastest[P95]:.3f} ms</small></article>")
         tables.append(f"<h3>一次输入 {batch} 条文本</h3>" + table([lookup[name,batch] for name in PRIMARY]))
     tails = []
     for name in ("deebert", "router_batched", "hdc_batched"):
@@ -286,11 +344,11 @@ def build(run_dir, allow_example=False):
     marker = "<p class='example'>合成测试样例，不是实验结果</p>" if example else ""
     document = f"""<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>DeeBERT / RouterBERT 公平补测与代码排查</title><style>
     *{{box-sizing:border-box}}body{{margin:0;background:#f2f5f7;color:#172b3a;font:16px/1.75 'Microsoft YaHei','PingFang SC',sans-serif}}main{{max-width:1120px;margin:36px auto;padding:0 24px 50px}}header,section{{background:white;border:1px solid #dce5eb;border-radius:14px;padding:28px 32px;margin:20px 0}}h1{{font-size:30px;line-height:1.4;margin:8px 0 15px}}h2{{font-size:23px;line-height:1.4;margin:0 0 14px}}h3{{font-size:18px;margin:25px 0 12px}}p{{margin:10px 0}}a{{color:#086b80;text-underline-offset:3px}}.eyebrow{{color:#53717f;font-size:13px;letter-spacing:1px}}.note{{color:#526777;font-size:14px}}.cards{{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0}}article{{background:#f0f8f8;border:1px solid #cce3e4;border-radius:10px;padding:16px}}article span,article strong,article b,article small{{display:block}}article span{{font-size:12px;color:#536879}}article strong{{font-size:18px;line-height:1.5;margin:8px 0}}article b{{color:#067582;font-size:24px}}article small{{font-size:12px;margin-top:8px}}.table-wrap{{overflow-x:auto}}table{{width:100%;border-collapse:collapse;font-size:13px;line-height:1.6;font-variant-numeric:tabular-nums}}th,td{{padding:11px 9px;border-bottom:1px solid #dce5eb;text-align:right;white-space:nowrap}}thead th{{background:#edf3f6;color:#35515e;font-weight:600}}th:first-child{{text-align:left}}tbody th{{font-weight:500}}tbody tr:nth-child(even){{background:#f8fafb}}img{{display:block;width:100%;height:auto;margin:20px 0}}li{{margin:10px 0}}li p{{margin:5px 0}}pre{{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.7 Consolas,monospace;background:#f3f5f7;padding:20px}}summary{{cursor:pointer;font-weight:600}}.example{{background:#fff0c2;color:#813f08;padding:14px;font-weight:700}}.links{{display:flex;gap:22px;flex-wrap:wrap;margin-top:18px}}@media(max-width:750px){{main{{padding:0 12px}}header,section{{padding:22px 18px}}h1{{font-size:25px}}.cards{{grid-template-columns:1fr}}}}@media print{{body{{background:white}}main{{margin:0;padding:0}}header,section{{break-inside:avoid;border-radius:0;padding:18px}}.table-wrap{{overflow:visible}}a{{color:inherit}}}}
-    </style></head><body><main><header><div class="eyebrow">2026-11-09 · 新增比较与实现诊断</div>{marker}<h1>DeeBERT、RouterBERT<br>公平补测与代码排查</h1><p>此前只测了普通 BERT 与 HDC，尚不能判断收益来自早退还是路由。这次补齐独立基线，并把“同一组权重、不同执行实现”放在一起比较。</p><p class="note">下方主表全部来自本轮新计时，不拼接昨晚的数据。卡片按中位延迟选择当前配置中的最快项，准确率与尾延迟一并展示，不代表综合质量排名。</p><div class="cards">{''.join(cards)}</div><div class="links"><a href="summary.csv">下载结果 CSV</a><a href="summary.json">查看完整结果 JSON</a><a href="manifest.json">查看实验配置与哈希</a></div></header>
+    </style></head><body><main><header><div class="eyebrow">2026-11-09 · 新增比较与实现诊断</div>{marker}<h1>DeeBERT、RouterBERT<br>公平补测与代码排查</h1><p>此前只测了普通 BERT 与 HDC，尚不能判断收益来自早退还是路由。这次补齐独立基线，并把“同一组权重、不同执行实现”放在一起比较。</p><p class="note">下方主表全部来自本轮新计时，不拼接昨晚的数据。卡片比较普通 BERT、DeeBERT、批量版 RouterBERT 与批量版 HDC，选择其中 P50 最低的一项；小差异不代表统计显著优势，也不是综合质量排名。逐条执行版与消融版仍完整列在下表。</p><div class="cards">{''.join(cards)}</div><div class="links"><a href="summary.csv">下载结果 CSV</a><a href="summary.json">查看完整结果 JSON</a><a href="manifest.json">查看实验配置与哈希</a></div></header>
     <section><h2>怎样保证比较公平</h2><p>所有路径共享已校验一致的骨干权重和最终分类头；相同输入分组、GPU、FP32、eager attention、关闭 TF32、固定输入长度 {config['max_length']}。设备：{esc(env.get('gpu','未记录'))}。</p><p>每组先预热 {config['warmup_batches']} 批，再执行 {config['benchmark_repeats']} 轮计时；轮换模型执行顺序。使用固定 {len(manifest['sample_indices']):,} 条不同文本，必要时循环同组输入以达到每轮最少 {config['benchmark_min_calls']} 次批调用。循环次数增加不等于增加独立测试样本。</p><p>准确率在完整 7,600 条测试集上分别测量。时延是模型本身的同步墙钟时间，输入已在显卡上，不含分词、网络、排队或服务框架。P50/P95 是各轮分位数的平均；Batch&gt;1 的数字是<strong>整批耗时</strong>，不能直接当作单请求耗时。</p></section>
     <section><h2>完整结果：同时看速度、准确率和计算量</h2><img src="comparison.png" alt="三种批量大小下七条执行路径的中位延迟，误差线表示重复轮次范围">{''.join(tables)}<p class="note">FLOPs 使用测速的相同输入分组；1 MAC = 2 FLOPs。计数覆盖实际执行形状的矩阵乘法，包含补齐查询、完整 FFN、路由和分类头；不包含索引、搬运、归一化与 softmax 等操作。准确率采用全测试集，FLOPs 的对应输入范围不同，不能混用。</p></section>
-    {implementation_section(rows,directory)}{ablation_section(rows)}
-    <section><h2>代码到底哪里有问题？</h2><ol><li><strong>已确认的语义不一致：</strong>训练时，选中的 token 仍然能看见所有有效 token；原推理把未选 token 连同 K/V 一起移除，改变了注意力函数。简单说，“这一层不更新某个词”，不等于“不让其他词看到它”。修正后保留完整 K/V，只减少需要更新的 query。</li><li><strong>可以优化的执行开销：</strong>原实现逐样本查找索引、逐样本调用小矩阵；普通 forward 还计算训练统计和预算损失，包含无用的 CPU 同步。此次测量把统计与计时分开，另加批量执行版，实际收益见上面的同权重对照。</li><li><strong>设计本身的计算下限：</strong>路由仅跳过注意力，FFN 仍处理全部 token。在 BERT-base、长度 128 时，FFN 约占每层矩阵 FLOPs 的 64.86%；只要仍有查询需要更新，正确的 query 路由还保留完整 K/V 投影，约占 16.22%。因此，保留一半 token 不等于节省一半模型计算；批量补齐到 Kmax 又会增加计算。这是矩阵 FLOPs 的分析，不是延迟占比。跳过 FFN 会改变模型，需要重新训练和评估。</li></ol><p>此外，原稀疏写回在 BF16 下存在 dtype 不匹配；这不解释 FP32 测速的慢。零初始化配合 ≥0.5 阈值实际全保留，原注释中的“一半保留”不准确，但不代表训练无法获得路由梯度。</p>{audit}</section>
+    {implementation_section(rows,directory)}{ablation_section(rows)}{padding_section(run,manifest,rows)}
+    <section><h2>代码到底哪里有问题？</h2><ol><li><strong>已确认的语义不一致：</strong>训练时，选中的 token 仍然能看见所有有效 token；原推理把未选 token 连同 K/V 一起移除，改变了注意力函数。简单说，“这一层跳过某个词的注意力更新”，不等于“不让其他词看到它”。修正后保留完整 K/V，只减少需要更新的 query。</li><li><strong>可以优化的执行开销：</strong>原实现逐样本查找索引、逐样本调用小矩阵；普通 forward 还计算训练统计和预算损失，包含无用的 CPU 同步。此次测量把统计与计时分开，另加批量执行版，实际收益见上面的同权重对照。</li><li><strong>设计本身的计算下限：</strong>路由仅跳过注意力，FFN 仍处理全部 token。在 BERT-base、长度 128 时，FFN 约占每层矩阵 FLOPs 的 64.86%；只要仍有查询需要更新，正确的 query 路由还保留完整 K/V 投影，约占 16.22%。因此，保留一半 token 不等于节省一半模型计算；批量补齐到 Kmax 又会增加计算。这是矩阵 FLOPs 的分析，不是延迟占比。跳过 FFN 会改变模型，需要重新训练和评估。</li></ol><p>此外，原稀疏写回在 BF16 下存在 dtype 不匹配；这不解释 FP32 测速的慢。零初始化配合 ≥0.5 阈值实际全保留，原注释中的“一半保留”不准确，但不代表训练无法获得路由梯度。</p>{audit}</section>
     {semantic_section(run,manifest)}
     <section><h2>重复波动与慢请求</h2><p>中位数改善不意味着最慢的一部分请求同样改善。P95 表示约 95% 的调用不超过的耗时；下表给出各轮分位数的范围，而非所有单次调用的最小/最大值。</p><ul>{''.join(tails)}</ul>{table(sorted(rows,key=lambda r:(r['batch_size'],PRIMARY.index(r['variant']))),ranges=True)}</section>
     {training_section(run)}{diagnostic_section(run,manifest)}
@@ -343,6 +401,25 @@ def self_test():
                     {"variant":"router_legacy","batch_size":32,"samples":10,"correct":8,"accuracy":.8}]}
         (semantic_dir/"manifest.json").write_text(json.dumps(semantic_manifest))
         (semantic_dir/"summary.json").write_text(json.dumps(semantic_result))
+        padding_rows=[]
+        for row in rows:
+            if row["variant"] not in ("router_loop","router_batched","hdc_loop","hdc_batched"):
+                continue
+            actual=row[FLOPS]/1e9
+            valid=actual+.02
+            padded=1.001 if row["variant"].startswith("router") else .98
+            padding_rows.append({"variant":row["variant"],"batch_size":row["batch_size"],
+                "dense_matmul_gflops_per_text":1.,"actual_matmul_gflops_per_text":actual,
+                "all_valid_queries_counterfactual_gflops_per_text":valid,
+                "all_padded_queries_same_exit_counterfactual_gflops_per_text":padded,
+                "total_saved_percent_of_dense":100*(1-actual),
+                "learned_gates_extra_saved_percent_of_dense":100*(valid-actual),
+                "pad_query_omission_saved_percent_of_dense":100*(padded-valid),
+                "early_exit_net_head_router_overhead_saved_percent_of_dense":100*(1-padded),
+                "learned_gates_fraction_of_total_saved_percent":100*(valid-actual)/(1-actual),
+                "repeat_costs_identical":True})
+        (run/"padding_compute_analysis.json").write_text(json.dumps({"analysis":"synthetic only",
+            "source_protocol_sha256":"SYNTHETIC-ONLY","rows":padding_rows,"definitions":{},"limitations":[]}))
         try:
             build(run)
         except ValueError:
@@ -355,6 +432,7 @@ def self_test():
         assert "SYNTHETIC &lt;fixture&gt;" in contents
         assert "降低" in contents and "增加" in contents
         assert "3 条预测不同" in contents and "提高 10.00 个百分点" in contents
+        assert "解析反事实计算" in contents and "固定相同的早退路径与已执行层数" in contents
         assert (directory/"comparison.png").stat().st_size > 1000
         try:
             semantic_section(run,dict(manifest,checkpoints={"router_loop":"mismatched"}))
