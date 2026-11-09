@@ -141,6 +141,51 @@ def threshold_for(name, source, out):
     return -1.0
 
 
+def verify_gpu_backends(config, resolved, source, out, data):
+    """Real selected weights and GPU precision, before substantive timings."""
+    identity={"config":config,"checkpoints":{name:file_hash(specs(source,out)[name][0]) for name in ("router_loop","hdc_loop")},
+        "data_sha256":file_hash(source/"data.pt"),
+        "source_sha256":{p:file_hash(ROOT/p) for p in ("benchmarks/compare_baselines.py",
+            "benchmarks/comparator_runtime.py","benchmarks/batched_query.py","benchmarks/hdc_runtime.py")}}
+    path=out/"gpu_backend_verification.json"
+    if path.exists():
+        cached=read_json(path)
+        if cached["identity"]!=identity:
+            raise RuntimeError("GPU equivalence check identity changed")
+        return cached
+    records=[]
+    with torch.inference_mode():
+        for name in ("router_loop","hdc_loop"):
+            model=make_model(name,config,resolved,source,out)
+            for size in config["benchmark_batches"]:
+                ids=data["validation"]["input_ids"][:size].cuda()
+                mask=data["validation"]["attention_mask"][:size].cuda()
+                for threshold in ([-1.0] if name=="router_loop" else [-1.0,threshold_for(name,source,out)]):
+                    model.backend="query_loop"
+                    reference,reference_stats=model.forward_dynamic(ids,mask,threshold,collect_stats=True)
+                    for backend in ("query_batched","dense_gate"):
+                        model.backend=backend
+                        result,stats=model.forward_dynamic(ids,mask,threshold,collect_stats=True)
+                        torch.testing.assert_close(result,reference,rtol=3e-4,atol=3e-4)
+                        ref_counts=[x["k_per_sample"] for x in reference_stats["stage_b_layers"]]
+                        counts=[x["k_per_sample"] for x in stats["stage_b_layers"]]
+                        if ref_counts!=counts or reference_stats["exit_layer"]!=stats["exit_layer"]:
+                            raise RuntimeError("GPU implementation change altered routing on verification inputs")
+                        if not torch.equal(result.argmax(-1),reference.argmax(-1)):
+                            raise RuntimeError("GPU implementation change altered verification predictions")
+                        records.append({"variant":name,"batch_size":size,"threshold":threshold,"backend":backend,
+                            "maximum_absolute_logit_difference":float((result-reference).abs().max()),
+                            "predictions_identical":bool(torch.equal(result.argmax(-1),reference.argmax(-1))),
+                            "route_counts_identical":True})
+            del model
+            torch.cuda.empty_cache()
+    result={"identity":identity,"records":records,"passed":True,
+        "scope":"First validation inputs at each registered batch size, real selected weights, FP32 GPU. Not test quality or latency."}
+    write_json(path,result)
+    log("gpu_backend_verification_passed",cases=len(records))
+    return result
+
+
 def run_measurements(config, resolved, source, out, data, diagnostic=False):
     output = out / ("diagnostic_benchmark" if diagnostic else "benchmark")
     output.mkdir(exist_ok=True)
@@ -200,10 +245,53 @@ def run_measurements(config, resolved, source, out, data, diagnostic=False):
     log("measurement_complete", output=str(output), rows=len(rows))
 
 
+def semantic_diagnostic(config, resolved, source, out, data):
+    """Full-test consequence of K/V removal, without another timing sweep."""
+    output=out/"semantic_diagnostic"
+    output.mkdir(exist_ok=True)
+    identity={"config":config,"checkpoint_sha256":file_hash(out/"router_best.pt"),
+        "data_sha256":file_hash(source/"data.pt"),"batch_size":32,
+        "source_sha256":{p:file_hash(ROOT/p) for p in (
+            "benchmarks/compare_baselines.py","benchmarks/comparator_runtime.py",
+            "benchmarks/hdc_runtime.py","benchmarks/measure_latency.py","models/hdc_bert.py",
+            "models/router_tuning_bert.py")}}
+    identity["protocol_sha256"]=hashlib.sha256(json.dumps(identity,sort_keys=True).encode()).hexdigest()
+    path=output/"manifest.json"
+    if path.exists() and read_json(path)!=identity:
+        raise RuntimeError("Semantic diagnostic identity changed")
+    write_json(path,identity)
+    rows=[]; predictions={}
+    for name in ("router_loop","router_legacy"):
+        model=make_model(name,config,resolved,source,out)
+        row=quality_pass(torch,model,data["test"],name,32,-1,torch.device("cuda"),output)
+        rows.append(row)
+        with (output/row["predictions_file"]).open(encoding="utf-8",newline="") as stream:
+            predictions[name]=list(csv.DictReader(stream))
+        del model
+        torch.cuda.empty_cache()
+    left,right=predictions["router_loop"],predictions["router_legacy"]
+    labels=data["test"]["labels"]
+    if len(left)!=len(labels) or len(left)!=len(right) or any(
+        int(a["sample_index"])!=i or a["sample_index"]!=b["sample_index"]
+        or int(a["label"])!=int(labels[i]) or a["label"]!=b["label"]
+        for i,(a,b) in enumerate(zip(left,right))):
+        raise RuntimeError("Unpaired semantic diagnostic")
+    for records,row in zip((left,right),rows):
+        if row["samples"]!=len(records) or row["correct"]!=sum(r["prediction"]==r["label"] for r in records):
+            raise RuntimeError("Semantic diagnostic quality aggregate mismatch")
+    result={"protocol_sha256":identity["protocol_sha256"],"rows":rows,"samples":len(left),
+        "prediction_disagreements":sum(a["prediction"]!=b["prediction"] for a,b in zip(left,right)),
+        "query_correct_legacy_wrong":sum(a["prediction"]==a["label"] and b["prediction"]!=b["label"] for a,b in zip(left,right)),
+        "legacy_correct_query_wrong":sum(b["prediction"]==b["label"] and a["prediction"]!=a["label"] for a,b in zip(left,right)),
+        "scope":"New validation-selected Router weights, full test; K-by-K versus full-K/V query semantics. Not historical checkpoints and not a timing comparison."}
+    write_json(output/"summary.json",result)
+    log("semantic_diagnostic_complete", disagreements=result["prediction_disagreements"],samples=len(left))
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config",type=Path,default=ROOT/"configs/comparator_audit_20261109.json")
-    parser.add_argument("--phase",choices=["select","measure","diagnose","all"],default="all")
+    parser.add_argument("--phase",choices=["verify","select","measure","diagnose","semantic","all"],default="all")
     args=parser.parse_args()
     config=read_json(args.config)
     source=ROOT/config["source_run"]; out=ROOT/config["output_root"]
@@ -222,6 +310,8 @@ def main():
         ctypes.windll.kernel32.SetThreadExecutionState(0x80000001)
     data=torch.load(source/"data.pt",map_location="cpu",weights_only=False,mmap=True)
     log("start", phase=args.phase, telemetry=telemetry())
+    if args.phase in {"verify","all"}:
+        verify_gpu_backends(config,resolved,source,out,data)
     if args.phase in {"select","all"}:
         select_deebert(config,resolved,source,out,data)
     if args.phase in {"measure","all"}:
@@ -230,6 +320,8 @@ def main():
         run_measurements(config,resolved,source,out,data)
     if args.phase=="diagnose":
         run_measurements(config,resolved,source,out,data,diagnostic=True)
+    if args.phase in {"semantic","all"}:
+        semantic_diagnostic(config,resolved,source,out,data)
 
 
 if __name__=="__main__":

@@ -31,6 +31,7 @@ Start from clean, fetched, synced branch `codex/latency-20261108`, commit `558ce
 - Same 1,024 unique seeded test inputs as previous run; at least 256 timed batch calls, 30 warmups, three repetitions with rotated/reversed path order. Batch 1 naturally has 1,024 calls. This smaller minimum than the first run is an explicit new matched protocol for all competitors, not a splice of old and new times. Separate continuous throughput window; synchronized wall-clock per-batch P50/P95.
 - Matrix FLOPs: one multiply-add = two operations; actual executed padded shapes, including full FFN/router/head work. Separate untimed count on exactly the timing groups. Indexing, memory movement, synchronization and non-matmul operations are excluded from this count but included in measured latency.
 - Bounded diagnostics may compare original compact attention and a dense-gate reference on the same new Router weights. Label them separately from the corrected four-model comparison. No profiler kernel timing claim when CUDA profiling is unavailable.
+- Before measurements, narrow the required semantic diagnostic to full-test batch-32 query versus legacy K-by-K predictions on the same new Router weights. Report disagreement counts and accuracy changes; this answers the correctness question without a redundant timing sweep. The broader `--phase diagnose` timing sweep remains optional and is not required if the primary loop/batched measurements already resolve the overhead question.
 
 ### Evidence / stopping
 
@@ -49,6 +50,10 @@ memory-mapped inputs and bounded feature-cache writes; no global environment or
 persistent power-plan change was made. CPU tests separately verify historical
 bugs, corrected query equivalence, padded-batch FLOPs, final-head mapping,
 validation-only selection, paired timing orchestration and stale-cache rejection.
+Before the primary timings, also check the actual selected Router/HDC weights
+on the GPU: first validation inputs at B1/8/32, query-loop versus batched-query
+and dense-gate logits, predictions, retained counts and exits. HDC is checked
+with and without early exits. This is a correctness check, not a quality result.
 
 Commands:
 
@@ -56,7 +61,7 @@ Commands:
 python -m benchmarks.train_comparators --phase smoke
 python -m benchmarks.train_comparators --phase all
 python -m benchmarks.compare_baselines --phase all
-python -m benchmarks.compare_baselines --phase diagnose
+python -m benchmarks.compare_baselines --phase semantic
 python -m unittest discover -s tests -p "test_*.py"
 ```
 

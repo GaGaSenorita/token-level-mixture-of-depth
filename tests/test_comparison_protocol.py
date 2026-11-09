@@ -14,6 +14,7 @@ from transformers import BertConfig
 
 from benchmarks import compare_baselines as comparison
 from benchmarks.comparator_runtime import ComparatorRuntime
+from benchmarks.hdc_runtime import dense_matmul_flops
 from benchmarks.measure_latency import quality_pass as actual_quality_pass
 from benchmarks.measure_latency import read_json, sample_indices, write_json
 
@@ -217,6 +218,93 @@ class ComparisonProtocolTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "per-sample"):
             self._calibrate_tiny_cpu_model(corrupt_record=True)
         self.assertFalse((self.out / "deebert_selection.json").exists())
+
+    def semantic_patches(self, fault=None):
+        self.semantic_data = {"test": {"labels": torch.tensor([0, 1, 2, 0, 1, 2])}}
+        predictions = {"router_loop": [0, 0, 2, 1, 0, 0],
+                       "router_legacy": [0, 1, 1, 2, 0, 2]}
+        def quality(torch_module, model, data, name, size, threshold, device, output):
+            self.assertEqual((size, threshold), (32, -1))
+            labels = data["labels"].tolist()
+            rows = [{"sample_index": i, "label": label, "prediction": pred, "batch_exit_layer": 12}
+                    for i, (label, pred) in enumerate(zip(labels, predictions[name]))]
+            correct = sum(row["prediction"] == row["label"] for row in rows)
+            if fault == "unpaired" and name == "router_legacy":
+                rows[0], rows[1] = rows[1], rows[0]
+            if fault == "both_truncated":
+                rows = rows[:-1]
+            if fault == "both_wrong_labels":
+                rows[0]["label"] = 2
+            path = output / (name + "_predictions.csv")
+            with path.open("w", newline="", encoding="utf-8") as stream:
+                writer = csv.DictWriter(stream, fieldnames=["sample_index", "label", "prediction", "batch_exit_layer"])
+                writer.writeheader()
+                writer.writerows(rows)
+            return {"variant": name, "batch_size": size, "samples": len(labels), "correct": correct,
+                    "accuracy": correct / len(labels), "predictions_file": path.name}
+        stack = ExitStack()
+        stack.enter_context(patch.object(comparison, "make_model", return_value=object()))
+        stack.enter_context(patch.object(comparison, "quality_pass", side_effect=quality))
+        stack.enter_context(patch.object(comparison, "file_hash", side_effect=lambda p: self.file_revision + ":" + str(p)))
+        stack.enter_context(patch.object(comparison.torch.cuda, "empty_cache"))
+        stack.enter_context(patch.object(comparison, "log"))
+        return stack
+
+    def run_semantic(self):
+        comparison.semantic_diagnostic(self.config, {}, self.source, self.out, self.semantic_data)
+        return read_json(self.out / "semantic_diagnostic" / "summary.json")
+
+    def test_semantic_disagreement_counts_include_both_wrong_different_predictions(self):
+        with self.semantic_patches():
+            result = self.run_semantic()
+        self.assertEqual(result["samples"], 6)
+        self.assertEqual(result["prediction_disagreements"], 4)
+        self.assertEqual(result["query_correct_legacy_wrong"], 1)
+        self.assertEqual(result["legacy_correct_query_wrong"], 2)
+        # Four disagreements need not equal the three cases changing accuracy:
+        # two different wrong labels contribute a disagreement, but no benefit.
+        self.assertEqual(result["rows"][0]["correct"] - result["rows"][1]["correct"], -1)
+
+    def test_semantic_resume_rejects_changed_identity_before_model_loading(self):
+        with self.semantic_patches():
+            self.run_semantic()
+            self.file_revision = "changed"
+            with patch.object(comparison, "make_model", side_effect=AssertionError("must reject first")):
+                with self.assertRaisesRegex(RuntimeError, "identity changed"):
+                    self.run_semantic()
+
+    def test_semantic_rejects_unpaired_or_truncated_or_mislabelled_predictions(self):
+        for fault in ("unpaired", "both_truncated", "both_wrong_labels"):
+            with self.subTest(fault=fault), self.semantic_patches(fault=fault):
+                with self.assertRaises(RuntimeError):
+                    self.run_semantic()
+
+    def test_no_router_ablation_matches_dense_and_counts_extra_exit_head_only(self):
+        torch.manual_seed(80)
+        torch.set_num_threads(1)
+        model = ComparatorRuntime(config=BertConfig(
+            vocab_size=21, hidden_size=8, intermediate_size=16,
+            num_attention_heads=2, num_hidden_layers=3, max_position_embeddings=16,
+            hidden_dropout_prob=0, attention_probs_dropout_prob=0,
+        ), num_labels=2, dropout=0, split_layer=1, backend="no_router").eval()
+        ids = torch.tensor([[2, 3, 4, 0], [2, 4, 5, 6]])
+        mask = ids.ne(0).long()
+        dense = model.forward_dense(ids, mask)
+        expected = dense_matmul_flops(2, 4, 8, 16, 2, 3) + 2 * 2 * 8 * 2
+        with ExitStack() as stack:
+            for router in model.routers:
+                stack.enter_context(patch.object(router, "forward", side_effect=AssertionError("router executed")))
+            with torch.profiler.profile(activities=[torch.profiler.ProfilerActivity.CPU], with_flops=True) as profiler:
+                actual, stats = model.forward_dynamic(ids, mask, -1, collect_stats=True)
+            torch.testing.assert_close(actual, dense, rtol=1e-5, atol=1e-6)
+            measured = sum(event.flops for event in profiler.key_averages()
+                           if event.key in {"aten::mm", "aten::addmm", "aten::bmm"})
+            self.assertEqual(stats["matmul_flops"], expected)
+            self.assertEqual(measured, expected)
+            self.assertEqual(stats["stage_b_layers"], [])
+            _, early = model.forward_dynamic(ids, mask, float("inf"), collect_stats=True)
+            self.assertEqual(early["exit_layer"], 1)
+            self.assertEqual(early["matmul_flops"], dense_matmul_flops(2, 4, 8, 16, 2, 1))
 
 
 if __name__ == "__main__":
